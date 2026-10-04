@@ -19,17 +19,17 @@ import io.github.m4sak1.tabiline.R
 import io.github.m4sak1.tabiline.core.model.AccentPalette
 import io.github.m4sak1.tabiline.core.model.ThemePreference
 
-data class AccentColors(val strong: Color, val soft: Color)
+data class AccentColors(val strong: Color, val medium: Color, val soft: Color)
 
 fun accentColors(palette: AccentPalette): AccentColors = when (palette) {
-    AccentPalette.PURPLE -> AccentColors(Color(0xFF675496), Color(0xFFC8B3FD))
-    AccentPalette.ORCHID -> AccentColors(Color(0xFF86468C), Color(0xFFFBAFFE))
-    AccentPalette.BLUE -> AccentColors(Color(0xFF315DA8), Color(0xFFAFCBFF))
-    AccentPalette.GREEN -> AccentColors(Color(0xFF367A55), Color(0xFFAEEAC5))
-    AccentPalette.CORAL -> AccentColors(Color(0xFFA84462), Color(0xFFFFC0CD))
-    AccentPalette.AMBER -> AccentColors(Color(0xFF925700), Color(0xFFFFD18A))
-    AccentPalette.TEAL -> AccentColors(Color(0xFF006A70), Color(0xFF8EE8EB))
-    AccentPalette.MONO -> AccentColors(Color(0xFF514B5E), Color(0xFFD5CFDF))
+    AccentPalette.PURPLE -> AccentColors(Color(0xFF675496), Color(0xFF8874B8), Color(0xFFC8B3FD))
+    AccentPalette.ORCHID -> AccentColors(Color(0xFF86468C), Color(0xFFAA69B0), Color(0xFFFBAFFE))
+    AccentPalette.BLUE -> AccentColors(Color(0xFF315DA8), Color(0xFF5D82C6), Color(0xFFAFCBFF))
+    AccentPalette.GREEN -> AccentColors(Color(0xFF367A55), Color(0xFF5D9B76), Color(0xFFAEEAC5))
+    AccentPalette.CORAL -> AccentColors(Color(0xFFA84462), Color(0xFFC76B82), Color(0xFFFFC0CD))
+    AccentPalette.AMBER -> AccentColors(Color(0xFF925700), Color(0xFFB87817), Color(0xFFFFD18A))
+    AccentPalette.TEAL -> AccentColors(Color(0xFF006A70), Color(0xFF328E93), Color(0xFF8EE8EB))
+    AccentPalette.MONO -> AccentColors(Color(0xFF514B5E), Color(0xFF767080), Color(0xFFD5CFDF))
 }
 
 private val LightColors = lightColorScheme(
@@ -119,15 +119,15 @@ fun TabilineTheme(preference: ThemePreference, accentPalette: AccentPalette, con
     val accent = accentColors(accentPalette)
     val colors = if (dark) {
         DarkColors.copy(
-            primary = accent.soft,
-            onPrimary = Color.Black,
+            primary = accent.medium,
+            onPrimary = Color.White,
             primaryContainer = accent.strong,
             onPrimaryContainer = Color.White,
             inversePrimary = accent.strong,
         )
     } else {
         LightColors.copy(
-            primary = accent.strong,
+            primary = accent.medium,
             onPrimary = Color.White,
             primaryContainer = accent.soft,
             onPrimaryContainer = Color.Black,

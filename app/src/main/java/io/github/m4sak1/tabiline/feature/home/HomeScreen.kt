@@ -36,6 +36,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -84,6 +85,7 @@ fun HomeScreen(
 
     Scaffold(
         modifier = Modifier.statusBarsPadding(),
+        containerColor = Color.Transparent,
         bottomBar = {
             AppBottomBar(
                 selected = AppDestination.TODAY,

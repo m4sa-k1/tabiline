@@ -13,6 +13,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -46,6 +51,7 @@ class MainActivity : ComponentActivity() {
 private fun TabilineRoot(viewModel: MainViewModel) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     TabilineTheme(settings.theme, settings.accentPalette) {
+        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
         val nav = rememberNavController()
         val trips by viewModel.trips.collectAsStateWithLifecycle()
         var tripDialog by remember { mutableStateOf<Trip?>(null) }
@@ -133,6 +139,7 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                     tripId = tripId,
                     existing = existing,
                     previous = trip?.legs?.lastOrNull(),
+                    defaultZoneId = settings.defaultZoneId,
                     isLoading = !loaded,
                     onBack = { nav.popBackStack() },
                     onSave = { viewModel.saveLeg(it) { nav.popBackStack() } },
@@ -163,5 +170,6 @@ private fun TabilineRoot(viewModel: MainViewModel) {
         tripDialog?.let { trip -> TripEditorDialog(trip, { tripDialog = null }) {
             viewModel.saveTrip(it) { tripDialog = null }
         } }
+        }
     }
 }

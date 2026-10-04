@@ -51,6 +51,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import io.github.m4sak1.tabiline.core.model.TrainType
@@ -72,13 +73,14 @@ fun LegEditorScreen(
     tripId: Long,
     existing: TransportLeg?,
     previous: TransportLeg?,
+    defaultZoneId: String,
     isLoading: Boolean,
     onBack: () -> Unit,
     onSave: (TransportLeg) -> Unit,
     onDelete: ((Long) -> Unit)?,
 ) {
     if (isLoading) return
-    val defaultZone = ZoneId.systemDefault().id
+    val defaultZone = runCatching { ZoneId.of(defaultZoneId).id }.getOrDefault("Asia/Tokyo")
     val initialDeparture = existing?.departureLocal?.toLocalDateTime()
         ?: previous?.arrivalLocal?.toLocalDateTime()?.plusMinutes(10)
         ?: LocalDateTime.now().plusHours(1).withMinute(0)
@@ -108,6 +110,7 @@ fun LegEditorScreen(
 
     Scaffold(
         modifier = Modifier.statusBarsPadding(),
+        containerColor = Color.Transparent,
     ) { padding ->
         Column(
             Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(PaddingValues(16.dp)),

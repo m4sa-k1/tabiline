@@ -47,6 +47,7 @@ enum class AccentPalette { PURPLE, ORCHID, BLUE, GREEN, CORAL, AMBER, TEAL, MONO
 data class UserSettings(
     val theme: ThemePreference = ThemePreference.SYSTEM,
     val accentPalette: AccentPalette = AccentPalette.PURPLE,
+    val defaultZoneId: String = "Asia/Tokyo",
     val trainMinutes: Int = 10,
     val busMinutes: Int = 10,
     val flightMinutes: Int = 60,

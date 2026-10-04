@@ -25,6 +25,7 @@ class DataStoreSettingsRepository(private val context: Context) : SettingsReposi
                 ?: ThemePreference.SYSTEM,
             accentPalette = prefs[Keys.accent]?.let { runCatching { AccentPalette.valueOf(it) }.getOrNull() }
                 ?: AccentPalette.PURPLE,
+            defaultZoneId = prefs[Keys.defaultZone] ?: "Asia/Tokyo",
             trainMinutes = prefs[Keys.train] ?: 10,
             busMinutes = prefs[Keys.bus] ?: 10,
             flightMinutes = prefs[Keys.flight] ?: 60,
@@ -37,6 +38,7 @@ class DataStoreSettingsRepository(private val context: Context) : SettingsReposi
         context.settingsDataStore.edit {
             it[Keys.theme] = settings.theme.name
             it[Keys.accent] = settings.accentPalette.name
+            it[Keys.defaultZone] = settings.defaultZoneId
             it[Keys.train] = settings.trainMinutes
             it[Keys.bus] = settings.busMinutes
             it[Keys.flight] = settings.flightMinutes
@@ -48,6 +50,7 @@ class DataStoreSettingsRepository(private val context: Context) : SettingsReposi
     private object Keys {
         val theme = stringPreferencesKey("theme")
         val accent = stringPreferencesKey("accent_palette")
+        val defaultZone = stringPreferencesKey("default_zone_id")
         val train = intPreferencesKey("train_minutes")
         val bus = intPreferencesKey("bus_minutes")
         val flight = intPreferencesKey("flight_minutes")

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -40,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import io.github.m4sak1.tabiline.BuildConfig
 import io.github.m4sak1.tabiline.core.model.AccentPalette
@@ -55,6 +57,20 @@ private val footerFaces = listOf(
     "(╹▽╹)", "(ᵕ—ᴗ—)", "(｡•́︿•̀｡)",
 )
 
+private data class ZoneChoice(val label: String, val zoneId: String)
+
+private val defaultZones = listOf(
+    ZoneChoice("東京", "Asia/Tokyo"),
+    ZoneChoice("ソウル", "Asia/Seoul"),
+    ZoneChoice("シンガポール", "Asia/Singapore"),
+    ZoneChoice("シドニー", "Australia/Sydney"),
+    ZoneChoice("ロンドン", "Europe/London"),
+    ZoneChoice("パリ", "Europe/Paris"),
+    ZoneChoice("ニューヨーク", "America/New_York"),
+    ZoneChoice("ロサンゼルス", "America/Los_Angeles"),
+    ZoneChoice("ホノルル", "Pacific/Honolulu"),
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
@@ -65,6 +81,7 @@ fun SettingsScreen(
     var footerFace by rememberSaveable { mutableStateOf(footerFaces.random()) }
     Scaffold(
         modifier = Modifier.statusBarsPadding(),
+        containerColor = Color.Transparent,
         bottomBar = {
             AppBottomBar(
                 selected = AppDestination.SETTINGS,
@@ -106,6 +123,22 @@ fun SettingsScreen(
                         onClick = { onUpdate(settings.copy(accentPalette = palette)) },
                     )
                 }
+            }
+            SettingsCard(title = "デフォルト地域", subtitle = "新しい移動のタイムゾーンに使用") {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    defaultZones.forEach { zone ->
+                        FilterChip(
+                            selected = settings.defaultZoneId == zone.zoneId,
+                            onClick = { onUpdate(settings.copy(defaultZoneId = zone.zoneId)) },
+                            label = { Text(zone.label) },
+                        )
+                    }
+                }
+                Text(
+                    defaultZones.firstOrNull { it.zoneId == settings.defaultZoneId }?.zoneId ?: settings.defaultZoneId,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
             SettingsCard(title = "乗り継ぎ警告", subtitle = "この時間を下回る乗り継ぎを警告します") {
                 ThresholdStepper("電車", settings.trainMinutes) { onUpdate(settings.copy(trainMinutes = it)) }
