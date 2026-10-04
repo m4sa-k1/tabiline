@@ -15,17 +15,27 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.ArrowDropDown
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.LocationOn
+import androidx.compose.material.icons.automirrored.rounded.Notes
+import androidx.compose.material.icons.rounded.Schedule
+import androidx.compose.material.icons.rounded.Signpost
+import androidx.compose.material.icons.rounded.TripOrigin
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -41,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import io.github.m4sak1.tabiline.core.model.TrainType
 import io.github.m4sak1.tabiline.core.model.TransportLeg
 import io.github.m4sak1.tabiline.core.model.TransportMode
+import io.github.m4sak1.tabiline.ui.components.visual
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -78,7 +89,8 @@ fun LegEditorScreen(
     var departureZone by remember(existing?.id) { mutableStateOf(existing?.departureZoneId ?: previous?.arrivalZoneId ?: defaultZone) }
     var arrivalZone by remember(existing?.id) { mutableStateOf(existing?.arrivalZoneId ?: departureZone) }
     var mode by remember(existing?.id) { mutableStateOf(existing?.mode ?: previous?.mode ?: TransportMode.TRAIN) }
-    var trainType by remember(existing?.id) { mutableStateOf(existing?.trainType ?: TrainType.LOCAL) }
+    var trainType by remember(existing?.id) { mutableStateOf(existing?.trainType ?: previous?.trainType ?: TrainType.LOCAL) }
+    var trainTypeMenu by remember { mutableStateOf(false) }
     var memo by remember(existing?.id) { mutableStateOf(existing?.memo.orEmpty()) }
     var confirmDelete by remember { mutableStateOf(false) }
 
@@ -93,7 +105,7 @@ fun LegEditorScreen(
         topBar = {
             TopAppBar(
                 title = { Text(if (existing == null) "移動を追加" else "移動を編集") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "戻る") } },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Rounded.Close, "閉じる") } },
                 actions = {
                     if (existing != null && onDelete != null) IconButton(onClick = { confirmDelete = true }) {
                         Icon(Icons.Rounded.Delete, "削除")
@@ -109,31 +121,50 @@ fun LegEditorScreen(
             Text("交通手段", style = MaterialTheme.typography.titleLarge)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TransportMode.entries.forEach { value ->
-                    FilterChip(selected = mode == value, onClick = { mode = value }, label = { Text(value.label) })
+                    val visual = value.visual()
+                    FilterChip(
+                        selected = mode == value, onClick = { mode = value },
+                        label = { Text(value.label) }, leadingIcon = { Icon(visual.icon, null) },
+                    )
                 }
             }
             if (mode == TransportMode.TRAIN) {
-                Text("電車の種別", style = MaterialTheme.typography.titleMedium)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TrainType.entries.forEach { value ->
-                        FilterChip(selected = trainType == value, onClick = { trainType = value }, label = { Text(value.label) })
+                ExposedDropdownMenuBox(expanded = trainTypeMenu, onExpandedChange = { trainTypeMenu = it }) {
+                    TextField(
+                        value = trainType.label, onValueChange = {}, readOnly = true,
+                        label = { Text("電車の種別") },
+                        trailingIcon = { Icon(Icons.Rounded.ArrowDropDown, null) },
+                        modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+                    )
+                    ExposedDropdownMenu(expanded = trainTypeMenu, onDismissRequest = { trainTypeMenu = false }) {
+                        TrainType.entries.forEach { value ->
+                            DropdownMenuItem(text = { Text(value.label) }, onClick = { trainType = value; trainTypeMenu = false })
+                        }
                     }
                 }
             }
             Text("出発", style = MaterialTheme.typography.titleLarge)
-            OutlinedTextField(departurePlace, { departurePlace = it }, label = { Text("出発地") }, modifier = Modifier.fillMaxWidth())
+            TextField(departurePlace, { departurePlace = it }, label = { Text("出発地") },
+                leadingIcon = { Icon(Icons.Rounded.TripOrigin, null) }, modifier = Modifier.fillMaxWidth())
             DateTimeRow(departureDate, departureTime, { departureDate = it }, { departureTime = it })
-            OutlinedTextField(departurePlatform, { departurePlatform = it }, label = { Text("ホーム・ゲート・バース（任意）") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(departureZone, { departureZone = it }, label = { Text("タイムゾーン") }, isError = departureZoneId == null, modifier = Modifier.fillMaxWidth())
+            TextField(departurePlatform, { departurePlatform = it }, label = { Text("出発の乗り場") },
+                supportingText = { Text("ホーム番号・ゲート・バースなど") }, leadingIcon = { Icon(Icons.Rounded.Signpost, null) }, modifier = Modifier.fillMaxWidth())
+            TextField(departureZone, { departureZone = it }, label = { Text("出発地のタイムゾーン") }, isError = departureZoneId == null, modifier = Modifier.fillMaxWidth())
 
             Text("到着", style = MaterialTheme.typography.titleLarge)
-            OutlinedTextField(arrivalPlace, { arrivalPlace = it }, label = { Text("到着地") }, modifier = Modifier.fillMaxWidth())
-            DateTimeRow(arrivalDate, arrivalTime, { arrivalDate = it }, { arrivalTime = it })
-            OutlinedTextField(arrivalPlatform, { arrivalPlatform = it }, label = { Text("ホーム・ゲート・バース（任意）") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(arrivalZone, { arrivalZone = it }, label = { Text("タイムゾーン") }, isError = arrivalZoneId == null, modifier = Modifier.fillMaxWidth())
+            TextField(arrivalPlace, { arrivalPlace = it }, label = { Text("到着地") },
+                leadingIcon = { Icon(Icons.Rounded.LocationOn, null) }, modifier = Modifier.fillMaxWidth())
+            DateTimeRow(arrivalDate, arrivalTime, { arrivalDate = it }, {
+                arrivalTime = it
+                if (arrivalDate == departureDate && !it.isAfter(departureTime)) arrivalDate = departureDate.plusDays(1)
+            })
+            TextField(arrivalPlatform, { arrivalPlatform = it }, label = { Text("到着の乗り場") },
+                supportingText = { Text("ホーム番号・ゲート・バースなど") }, leadingIcon = { Icon(Icons.Rounded.Signpost, null) }, modifier = Modifier.fillMaxWidth())
+            TextField(arrivalZone, { arrivalZone = it }, label = { Text("到着地のタイムゾーン") }, isError = arrivalZoneId == null, modifier = Modifier.fillMaxWidth())
 
-            OutlinedTextField(
-                memo, { memo = it }, label = { Text("列車名・便名・座席・予約番号など") },
+            TextField(
+                memo, { memo = it }, label = { Text("メモ") }, supportingText = { Text("列車名・便名、座席、予約番号など") },
+                leadingIcon = { Icon(Icons.AutoMirrored.Rounded.Notes, null) },
                 minLines = 2, modifier = Modifier.fillMaxWidth(),
             )
             if (!valid) Text(
@@ -161,7 +192,7 @@ fun LegEditorScreen(
                     ))
                 },
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text("保存") }
+            ) { Icon(Icons.Rounded.Check, null); Text("保存", Modifier.padding(start = 8.dp)) }
         }
     }
     if (confirmDelete && existing != null && onDelete != null) AlertDialog(
@@ -184,18 +215,18 @@ private fun DateTimeRow(
         Box(Modifier.weight(1f).clickable {
             DatePickerDialog(context, { _, y, m, d -> onDate(LocalDate.of(y, m + 1, d)) }, date.year, date.monthValue - 1, date.dayOfMonth).show()
         }) {
-            OutlinedTextField(
+            TextField(
                 value = date.format(dateFormatter), onValueChange = {}, enabled = false,
-                label = { Text("日付") }, modifier = Modifier.fillMaxWidth(),
+                label = { Text("日付") }, leadingIcon = { Icon(Icons.Rounded.Schedule, null) }, modifier = Modifier.fillMaxWidth(),
                 colors = dateTimeFieldColors(),
             )
         }
         Box(Modifier.weight(1f).clickable {
             TimePickerDialog(context, { _, h, m -> onTime(LocalTime.of(h, m)) }, time.hour, time.minute, true).show()
         }) {
-            OutlinedTextField(
+            TextField(
                 value = time.format(timeFormatter), onValueChange = {}, enabled = false,
-                label = { Text("時刻") }, modifier = Modifier.fillMaxWidth(),
+                label = { Text("時刻") }, leadingIcon = { Icon(Icons.Rounded.Schedule, null) }, modifier = Modifier.fillMaxWidth(),
                 colors = dateTimeFieldColors(),
             )
         }
@@ -203,8 +234,9 @@ private fun DateTimeRow(
 }
 
 @Composable
-private fun dateTimeFieldColors() = OutlinedTextFieldDefaults.colors(
+private fun dateTimeFieldColors() = TextFieldDefaults.colors(
     disabledTextColor = MaterialTheme.colorScheme.onSurface,
-    disabledBorderColor = MaterialTheme.colorScheme.outline,
     disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+    disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
 )

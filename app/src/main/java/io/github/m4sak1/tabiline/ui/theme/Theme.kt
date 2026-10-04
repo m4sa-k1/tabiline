@@ -1,46 +1,73 @@
 package io.github.m4sak1.tabiline.ui.theme
 
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.dp
+import io.github.m4sak1.tabiline.R
 import io.github.m4sak1.tabiline.core.model.ThemePreference
 
 private val LightColors = lightColorScheme(
-    primary = Color(0xFF4A5F9E),
-    onPrimary = Color.White,
-    primaryContainer = Color(0xFFDDE1FF),
-    onPrimaryContainer = Color(0xFF00164D),
-    secondary = Color(0xFF006B5F),
-    secondaryContainer = Color(0xFF9EF2E1),
-    tertiary = Color(0xFF8B4A57),
-    background = Color(0xFFF9F9FF),
-    surface = Color(0xFFF9F9FF),
-    surfaceVariant = Color(0xFFE2E2EC),
-    error = Color(0xFFBA1A1A),
+    primary = Color(0xFF4A4459), onPrimary = Color(0xFFFFFFFF),
+    primaryContainer = Color(0xFFE7DFF8), onPrimaryContainer = Color(0xFF332D41),
+    secondary = Color(0xFF48464D), secondaryContainer = Color(0xFFE4E1EA),
+    onSecondaryContainer = Color(0xFF312F36), tertiaryContainer = Color(0xFFF0DEE2),
+    onTertiaryContainer = Color(0xFF3A2D30), surface = Color(0xFFFAF8FE),
+    surfaceContainerLowest = Color(0xFFFFFFFF), surfaceContainerLow = Color(0xFFF4F3F8),
+    surfaceContainer = Color(0xFFEFEDF3), surfaceContainerHigh = Color(0xFFE9E7ED),
+    surfaceContainerHighest = Color(0xFFE3E2E7), onSurface = Color(0xFF1C1B1F),
+    onSurfaceVariant = Color(0xFF3D3A44), outline = Color(0xFF605D68),
+    outlineVariant = Color(0xFFA09CA8), inverseSurface = Color(0xFF313034),
+    inverseOnSurface = Color(0xFFF2F0F5), inversePrimary = Color(0xFFCAC3DC),
+    error = Color(0xFFB3261E), onError = Color(0xFFFFFFFF),
+    errorContainer = Color(0xFFF9DEDC), onErrorContainer = Color(0xFF410E0B),
 )
 
 private val DarkColors = darkColorScheme(
-    primary = Color(0xFFB7C4FF),
-    onPrimary = Color(0xFF142E6C),
-    primaryContainer = Color(0xFF304681),
-    secondary = Color(0xFF82D5C5),
-    secondaryContainer = Color(0xFF005047),
-    tertiary = Color(0xFFFFB1C0),
-    background = Color(0xFF111318),
-    surface = Color(0xFF111318),
-    surfaceVariant = Color(0xFF45464F),
-    error = Color(0xFFFFB4AB),
+    primary = Color(0xFFD8D1EA), onPrimary = Color(0xFF332D41),
+    primaryContainer = Color(0xFF4A4459), onPrimaryContainer = Color(0xFFF3EEFE),
+    secondary = Color(0xFFD6D3DC), secondaryContainer = Color(0xFF48464D),
+    onSecondaryContainer = Color(0xFFF2EFF8), tertiaryContainer = Color(0xFF524346),
+    onTertiaryContainer = Color(0xFFFFECF0), surface = Color(0xFF141317),
+    surfaceContainerLowest = Color(0xFF0F0E12), surfaceContainerLow = Color(0xFF1C1B1F),
+    surfaceContainer = Color(0xFF201F23), surfaceContainerHigh = Color(0xFF2B292D),
+    surfaceContainerHighest = Color(0xFF353438), onSurface = Color(0xFFE3E2E7),
+    onSurfaceVariant = Color(0xFFD6D2DF), outline = Color(0xFFADA9B6),
+    outlineVariant = Color(0xFF797581), inverseSurface = Color(0xFFE3E2E7),
+    inverseOnSurface = Color(0xFF313034), inversePrimary = Color(0xFF615B71),
+    error = Color(0xFFF2B8B5), onError = Color(0xFF601410),
+    errorContainer = Color(0xFF8C1D18), onErrorContainer = Color(0xFFF9DEDC),
 )
+
+private val RobotoFlex = FontFamily(
+    Font(R.font.roboto_flex, FontWeight.Normal), Font(R.font.roboto_flex, FontWeight.Medium),
+    Font(R.font.roboto_flex, FontWeight.Bold), Font(R.font.roboto_flex, FontWeight.Black),
+)
+
+private val TabilineTypography = Typography().run {
+    copy(
+        displayLarge = displayLarge.withFont(FontWeight.Black), displayMedium = displayMedium.withFont(FontWeight.Black),
+        displaySmall = displaySmall.withFont(FontWeight.Black), headlineLarge = headlineLarge.withFont(FontWeight.Bold),
+        headlineMedium = headlineMedium.withFont(FontWeight.Bold), headlineSmall = headlineSmall.withFont(FontWeight.Bold),
+        titleLarge = titleLarge.withFont(FontWeight.Bold), titleMedium = titleMedium.withFont(FontWeight.Bold),
+        titleSmall = titleSmall.withFont(FontWeight.Bold), bodyLarge = bodyLarge.withFont(),
+        bodyMedium = bodyMedium.withFont(), bodySmall = bodySmall.withFont(),
+        labelLarge = labelLarge.withFont(FontWeight.Bold), labelMedium = labelMedium.withFont(FontWeight.Bold),
+        labelSmall = labelSmall.withFont(FontWeight.Bold),
+    )
+}
+
+private fun TextStyle.withFont(weight: FontWeight = fontWeight ?: FontWeight.Normal) =
+    copy(fontFamily = RobotoFlex, fontWeight = weight)
 
 @Composable
 fun TabilineTheme(preference: ThemePreference, content: @Composable () -> Unit) {
@@ -49,24 +76,13 @@ fun TabilineTheme(preference: ThemePreference, content: @Composable () -> Unit) 
         ThemePreference.LIGHT -> false
         ThemePreference.DARK -> true
     }
-    val context = LocalContext.current
-    val colors = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-    } else if (dark) DarkColors else LightColors
-
     MaterialTheme(
-        colorScheme = colors,
-        typography = MaterialTheme.typography.copy(
-            displaySmall = TextStyle(fontSize = 36.sp, lineHeight = 40.sp, fontWeight = FontWeight.Black),
-            headlineLarge = TextStyle(fontSize = 30.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold),
-            headlineMedium = TextStyle(fontSize = 26.sp, lineHeight = 32.sp, fontWeight = FontWeight.Bold),
-            titleLarge = TextStyle(fontSize = 22.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold),
-        ),
-        shapes = MaterialTheme.shapes.copy(
-            small = androidx.compose.foundation.shape.RoundedCornerShape(12),
-            medium = androidx.compose.foundation.shape.RoundedCornerShape(20),
-            large = androidx.compose.foundation.shape.RoundedCornerShape(28),
-            extraLarge = androidx.compose.foundation.shape.RoundedCornerShape(36),
+        colorScheme = if (dark) DarkColors else LightColors,
+        typography = TabilineTypography,
+        shapes = androidx.compose.material3.Shapes(
+            extraSmall = RoundedCornerShape(8.dp), small = RoundedCornerShape(12.dp),
+            medium = RoundedCornerShape(16.dp), large = RoundedCornerShape(20.dp),
+            extraLarge = RoundedCornerShape(28.dp),
         ),
         content = content,
     )

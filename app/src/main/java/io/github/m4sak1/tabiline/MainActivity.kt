@@ -11,6 +11,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavType
@@ -23,6 +24,7 @@ import io.github.m4sak1.tabiline.core.model.Trip
 import io.github.m4sak1.tabiline.feature.editor.LegEditorScreen
 import io.github.m4sak1.tabiline.feature.editor.TripEditorDialog
 import io.github.m4sak1.tabiline.feature.home.HomeScreen
+import io.github.m4sak1.tabiline.feature.home.PlansScreen
 import io.github.m4sak1.tabiline.feature.settings.SettingsScreen
 import io.github.m4sak1.tabiline.feature.timeline.TimelineScreen
 import io.github.m4sak1.tabiline.ui.theme.TabilineTheme
@@ -47,13 +49,36 @@ private fun TabilineRoot(viewModel: MainViewModel) {
         val trips by viewModel.trips.collectAsStateWithLifecycle()
         var tripDialog by remember { mutableStateOf<Trip?>(null) }
         var showNewTrip by remember { mutableStateOf(false) }
+        var selectedTripId by rememberSaveable { mutableStateOf<Long?>(null) }
+        LaunchedEffect(trips) {
+            if (trips.none { it.trip.id == selectedTripId }) {
+                val today = java.time.LocalDate.now()
+                selectedTripId = trips.firstOrNull { today in it.trip.startDate..it.trip.endDate }?.trip?.id
+                    ?: trips.firstOrNull { it.trip.startDate > today }?.trip?.id
+                    ?: trips.firstOrNull()?.trip?.id
+            }
+        }
 
         NavHost(navController = nav, startDestination = "home") {
             composable("home") {
                 HomeScreen(
                     trips = trips,
                     onCreateTrip = { showNewTrip = true },
-                    onOpenTrip = { nav.navigate("trip/$it") },
+                    onOpenTrip = { selectedTripId = it; nav.navigate("trip/$it") },
+                    onEditLeg = { tripId, legId -> selectedTripId = tripId; nav.navigate("leg/$tripId/$legId") },
+                    onAddLeg = { tripId -> selectedTripId = tripId; nav.navigate("leg/$tripId/0") },
+                    onPlans = { nav.navigate("plans") { launchSingleTop = true } },
+                    onTimeline = { selectedTripId = it; nav.navigate("trip/$it") { launchSingleTop = true } },
+                )
+            }
+            composable("plans") {
+                PlansScreen(
+                    trips = trips,
+                    selectedTripId = selectedTripId,
+                    onCreateTrip = { showNewTrip = true },
+                    onOpenTrip = { selectedTripId = it; nav.navigate("trip/$it") },
+                    onToday = { nav.popBackStack("home", false) },
+                    onTimeline = { selectedTripId = it; nav.navigate("trip/$it") { launchSingleTop = true } },
                     onSettings = { nav.navigate("settings") },
                 )
             }
@@ -62,13 +87,14 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                 arguments = listOf(navArgument("tripId") { type = NavType.LongType }),
             ) { entry ->
                 val id = entry.arguments?.getLong("tripId") ?: return@composable
+                LaunchedEffect(id) { selectedTripId = id }
                 val item by viewModel.observeTrip(id).collectAsState(initial = null)
                 TimelineScreen(
                     item = item,
                     settings = settings,
                     onBack = { nav.popBackStack() },
                     onEditTrip = { tripDialog = item?.trip },
-                    onDeleteTrip = { viewModel.deleteTrip(id) { nav.popBackStack("home", false) } },
+                    onDeleteTrip = { viewModel.deleteTrip(id) { nav.navigate("plans") { popUpTo("home") } } },
                     onAddLeg = { nav.navigate("leg/$id/0") },
                     onEditLeg = { nav.navigate("leg/$id/$it") },
                     onMoveLeg = { legId, direction ->
@@ -80,6 +106,8 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                             viewModel.reorder(id, legs.map { it.id })
                         }
                     },
+                    onToday = { nav.popBackStack("home", false) },
+                    onPlans = { nav.navigate("plans") { launchSingleTop = true } },
                 )
             }
             composable(
@@ -114,7 +142,7 @@ private fun TabilineRoot(viewModel: MainViewModel) {
         }
 
         if (showNewTrip) TripEditorDialog(null, { showNewTrip = false }) {
-            viewModel.saveTrip(it) { id -> showNewTrip = false; nav.navigate("trip/$id") }
+            viewModel.saveTrip(it) { id -> selectedTripId = id; showNewTrip = false; nav.navigate("trip/$id") }
         }
         tripDialog?.let { trip -> TripEditorDialog(trip, { tripDialog = null }) {
             viewModel.saveTrip(it) { tripDialog = null }
