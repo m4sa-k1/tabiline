@@ -1,6 +1,6 @@
 Tabiline — All Rights Reserved
 
-Copyright (c) 2026 @m4sak1
+Copyright (c) 2026 @m4sa-k1
 All rights reserved.
 
 Tabiline, including its source code, design, artwork, documentation, and other
@@ -9,14 +9,18 @@ original materials, is proprietary software.
 Permission is granted only to download, install, and use an unmodified official
 Tabiline APK for personal, non-commercial purposes.
 
-No permission is granted to copy, modify, adapt, translate, create derivative
+Except for rights required by applicable law and the GitHub Terms of Service
+(including viewing and forking this public repository through GitHub), no
+permission is granted to copy, modify, adapt, translate, create derivative
 works from, redistribute, sublicense, sell, commercially exploit, or incorporate
 Tabiline or its original materials into another product without prior written
 permission from the copyright holder. Public availability of this repository
-does not grant any additional rights.
+does not grant any additional rights beyond those exceptions. This is not an
+open-source license and does not grant general redistribution or commercial-use
+rights.
 
 Third-party materials remain subject to their respective licenses. Notices for
-bundled fonts are available in:
+bundled fonts, libraries, and other materials are available in:
 
 app/src/main/assets/third_party_licenses
 
@@ -27,5 +31,5 @@ TABILINE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
 TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE COPYRIGHT HOLDER SHALL NOT BE LIABLE
 FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM THE SOFTWARE OR ITS USE.
 
-For permission requests, contact @m4sak1 through:
+For permission requests, contact @m4sa-k1 through:
 https://github.com/m4sa-k1/tabiline

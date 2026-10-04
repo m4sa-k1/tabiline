@@ -13,3 +13,16 @@ captures/
 keystore.properties
 app/release/
 release-keystore.jks
+
+# Local conversation attachments and generated promotional captures
+.codex-remote-attachments/
+artifacts/
+.env
+.env.*
+!.env.example
+*.p12
+*.pfx
+*.key
+*.pem
+__pycache__/
+*.pyc
