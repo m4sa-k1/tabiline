@@ -66,8 +66,6 @@ import io.github.m4sak1.tabiline.core.model.TransportLeg
 import io.github.m4sak1.tabiline.core.model.TransportMode
 import io.github.m4sak1.tabiline.core.model.TripWithLegs
 import io.github.m4sak1.tabiline.core.model.UserSettings
-import io.github.m4sak1.tabiline.ui.components.AppBottomBar
-import io.github.m4sak1.tabiline.ui.components.AppDestination
 import io.github.m4sak1.tabiline.ui.components.detailLabel
 import io.github.m4sak1.tabiline.ui.components.visual
 import java.time.Duration
@@ -91,9 +89,6 @@ fun TimelineScreen(
     onAddLeg: () -> Unit,
     onEditLeg: (Long) -> Unit,
     onMoveLeg: (Long, Int) -> Unit,
-    onToday: () -> Unit,
-    onPlans: () -> Unit,
-    onSettings: () -> Unit,
 ) {
     var confirmDelete by remember { mutableStateOf(false) }
     var menuOpen by remember { mutableStateOf(false) }
@@ -109,20 +104,6 @@ fun TimelineScreen(
         modifier = Modifier.fillMaxSize(),
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        bottomBar = {
-            AppBottomBar(
-                selected = AppDestination.TIMELINE,
-                onAdd = onAddLeg,
-                addContentDescription = "移動を追加",
-            ) { destination ->
-                when (destination) {
-                    AppDestination.TODAY -> onToday()
-                    AppDestination.TIMELINE -> Unit
-                    AppDestination.PLANS -> onPlans()
-                    AppDestination.SETTINGS -> onSettings()
-                }
-            }
-        },
     ) { _ ->
         if (item == null || selectedDate == null) Box(Modifier.fillMaxSize().statusBarsPadding(), contentAlignment = Alignment.Center) { Text("読み込み中…") }
         else Column(Modifier.fillMaxSize().statusBarsPadding()) {
@@ -188,55 +169,48 @@ private fun RelativeDaySelector(
     onSelect: (LocalDate) -> Unit,
 ) {
     val selectorWidth = (dates.size * 72 + (dates.size - 1) * 4).coerceAtMost(360).dp
-    val selectedIndex = dates.indexOf(selectedDate).coerceAtLeast(0)
-    val selectedOffset by animateDpAsState(
-        targetValue = (selectedIndex * 76).dp,
-        animationSpec = spring(
-            dampingRatio = 0.82f,
-            stiffness = Spring.StiffnessMedium,
-        ),
-        label = "day-indicator-position",
-    )
     Box(
         modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Box(Modifier.width(selectorWidth).height(44.dp)) {
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                itemsIndexed(dates, key = { _, date -> "day-background-${date.toEpochDay()}" }) { index, _ ->
-                    Surface(
-                        modifier = Modifier.size(width = 72.dp, height = 44.dp),
-                        shape = RoundedCornerShape(
-                            topStart = if (index == 0) 22.dp else 5.dp,
-                            bottomStart = if (index == 0) 22.dp else 5.dp,
-                            topEnd = if (index == dates.lastIndex) 22.dp else 5.dp,
-                            bottomEnd = if (index == dates.lastIndex) 22.dp else 5.dp,
-                        ),
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                    ) {}
-                }
-            }
-            Surface(
-                modifier = Modifier.offset(x = selectedOffset).size(width = 72.dp, height = 44.dp),
-                shape = RoundedCornerShape(22.dp),
-                color = MaterialTheme.colorScheme.primary,
-                shadowElevation = 0.dp,
-                tonalElevation = 0.dp,
-            ) {}
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                itemsIndexed(dates, key = { _, date -> "day-control-${date.toEpochDay()}" }) { index, date ->
-                    val selected = date == selectedDate
-                    Surface(
-                        onClick = { onSelect(date) },
-                        modifier = Modifier.size(width = 72.dp, height = 44.dp),
-                        shape = RoundedCornerShape(22.dp),
-                        color = Color.Transparent,
-                        contentColor = if (selected) MaterialTheme.colorScheme.onPrimary
-                        else MaterialTheme.colorScheme.onPrimaryContainer,
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text("${index + 1}", fontWeight = FontWeight.Bold)
-                        }
+        LazyRow(
+            modifier = Modifier.width(selectorWidth),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            itemsIndexed(dates, key = { _, date -> date.toEpochDay() }) { index, date ->
+                val selected = date == selectedDate
+                val startRadius by animateDpAsState(
+                    targetValue = if (selected || index == 0) 22.dp else 5.dp,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessMedium,
+                    ),
+                    label = "day-start-shape",
+                )
+                val endRadius by animateDpAsState(
+                    targetValue = if (selected || index == dates.lastIndex) 22.dp else 5.dp,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessMedium,
+                    ),
+                    label = "day-end-shape",
+                )
+                Surface(
+                    onClick = { onSelect(date) },
+                    modifier = Modifier.size(width = 72.dp, height = 44.dp),
+                    shape = RoundedCornerShape(
+                        topStart = startRadius,
+                        bottomStart = startRadius,
+                        topEnd = endRadius,
+                        bottomEnd = endRadius,
+                    ),
+                    color = if (selected) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = if (selected) MaterialTheme.colorScheme.onPrimary
+                    else MaterialTheme.colorScheme.onPrimaryContainer,
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text("${index + 1}", fontWeight = FontWeight.Bold)
                     }
                 }
             }

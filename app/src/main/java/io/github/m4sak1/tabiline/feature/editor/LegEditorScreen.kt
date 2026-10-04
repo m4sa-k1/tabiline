@@ -51,7 +51,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import io.github.m4sak1.tabiline.core.model.TrainType
@@ -110,7 +109,7 @@ fun LegEditorScreen(
 
     Scaffold(
         modifier = Modifier.statusBarsPadding(),
-        containerColor = Color.Transparent,
+        containerColor = MaterialTheme.colorScheme.surface,
     ) { padding ->
         Column(
             Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(PaddingValues(16.dp)),

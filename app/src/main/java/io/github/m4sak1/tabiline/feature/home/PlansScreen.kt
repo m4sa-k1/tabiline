@@ -35,8 +35,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.m4sak1.tabiline.core.model.TripWithLegs
-import io.github.m4sak1.tabiline.ui.components.AppBottomBar
-import io.github.m4sak1.tabiline.ui.components.AppDestination
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -50,9 +48,6 @@ fun PlansScreen(
     selectedTripId: Long?,
     onCreateTrip: () -> Unit,
     onOpenTrip: (Long) -> Unit,
-    onToday: () -> Unit,
-    onTimeline: (Long) -> Unit,
-    onSettings: () -> Unit,
 ) {
     val today = LocalDate.now()
     val ongoing = trips.filter { today in it.trip.startDate..it.trip.endDate }
@@ -62,20 +57,6 @@ fun PlansScreen(
         modifier = Modifier.fillMaxSize(),
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        bottomBar = {
-            AppBottomBar(
-                selected = AppDestination.PLANS,
-                onAdd = onCreateTrip,
-                addContentDescription = "新しい旅行",
-            ) { destination ->
-                when (destination) {
-                    AppDestination.TODAY -> onToday()
-                    AppDestination.TIMELINE -> selectedTripId?.let(onTimeline)
-                    AppDestination.PLANS -> Unit
-                    AppDestination.SETTINGS -> onSettings()
-                }
-            }
-        },
     ) { _ ->
         if (trips.isEmpty()) {
             Box(Modifier.fillMaxSize().statusBarsPadding(), contentAlignment = Alignment.Center) {

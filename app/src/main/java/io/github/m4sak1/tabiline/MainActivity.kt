@@ -7,6 +7,10 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.core.Spring
@@ -23,11 +27,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import io.github.m4sak1.tabiline.core.model.TransportLeg
@@ -39,7 +47,14 @@ import io.github.m4sak1.tabiline.feature.home.PlansScreen
 import io.github.m4sak1.tabiline.feature.settings.SettingsScreen
 import io.github.m4sak1.tabiline.feature.timeline.TimelineScreen
 import io.github.m4sak1.tabiline.ui.components.AppDestination
+import io.github.m4sak1.tabiline.ui.components.AppBottomBar
 import io.github.m4sak1.tabiline.ui.theme.TabilineTheme
+
+private val footerFaces = listOf(
+    "(·_·)", "(≥o≤)", "(;-;)", "(^-^*)", "(o^^)o",
+    "(•‿•)", "(･ω･)", "(≧▽≦)", "(¬‿¬)", "(•̀ᴗ•́)و",
+    "(╹▽╹)", "(ᵕ—ᴗ—)", "(｡•́︿•̀｡)",
+)
 
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels {
@@ -72,9 +87,11 @@ private fun TabilineRoot(viewModel: MainViewModel) {
     TabilineTheme(settings.theme, settings.accentPalette) {
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
         val nav = rememberNavController()
+        val currentEntry by nav.currentBackStackEntryAsState()
         val trips by viewModel.trips.collectAsStateWithLifecycle()
         var tripDialog by remember { mutableStateOf<Trip?>(null) }
         var showNewTrip by remember { mutableStateOf(false) }
+        var footerFace by rememberSaveable { mutableStateOf(footerFaces.random()) }
         var selectedTripId by rememberSaveable { mutableStateOf<Long?>(null) }
         LaunchedEffect(trips) {
             if (trips.none { it.trip.id == selectedTripId }) {
@@ -85,44 +102,89 @@ private fun TabilineRoot(viewModel: MainViewModel) {
             }
         }
 
+        val route = currentEntry?.destination?.route
+        val destination = when (route) {
+            "home" -> AppDestination.TODAY
+            "plans" -> AppDestination.PLANS
+            "settings" -> AppDestination.SETTINGS
+            "trip/{tripId}" -> AppDestination.TIMELINE
+            else -> null
+        }
+        var retainedDestination by remember { mutableStateOf(AppDestination.TODAY) }
+        LaunchedEffect(destination) { destination?.let { retainedDestination = it } }
+        val isAddRoute = route == "leg/{tripId}/{legId}" && currentEntry?.arguments?.getLong("legId") == 0L
+
         NavHost(
             navController = nav,
             startDestination = "home",
+            modifier = Modifier.zIndex(if (isAddRoute) 2f else 0f),
             enterTransition = {
-                slideInHorizontally(
-                    initialOffsetX = { it / 14 },
-                    animationSpec = spring(
-                        dampingRatio = 0.9f,
-                        stiffness = Spring.StiffnessMedium,
-                    ),
-                )
+                val opensFromAddButton = targetState.destination.route == "leg/{tripId}/{legId}" &&
+                    targetState.arguments?.getLong("legId") == 0L
+                if (opensFromAddButton) {
+                    scaleIn(
+                        initialScale = 0.12f,
+                        transformOrigin = TransformOrigin(0.78f, 0.9f),
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioNoBouncy,
+                            stiffness = Spring.StiffnessMedium,
+                        ),
+                    )
+                } else {
+                    slideInHorizontally(
+                        initialOffsetX = { it / 14 },
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioNoBouncy,
+                            stiffness = Spring.StiffnessMedium,
+                        ),
+                    )
+                }
             },
             exitTransition = {
-                slideOutHorizontally(
-                    targetOffsetX = { -it / 18 },
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioNoBouncy,
-                        stiffness = Spring.StiffnessMedium,
-                    ),
-                )
+                val opensFromAddButton = targetState.destination.route == "leg/{tripId}/{legId}" &&
+                    targetState.arguments?.getLong("legId") == 0L
+                if (opensFromAddButton) ExitTransition.None
+                else slideOutHorizontally(
+                        targetOffsetX = { -it / 18 },
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioNoBouncy,
+                            stiffness = Spring.StiffnessMedium,
+                        ),
+                    )
             },
             popEnterTransition = {
-                slideInHorizontally(
-                    initialOffsetX = { -it / 14 },
-                    animationSpec = spring(
-                        dampingRatio = 0.9f,
-                        stiffness = Spring.StiffnessMedium,
-                    ),
-                )
+                val closesIntoAddButton = initialState.destination.route == "leg/{tripId}/{legId}" &&
+                    initialState.arguments?.getLong("legId") == 0L
+                if (closesIntoAddButton) EnterTransition.None
+                else slideInHorizontally(
+                        initialOffsetX = { -it / 14 },
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioNoBouncy,
+                            stiffness = Spring.StiffnessMedium,
+                        ),
+                    )
             },
             popExitTransition = {
-                slideOutHorizontally(
-                    targetOffsetX = { it / 18 },
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioNoBouncy,
-                        stiffness = Spring.StiffnessMedium,
-                    ),
-                )
+                val closesIntoAddButton = initialState.destination.route == "leg/{tripId}/{legId}" &&
+                    initialState.arguments?.getLong("legId") == 0L
+                if (closesIntoAddButton) {
+                    scaleOut(
+                        targetScale = 0.12f,
+                        transformOrigin = TransformOrigin(0.78f, 0.9f),
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioNoBouncy,
+                            stiffness = Spring.StiffnessMedium,
+                        ),
+                    )
+                } else {
+                    slideOutHorizontally(
+                        targetOffsetX = { it / 18 },
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioNoBouncy,
+                            stiffness = Spring.StiffnessMedium,
+                        ),
+                    )
+                }
             },
         ) {
             composable("home") {
@@ -132,9 +194,6 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                     onOpenTrip = { selectedTripId = it; nav.navigate("trip/$it") },
                     onEditLeg = { tripId, legId -> selectedTripId = tripId; nav.navigate("leg/$tripId/$legId") },
                     onAddLeg = { tripId -> selectedTripId = tripId; nav.navigate("leg/$tripId/0") },
-                    onPlans = { nav.navigate("plans") { launchSingleTop = true } },
-                    onTimeline = { selectedTripId = it; nav.navigate("trip/$it") { launchSingleTop = true } },
-                    onSettings = { nav.navigate("settings") { launchSingleTop = true } },
                 )
             }
             composable("plans") {
@@ -143,9 +202,6 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                     selectedTripId = selectedTripId,
                     onCreateTrip = { showNewTrip = true },
                     onOpenTrip = { selectedTripId = it; nav.navigate("trip/$it") },
-                    onToday = { nav.popBackStack("home", false) },
-                    onTimeline = { selectedTripId = it; nav.navigate("trip/$it") { launchSingleTop = true } },
-                    onSettings = { nav.navigate("settings") },
                 )
             }
             composable(
@@ -172,9 +228,6 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                             viewModel.reorder(id, legs.map { it.id })
                         }
                     },
-                    onToday = { nav.popBackStack("home", false) },
-                    onPlans = { nav.navigate("plans") { launchSingleTop = true } },
-                    onSettings = { nav.navigate("settings") { launchSingleTop = true } },
                 )
             }
             composable(
@@ -208,17 +261,46 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                 SettingsScreen(
                     settings = settings,
                     onUpdate = viewModel::updateSettings,
-                    onDestination = { destination ->
-                        when (destination) {
-                            AppDestination.TODAY -> nav.popBackStack("home", false)
-                            AppDestination.TIMELINE -> selectedTripId?.let {
-                                nav.navigate("trip/$it") { launchSingleTop = true }
-                            }
-                            AppDestination.PLANS -> nav.navigate("plans") { launchSingleTop = true }
-                            AppDestination.SETTINGS -> Unit
-                        }
-                    },
                 )
+            }
+        }
+
+        if (destination != null || isAddRoute) {
+            val barDestination = destination ?: retainedDestination
+            val today = java.time.LocalDate.now()
+            val homeTripId = trips.firstOrNull { today in it.trip.startDate..it.trip.endDate }?.trip?.id
+                ?: trips.firstOrNull { it.trip.startDate > today }?.trip?.id
+            val routeTripId = currentEntry?.arguments?.getLong("tripId")
+            AppBottomBar(
+                selected = barDestination,
+                modifier = Modifier.align(Alignment.BottomCenter).zIndex(1f),
+                onAdd = when (barDestination) {
+                    AppDestination.TODAY -> if (homeTripId == null) ({ showNewTrip = true })
+                        else ({ nav.navigate("leg/$homeTripId/0") })
+                    AppDestination.TIMELINE -> routeTripId?.let { tripId ->
+                        { nav.navigate("leg/$tripId/0") }
+                    }
+                    AppDestination.PLANS -> ({ showNewTrip = true })
+                    AppDestination.SETTINGS -> ({
+                        footerFace = footerFaces.filterNot { it == footerFace }.random()
+                    })
+                },
+                addContentDescription = when (barDestination) {
+                    AppDestination.TODAY -> if (homeTripId == null) "新しい旅行" else "移動を追加"
+                    AppDestination.TIMELINE -> "移動を追加"
+                    AppDestination.PLANS -> "新しい旅行"
+                    AppDestination.SETTINGS -> "表情を変える"
+                },
+                addText = footerFace.takeIf { barDestination == AppDestination.SETTINGS },
+            ) { target ->
+                when (target) {
+                    AppDestination.TODAY -> nav.popBackStack("home", false)
+                    AppDestination.TIMELINE -> selectedTripId?.let {
+                        nav.navigate("trip/$it") { launchSingleTop = true }
+                    }
+                    AppDestination.PLANS -> nav.navigate("plans") { launchSingleTop = true }
+                    AppDestination.SETTINGS -> nav.navigate("settings") { launchSingleTop = true }
+                }
             }
         }
 

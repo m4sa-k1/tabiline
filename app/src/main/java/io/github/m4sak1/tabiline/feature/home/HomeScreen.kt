@@ -47,8 +47,6 @@ import androidx.compose.ui.unit.sp
 import io.github.m4sak1.tabiline.core.model.TransportLeg
 import io.github.m4sak1.tabiline.core.model.TransportMode
 import io.github.m4sak1.tabiline.core.model.TripWithLegs
-import io.github.m4sak1.tabiline.ui.components.AppBottomBar
-import io.github.m4sak1.tabiline.ui.components.AppDestination
 import io.github.m4sak1.tabiline.ui.components.detailLabel
 import io.github.m4sak1.tabiline.ui.components.visual
 import java.time.Duration
@@ -68,9 +66,6 @@ fun HomeScreen(
     onOpenTrip: (Long) -> Unit,
     onEditLeg: (Long, Long) -> Unit,
     onAddLeg: (Long) -> Unit,
-    onPlans: () -> Unit,
-    onTimeline: (Long) -> Unit,
-    onSettings: () -> Unit,
 ) {
     var clock by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) { while (true) { delay(60_000); clock = System.currentTimeMillis() } }
@@ -90,20 +85,6 @@ fun HomeScreen(
         modifier = Modifier.fillMaxSize(),
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        bottomBar = {
-            AppBottomBar(
-                selected = AppDestination.TODAY,
-                onAdd = { if (focus == null) onCreateTrip() else onAddLeg(focus.trip.id) },
-                addContentDescription = if (focus == null) "新しい旅行" else "移動を追加",
-            ) { destination ->
-                when (destination) {
-                    AppDestination.TODAY -> Unit
-                    AppDestination.TIMELINE -> focus?.trip?.id?.let(onTimeline)
-                    AppDestination.PLANS -> onPlans()
-                    AppDestination.SETTINGS -> onSettings()
-                }
-            }
-        },
     ) { _ ->
         if (hero == null || focus == null) {
             EmptyToday(Modifier.fillMaxSize().statusBarsPadding()) {

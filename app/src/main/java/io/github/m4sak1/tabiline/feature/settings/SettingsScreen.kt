@@ -34,11 +34,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
@@ -49,15 +44,7 @@ import io.github.m4sak1.tabiline.BuildConfig
 import io.github.m4sak1.tabiline.core.model.AccentPalette
 import io.github.m4sak1.tabiline.core.model.ThemePreference
 import io.github.m4sak1.tabiline.core.model.UserSettings
-import io.github.m4sak1.tabiline.ui.components.AppBottomBar
-import io.github.m4sak1.tabiline.ui.components.AppDestination
 import io.github.m4sak1.tabiline.ui.theme.accentColors
-
-private val footerFaces = listOf(
-    "(·_·)", "(≥o≤)", "(;-;)", "(^-^*)", "(o^^)o",
-    "(•‿•)", "(･ω･)", "(≧▽≦)", "(¬‿¬)", "(•̀ᴗ•́)و",
-    "(╹▽╹)", "(ᵕ—ᴗ—)", "(｡•́︿•̀｡)",
-)
 
 private data class ZoneChoice(val label: String, val zoneId: String)
 
@@ -79,24 +66,11 @@ private val defaultZones = listOf(
 fun SettingsScreen(
     settings: UserSettings,
     onUpdate: (UserSettings) -> Unit,
-    onDestination: (AppDestination) -> Unit,
 ) {
-    var footerFace by rememberSaveable { mutableStateOf(footerFaces.random()) }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        bottomBar = {
-            AppBottomBar(
-                selected = AppDestination.SETTINGS,
-                onAdd = {
-                    footerFace = footerFaces.filterNot { it == footerFace }.random()
-                },
-                addContentDescription = "表情を変える",
-                addText = footerFace,
-                onSelect = onDestination,
-            )
-        },
     ) { _ ->
         Column(
             Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState())
