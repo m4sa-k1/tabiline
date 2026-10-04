@@ -1,5 +1,6 @@
 package io.github.m4sak1.tabiline.feature.settings
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -72,6 +74,7 @@ private val defaultZones = listOf(
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun SettingsScreen(
     settings: UserSettings,
@@ -80,8 +83,9 @@ fun SettingsScreen(
 ) {
     var footerFace by rememberSaveable { mutableStateOf(footerFaces.random()) }
     Scaffold(
-        modifier = Modifier.statusBarsPadding(),
+        modifier = Modifier.fillMaxSize(),
         containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             AppBottomBar(
                 selected = AppDestination.SETTINGS,
@@ -93,9 +97,10 @@ fun SettingsScreen(
                 onSelect = onDestination,
             )
         },
-    ) { padding ->
+    ) { _ ->
         Column(
-            Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp),
+            Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState())
+                .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 144.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text("設定", style = MaterialTheme.typography.displaySmall, modifier = Modifier.padding(start = 8.dp, bottom = 2.dp))

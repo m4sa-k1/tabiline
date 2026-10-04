@@ -1,5 +1,10 @@
 package io.github.m4sak1.tabiline.feature.timeline
 
+import android.annotation.SuppressLint
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
@@ -7,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -75,6 +81,7 @@ private val headingDate = DateTimeFormatter.ofPattern("M月d日 EEEE", Locale.JA
 private val shortDateTime = DateTimeFormatter.ofPattern("M/d HH:mm")
 
 @OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun TimelineScreen(
     item: TripWithLegs?,
@@ -100,8 +107,9 @@ fun TimelineScreen(
     val warningThreshold = settings.otherMinutes
 
     Scaffold(
-        modifier = Modifier.statusBarsPadding(),
+        modifier = Modifier.fillMaxSize(),
         containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             AppBottomBar(
                 selected = AppDestination.TIMELINE,
@@ -116,9 +124,9 @@ fun TimelineScreen(
                 }
             }
         },
-    ) { padding ->
-        if (item == null || selectedDate == null) Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { Text("読み込み中…") }
-        else Column(Modifier.fillMaxSize().padding(padding)) {
+    ) { _ ->
+        if (item == null || selectedDate == null) Box(Modifier.fillMaxSize().statusBarsPadding(), contentAlignment = Alignment.Center) { Text("読み込み中…") }
+        else Column(Modifier.fillMaxSize().statusBarsPadding()) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(start = 24.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -136,7 +144,7 @@ fun TimelineScreen(
             if (dayLegs.isEmpty()) EmptyDay()
             else LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 104.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 144.dp),
             ) {
                 item {
                     Text(selectedDate.format(headingDate), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 16.dp, start = 8.dp))
@@ -185,27 +193,53 @@ private fun RelativeDaySelector(
         modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
         contentAlignment = Alignment.Center,
     ) {
-        LazyRow(
-            modifier = Modifier.width(selectorWidth),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        Surface(
+            modifier = Modifier.width(selectorWidth + 8.dp),
+            shape = RoundedCornerShape(26.dp),
+            color = MaterialTheme.colorScheme.primaryContainer,
+            shadowElevation = 0.dp,
+            tonalElevation = 0.dp,
         ) {
-            itemsIndexed(dates, key = { _, date -> date.toEpochDay() }) { index, date ->
-                val selected = date == selectedDate
-                val shape = when {
-                    selected -> RoundedCornerShape(22.dp)
-                    index == 0 -> RoundedCornerShape(topStart = 22.dp, bottomStart = 22.dp, topEnd = 10.dp, bottomEnd = 10.dp)
-                    index == dates.lastIndex -> RoundedCornerShape(topStart = 10.dp, bottomStart = 10.dp, topEnd = 22.dp, bottomEnd = 22.dp)
-                    else -> RoundedCornerShape(10.dp)
-                }
-                Surface(
-                    onClick = { onSelect(date) },
-                    modifier = Modifier.size(width = 72.dp, height = 44.dp),
-                    shape = shape,
-                    color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer,
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text("${index + 1}", fontWeight = FontWeight.Bold)
+            LazyRow(
+                modifier = Modifier.padding(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                itemsIndexed(dates, key = { _, date -> date.toEpochDay() }) { index, date ->
+                    val selected = date == selectedDate
+                    val containerColor by animateColorAsState(
+                        targetValue = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioNoBouncy,
+                            stiffness = Spring.StiffnessMediumLow,
+                        ),
+                        label = "day-container",
+                    )
+                    val contentColor by animateColorAsState(
+                        targetValue = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioNoBouncy,
+                            stiffness = Spring.StiffnessMediumLow,
+                        ),
+                        label = "day-content",
+                    )
+                    val cornerRadius by animateDpAsState(
+                        targetValue = if (selected) 22.dp else 14.dp,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMediumLow,
+                        ),
+                        label = "day-shape",
+                    )
+                    Surface(
+                        onClick = { onSelect(date) },
+                        modifier = Modifier.size(width = 72.dp, height = 44.dp),
+                        shape = RoundedCornerShape(cornerRadius),
+                        color = containerColor,
+                        contentColor = contentColor,
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text("${index + 1}", fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }

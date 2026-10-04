@@ -1,5 +1,6 @@
 package io.github.m4sak1.tabiline.feature.home
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -58,6 +60,7 @@ import kotlinx.coroutines.delay
 private val timeFormat = DateTimeFormatter.ofPattern("HH:mm")
 
 @OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomeScreen(
     trips: List<TripWithLegs>,
@@ -84,8 +87,9 @@ fun HomeScreen(
     val following = hero?.let { selected -> ordered.filter { it.departure > selected.departure }.take(3) }.orEmpty()
 
     Scaffold(
-        modifier = Modifier.statusBarsPadding(),
+        modifier = Modifier.fillMaxSize(),
         containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             AppBottomBar(
                 selected = AppDestination.TODAY,
@@ -100,15 +104,15 @@ fun HomeScreen(
                 }
             }
         },
-    ) { padding ->
+    ) { _ ->
         if (hero == null || focus == null) {
-            EmptyToday(Modifier.padding(padding)) {
+            EmptyToday(Modifier.fillMaxSize().statusBarsPadding()) {
                 if (focus == null) onCreateTrip() else onAddLeg(focus.trip.id)
             }
         } else {
             LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 104.dp),
+                modifier = Modifier.fillMaxSize().statusBarsPadding(),
+                contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 144.dp),
             ) {
                 item {
                     HeroCard(

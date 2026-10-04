@@ -1,11 +1,13 @@
 package io.github.m4sak1.tabiline.feature.home
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -41,6 +43,7 @@ import java.time.format.DateTimeFormatter
 private val planDateFormat = DateTimeFormatter.ofPattern("M/d")
 
 @OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun PlansScreen(
     trips: List<TripWithLegs>,
@@ -56,8 +59,9 @@ fun PlansScreen(
     val upcoming = trips.filter { it.trip.startDate > today }
     val completed = trips.filter { it.trip.endDate < today }.sortedByDescending { it.trip.endDate }
     Scaffold(
-        modifier = Modifier.statusBarsPadding(),
+        modifier = Modifier.fillMaxSize(),
         containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             AppBottomBar(
                 selected = AppDestination.PLANS,
@@ -72,9 +76,9 @@ fun PlansScreen(
                 }
             }
         },
-    ) { padding ->
+    ) { _ ->
         if (trips.isEmpty()) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+            Box(Modifier.fillMaxSize().statusBarsPadding(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Rounded.Luggage, null, Modifier.size(64.dp), tint = MaterialTheme.colorScheme.primary)
                     Text("旅行はまだありません", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = 16.dp))
@@ -83,8 +87,8 @@ fun PlansScreen(
                 }
             }
         } else LazyColumn(
-            Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 104.dp),
+            Modifier.fillMaxSize().statusBarsPadding(),
+            contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 144.dp),
         ) {
             item { Text("旅行", style = MaterialTheme.typography.headlineLarge, modifier = Modifier.padding(top = 16.dp, start = 8.dp, bottom = 10.dp)) }
             planSection("進行中", ongoing, onOpenTrip)

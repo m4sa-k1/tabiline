@@ -1,5 +1,9 @@
 package io.github.m4sak1.tabiline.ui.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.foundation.layout.Arrangement
@@ -21,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -51,9 +56,9 @@ fun AppBottomBar(
         ) {
             Surface(
                 shape = RoundedCornerShape(36.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerLowest,
-                shadowElevation = 4.dp,
-                tonalElevation = 1.dp,
+                color = MaterialTheme.colorScheme.primaryContainer,
+                shadowElevation = 0.dp,
+                tonalElevation = 0.dp,
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
@@ -72,7 +77,8 @@ fun AppBottomBar(
                     shape = RoundedCornerShape(34.dp),
                     color = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary,
-                    shadowElevation = 4.dp,
+                    shadowElevation = 0.dp,
+                    tonalElevation = 0.dp,
                 ) {
                     Box(Modifier.size(104.dp), contentAlignment = Alignment.Center) {
                         if (addText == null) {
@@ -105,12 +111,37 @@ private fun FooterButton(
     onSelect: (AppDestination) -> Unit,
 ) {
     val isSelected = destination == selected
+    val containerColor by animateColorAsState(
+        targetValue = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMediumLow,
+        ),
+        label = "footer-container",
+    )
+    val contentColor by animateColorAsState(
+        targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMediumLow,
+        ),
+        label = "footer-content",
+    )
+    val cornerRadius by animateDpAsState(
+        targetValue = if (isSelected) 26.dp else 18.dp,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMediumLow,
+        ),
+        label = "footer-shape",
+    )
     IconButton(
         onClick = { onSelect(destination) },
         modifier = Modifier.size(52.dp),
+        shape = RoundedCornerShape(cornerRadius),
         colors = IconButtonDefaults.iconButtonColors(
-            containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerLowest,
-            contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+            containerColor = containerColor,
+            contentColor = contentColor,
         ),
     ) {
         Icon(
