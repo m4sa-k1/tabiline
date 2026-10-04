@@ -89,6 +89,7 @@ fun TimelineScreen(
     onMoveLeg: (Long, Int) -> Unit,
     onToday: () -> Unit,
     onPlans: () -> Unit,
+    onSettings: () -> Unit,
 ) {
     var confirmDelete by remember { mutableStateOf(false) }
     var menuOpen by remember { mutableStateOf(false) }
@@ -117,20 +118,18 @@ fun TimelineScreen(
             )
         },
         bottomBar = {
-            AppBottomBar(AppDestination.TIMELINE) { destination ->
+            AppBottomBar(
+                selected = AppDestination.TIMELINE,
+                onAdd = onAddLeg,
+                addContentDescription = "移動を追加",
+            ) { destination ->
                 when (destination) {
                     AppDestination.TODAY -> onToday()
                     AppDestination.TIMELINE -> Unit
                     AppDestination.PLANS -> onPlans()
+                    AppDestination.SETTINGS -> onSettings()
                 }
             }
-        },
-        floatingActionButton = {
-            if (dayLegs.isNotEmpty()) FloatingActionButton(
-                onClick = onAddLeg,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-            ) { Icon(Icons.Rounded.Add, "移動を追加") }
         },
     ) { padding ->
         if (item == null || selectedDate == null) Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { Text("読み込み中…") }

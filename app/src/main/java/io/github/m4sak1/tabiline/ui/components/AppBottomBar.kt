@@ -1,35 +1,105 @@
 package io.github.m4sak1.tabiline.ui.components
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.rounded.Luggage
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Timeline
 import androidx.compose.material.icons.rounded.Today
 import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Text
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
 
-enum class AppDestination { TODAY, TIMELINE, PLANS }
+enum class AppDestination { TODAY, TIMELINE, PLANS, SETTINGS }
 
 @Composable
-fun AppBottomBar(selected: AppDestination, onSelect: (AppDestination) -> Unit) {
-    val label: @Composable (String, Boolean) -> Unit = { value, isSelected ->
-        Text(
-            value,
-            fontSize = 12.sp,
-            lineHeight = 16.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-        )
+fun AppBottomBar(
+    selected: AppDestination,
+    onAdd: (() -> Unit)? = null,
+    addContentDescription: String = "追加",
+    onSelect: (AppDestination) -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(bottom = 12.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.Bottom,
+        ) {
+            Surface(
+                shape = RoundedCornerShape(36.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLowest,
+                shadowElevation = 4.dp,
+                tonalElevation = 1.dp,
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    FooterButton(AppDestination.TODAY, selected, Icons.Rounded.Today, "今日", onSelect)
+                    FooterButton(AppDestination.TIMELINE, selected, Icons.Rounded.Timeline, "タイムライン", onSelect)
+                    FooterButton(AppDestination.PLANS, selected, Icons.Rounded.Luggage, "旅行", onSelect)
+                    FooterButton(AppDestination.SETTINGS, selected, Icons.Rounded.Settings, "設定", onSelect)
+                }
+            }
+            if (onAdd != null) {
+                Surface(
+                    onClick = onAdd,
+                    modifier = Modifier.size(104.dp),
+                    shape = RoundedCornerShape(34.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    shadowElevation = 4.dp,
+                ) {
+                    Box(Modifier.size(104.dp), contentAlignment = Alignment.Center) {
+                        Icon(Icons.Rounded.Add, addContentDescription, Modifier.size(40.dp))
+                    }
+                }
+            }
+        }
     }
-    NavigationBar {
-        NavigationBarItem(selected == AppDestination.TODAY, { onSelect(AppDestination.TODAY) },
-            { Icon(Icons.Rounded.Today, null) }, label = { label("今日", selected == AppDestination.TODAY) })
-        NavigationBarItem(selected == AppDestination.TIMELINE, { onSelect(AppDestination.TIMELINE) },
-            { Icon(Icons.Rounded.Timeline, null) }, label = { label("タイムライン", selected == AppDestination.TIMELINE) })
-        NavigationBarItem(selected == AppDestination.PLANS, { onSelect(AppDestination.PLANS) },
-            { Icon(Icons.Rounded.Luggage, null) }, label = { label("旅行", selected == AppDestination.PLANS) })
+}
+
+@Composable
+private fun FooterButton(
+    destination: AppDestination,
+    selected: AppDestination,
+    icon: ImageVector,
+    contentDescription: String,
+    onSelect: (AppDestination) -> Unit,
+) {
+    val isSelected = destination == selected
+    IconButton(
+        onClick = { onSelect(destination) },
+        modifier = Modifier.size(52.dp),
+        colors = IconButtonDefaults.iconButtonColors(
+            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLowest,
+            contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+        ),
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            modifier = Modifier.size(22.dp),
+        )
     }
 }

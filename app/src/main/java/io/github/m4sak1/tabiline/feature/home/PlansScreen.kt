@@ -73,21 +73,18 @@ fun PlansScreen(
             )
         },
         bottomBar = {
-            AppBottomBar(AppDestination.PLANS) { destination ->
+            AppBottomBar(
+                selected = AppDestination.PLANS,
+                onAdd = onCreateTrip,
+                addContentDescription = "新しい旅行",
+            ) { destination ->
                 when (destination) {
                     AppDestination.TODAY -> onToday()
                     AppDestination.TIMELINE -> selectedTripId?.let(onTimeline)
                     AppDestination.PLANS -> Unit
+                    AppDestination.SETTINGS -> onSettings()
                 }
             }
-        },
-        floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = onCreateTrip,
-                icon = { Icon(Icons.Rounded.Add, null) }, text = { Text("新しい旅行") },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-            )
         },
     ) { padding ->
         if (trips.isEmpty()) {

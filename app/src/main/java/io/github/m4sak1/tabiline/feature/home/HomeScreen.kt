@@ -69,6 +69,7 @@ fun HomeScreen(
     onAddLeg: (Long) -> Unit,
     onPlans: () -> Unit,
     onTimeline: (Long) -> Unit,
+    onSettings: () -> Unit,
 ) {
     var clock by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) { while (true) { delay(60_000); clock = System.currentTimeMillis() } }
@@ -93,22 +94,17 @@ fun HomeScreen(
             )
         },
         bottomBar = {
-            AppBottomBar(AppDestination.TODAY) { destination ->
+            AppBottomBar(
+                selected = AppDestination.TODAY,
+                onAdd = { if (focus == null) onCreateTrip() else onAddLeg(focus.trip.id) },
+                addContentDescription = if (focus == null) "新しい旅行" else "移動を追加",
+            ) { destination ->
                 when (destination) {
                     AppDestination.TODAY -> Unit
                     AppDestination.TIMELINE -> focus?.trip?.id?.let(onTimeline)
                     AppDestination.PLANS -> onPlans()
+                    AppDestination.SETTINGS -> onSettings()
                 }
-            }
-        },
-        floatingActionButton = {
-            if (hero != null && focus != null) {
-                ExtendedFloatingActionButton(
-                    onClick = { onAddLeg(focus.trip.id) },
-                    icon = { Icon(Icons.Rounded.Add, null) }, text = { Text("移動を追加") },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                )
             }
         },
     ) { padding ->

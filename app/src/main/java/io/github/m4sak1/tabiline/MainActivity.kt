@@ -27,6 +27,7 @@ import io.github.m4sak1.tabiline.feature.home.HomeScreen
 import io.github.m4sak1.tabiline.feature.home.PlansScreen
 import io.github.m4sak1.tabiline.feature.settings.SettingsScreen
 import io.github.m4sak1.tabiline.feature.timeline.TimelineScreen
+import io.github.m4sak1.tabiline.ui.components.AppDestination
 import io.github.m4sak1.tabiline.ui.theme.TabilineTheme
 
 class MainActivity : ComponentActivity() {
@@ -69,6 +70,7 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                     onAddLeg = { tripId -> selectedTripId = tripId; nav.navigate("leg/$tripId/0") },
                     onPlans = { nav.navigate("plans") { launchSingleTop = true } },
                     onTimeline = { selectedTripId = it; nav.navigate("trip/$it") { launchSingleTop = true } },
+                    onSettings = { nav.navigate("settings") { launchSingleTop = true } },
                 )
             }
             composable("plans") {
@@ -108,6 +110,7 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                     },
                     onToday = { nav.popBackStack("home", false) },
                     onPlans = { nav.navigate("plans") { launchSingleTop = true } },
+                    onSettings = { nav.navigate("settings") { launchSingleTop = true } },
                 )
             }
             composable(
@@ -137,7 +140,20 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                 )
             }
             composable("settings") {
-                SettingsScreen(settings, { nav.popBackStack() }, viewModel::updateSettings)
+                SettingsScreen(
+                    settings = settings,
+                    onUpdate = viewModel::updateSettings,
+                    onDestination = { destination ->
+                        when (destination) {
+                            AppDestination.TODAY -> nav.popBackStack("home", false)
+                            AppDestination.TIMELINE -> selectedTripId?.let {
+                                nav.navigate("trip/$it") { launchSingleTop = true }
+                            }
+                            AppDestination.PLANS -> nav.navigate("plans") { launchSingleTop = true }
+                            AppDestination.SETTINGS -> Unit
+                        }
+                    },
+                )
             }
         }
 
