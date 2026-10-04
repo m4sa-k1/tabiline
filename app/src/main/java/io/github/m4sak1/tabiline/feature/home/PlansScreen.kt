@@ -18,12 +18,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Luggage
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -46,7 +44,6 @@ private val planDateFormat = DateTimeFormatter.ofPattern("M/d")
 fun PlansScreen(
     trips: List<TripWithLegs>,
     selectedTripId: Long?,
-    onCreateTrip: () -> Unit,
     onOpenTrip: (Long) -> Unit,
 ) {
     val today = LocalDate.now()
@@ -63,10 +60,17 @@ fun PlansScreen(
         if (trips.isEmpty()) {
             Box(Modifier.fillMaxSize().statusBarsPadding(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Rounded.Luggage, null, Modifier.size(64.dp), tint = MaterialTheme.colorScheme.primary)
-                    Text("旅行はまだありません", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = 16.dp))
-                    ExtendedFloatingActionButton(onClick = onCreateTrip, modifier = Modifier.padding(top = 20.dp),
-                        icon = { Icon(Icons.Rounded.Add, null) }, text = { Text("新しい旅行") })
+                    Text("( ˶ᵔ ᵕ ᵔ˶ )", style = MaterialTheme.typography.headlineMedium)
+                    Text(
+                        "旅行はまだありません",
+                        style = MaterialTheme.typography.headlineSmall,
+                        modifier = Modifier.padding(top = 14.dp),
+                    )
+                    Text(
+                        "右下のボタンから新しい旅行を作れます",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 6.dp),
+                    )
                 }
             }
         } else LazyColumn(

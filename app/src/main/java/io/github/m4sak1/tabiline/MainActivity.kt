@@ -39,6 +39,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import io.github.m4sak1.tabiline.core.model.GapType
 import io.github.m4sak1.tabiline.core.model.TransportLeg
 import io.github.m4sak1.tabiline.core.model.Trip
 import io.github.m4sak1.tabiline.feature.editor.LegEditorScreen
@@ -48,6 +49,7 @@ import io.github.m4sak1.tabiline.feature.home.PlansScreen
 import io.github.m4sak1.tabiline.feature.settings.SettingsScreen
 import io.github.m4sak1.tabiline.feature.settings.SettingsDetailPopup
 import io.github.m4sak1.tabiline.feature.settings.SettingsSection
+import io.github.m4sak1.tabiline.feature.timeline.GapTypePopup
 import io.github.m4sak1.tabiline.feature.timeline.TimelineScreen
 import io.github.m4sak1.tabiline.ui.components.AppDestination
 import io.github.m4sak1.tabiline.ui.components.AppBottomBar
@@ -134,6 +136,7 @@ private fun TabilineRoot(viewModel: MainViewModel) {
         val trips by viewModel.trips.collectAsStateWithLifecycle()
         var tripDialog by remember { mutableStateOf<Trip?>(null) }
         var showNewTrip by remember { mutableStateOf(false) }
+        var gapTypePicker by remember { mutableStateOf<Pair<Long, GapType>?>(null) }
         var footerFace by rememberSaveable { mutableStateOf(footerFaces.random()) }
         var selectedTripId by rememberSaveable { mutableStateOf<Long?>(null) }
         var settingsDialogSection by remember { mutableStateOf<SettingsSection?>(null) }
@@ -216,7 +219,6 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                 PlansScreen(
                     trips = trips,
                     selectedTripId = selectedTripId,
-                    onCreateTrip = { showNewTrip = true },
                     onOpenTrip = { selectedTripId = it; nav.navigate("trip/$it") },
                 )
             }
@@ -242,7 +244,7 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                             viewModel.reorder(id, legs.map { it.id })
                         }
                     },
-                    onUpdateGapType = viewModel::updateGapType,
+                    onEditGapType = { legId, type -> gapTypePicker = legId to type },
                 )
             }
             composable(
@@ -421,6 +423,14 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                 settings = settings,
                 onUpdate = viewModel::updateSettings,
                 onDismiss = { settingsDialogSection = null },
+                onProgress = { popupBlurProgress = it },
+            )
+        }
+        gapTypePicker?.let { (legId, selectedType) ->
+            GapTypePopup(
+                selected = selectedType,
+                onSelect = { viewModel.updateGapType(legId, it) },
+                onDismiss = { gapTypePicker = null },
                 onProgress = { popupBlurProgress = it },
             )
         }
