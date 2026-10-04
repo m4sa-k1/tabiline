@@ -8,8 +8,6 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.core.CubicBezierEasing
@@ -18,6 +16,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -28,6 +28,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.BlurredEdgeTreatment
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavType
@@ -43,6 +46,8 @@ import io.github.m4sak1.tabiline.feature.editor.TripEditorDialog
 import io.github.m4sak1.tabiline.feature.home.HomeScreen
 import io.github.m4sak1.tabiline.feature.home.PlansScreen
 import io.github.m4sak1.tabiline.feature.settings.SettingsScreen
+import io.github.m4sak1.tabiline.feature.settings.SettingsDetailPopup
+import io.github.m4sak1.tabiline.feature.settings.SettingsSection
 import io.github.m4sak1.tabiline.feature.timeline.TimelineScreen
 import io.github.m4sak1.tabiline.ui.components.AppDestination
 import io.github.m4sak1.tabiline.ui.components.AppBottomBar
@@ -131,6 +136,10 @@ private fun TabilineRoot(viewModel: MainViewModel) {
         var showNewTrip by remember { mutableStateOf(false) }
         var footerFace by rememberSaveable { mutableStateOf(footerFaces.random()) }
         var selectedTripId by rememberSaveable { mutableStateOf<Long?>(null) }
+        var settingsDialogSection by remember { mutableStateOf<SettingsSection?>(null) }
+        var addingTripId by rememberSaveable { mutableStateOf<Long?>(null) }
+        var addScreenVisible by remember { mutableStateOf(false) }
+        var popupBlurProgress by remember { mutableFloatStateOf(0f) }
         LaunchedEffect(trips) {
             if (trips.none { it.trip.id == selectedTripId }) {
                 val today = java.time.LocalDate.now()
@@ -148,83 +157,58 @@ private fun TabilineRoot(viewModel: MainViewModel) {
             "trip/{tripId}" -> AppDestination.TIMELINE
             else -> null
         }
-        var retainedDestination by remember { mutableStateOf(AppDestination.TODAY) }
-        LaunchedEffect(destination) { destination?.let { retainedDestination = it } }
-        val isAddRoute = route == "leg/{tripId}/{legId}" && currentEntry?.arguments?.getLong("legId") == 0L
-
+        Box(
+            Modifier.fillMaxSize().blur(
+                radius = 12.dp * popupBlurProgress,
+                edgeTreatment = BlurredEdgeTreatment.Unbounded,
+            ),
+        ) {
         NavHost(
             navController = nav,
             startDestination = "home",
-            modifier = Modifier.zIndex(if (isAddRoute) 2f else 0f),
+            modifier = Modifier.zIndex(0f),
             enterTransition = {
-                val opensFromAddButton = targetState.destination.route == "leg/{tripId}/{legId}" &&
-                    targetState.arguments?.getLong("legId") == 0L
-                if (opensFromAddButton) {
-                    EnterTransition.None
-                } else {
-                    val direction = if (
-                        routePosition(targetState.destination.route) >= routePosition(initialState.destination.route)
-                    ) 1 else -1
-                    slideInHorizontally(
-                        initialOffsetX = { direction * it },
-                        animationSpec = tween(SCREEN_TRANSITION_MILLIS, easing = emphasizedEasing),
-                    )
-                }
+                val direction = if (
+                    routePosition(targetState.destination.route) >= routePosition(initialState.destination.route)
+                ) 1 else -1
+                slideInHorizontally(
+                    initialOffsetX = { direction * it },
+                    animationSpec = tween(SCREEN_TRANSITION_MILLIS, easing = emphasizedEasing),
+                )
             },
             exitTransition = {
-                val opensFromAddButton = targetState.destination.route == "leg/{tripId}/{legId}" &&
-                    targetState.arguments?.getLong("legId") == 0L
-                if (opensFromAddButton) ExitTransition.None
-                else {
-                    val direction = if (
-                        routePosition(targetState.destination.route) >= routePosition(initialState.destination.route)
-                    ) 1 else -1
-                    slideOutHorizontally(
-                        targetOffsetX = { -direction * it },
-                        animationSpec = tween(SCREEN_TRANSITION_MILLIS, easing = emphasizedEasing),
-                    )
-                }
+                val direction = if (
+                    routePosition(targetState.destination.route) >= routePosition(initialState.destination.route)
+                ) 1 else -1
+                slideOutHorizontally(
+                    targetOffsetX = { -direction * it },
+                    animationSpec = tween(SCREEN_TRANSITION_MILLIS, easing = emphasizedEasing),
+                )
             },
             popEnterTransition = {
-                val closesIntoAddButton = initialState.destination.route == "leg/{tripId}/{legId}" &&
-                    initialState.arguments?.getLong("legId") == 0L
-                if (closesIntoAddButton) EnterTransition.None
-                else {
-                    val direction = if (
-                        routePosition(targetState.destination.route) >= routePosition(initialState.destination.route)
-                    ) 1 else -1
-                    slideInHorizontally(
-                        initialOffsetX = { direction * it },
-                        animationSpec = tween(SCREEN_TRANSITION_MILLIS, easing = emphasizedEasing),
-                    )
-                }
+                val direction = if (
+                    routePosition(targetState.destination.route) >= routePosition(initialState.destination.route)
+                ) 1 else -1
+                slideInHorizontally(
+                    initialOffsetX = { direction * it },
+                    animationSpec = tween(SCREEN_TRANSITION_MILLIS, easing = emphasizedEasing),
+                )
             },
             popExitTransition = {
-                val closesIntoAddButton = initialState.destination.route == "leg/{tripId}/{legId}" &&
-                    initialState.arguments?.getLong("legId") == 0L
-                if (closesIntoAddButton) {
-                    ExitTransition.None
-                } else {
-                    val direction = if (
-                        routePosition(targetState.destination.route) >= routePosition(initialState.destination.route)
-                    ) 1 else -1
-                    slideOutHorizontally(
-                        targetOffsetX = { -direction * it },
-                        animationSpec = tween(SCREEN_TRANSITION_MILLIS, easing = emphasizedEasing),
-                    )
-                }
+                val direction = if (
+                    routePosition(targetState.destination.route) >= routePosition(initialState.destination.route)
+                ) 1 else -1
+                slideOutHorizontally(
+                    targetOffsetX = { -direction * it },
+                    animationSpec = tween(SCREEN_TRANSITION_MILLIS, easing = emphasizedEasing),
+                )
             },
         ) {
             composable("home") {
                 HomeScreen(
                     trips = trips,
-                    onCreateTrip = { showNewTrip = true },
                     onOpenTrip = { selectedTripId = it; nav.navigate("trip/$it") },
                     onEditLeg = { tripId, legId -> selectedTripId = tripId; nav.navigate("leg/$tripId/$legId") },
-                    onAddLeg = { tripId ->
-                        selectedTripId = tripId
-                        nav.navigate("leg/$tripId/0") { launchSingleTop = true }
-                    },
                 )
             }
             composable("plans") {
@@ -245,10 +229,8 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                 TimelineScreen(
                     item = item,
                     settings = settings,
-                    onBack = { nav.popBackStack() },
                     onEditTrip = { tripDialog = item?.trip },
                     onDeleteTrip = { viewModel.deleteTrip(id) { nav.navigate("plans") { popUpTo("home") } } },
-                    onAddLeg = { nav.navigate("leg/$id/0") { launchSingleTop = true } },
                     onEditLeg = { nav.navigate("leg/$id/$it") },
                     onMoveLeg = { legId, direction ->
                         val legs = item?.legs.orEmpty().toMutableList()
@@ -271,36 +253,89 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                 val tripId = entry.arguments?.getLong("tripId") ?: return@composable
                 val legId = entry.arguments?.getLong("legId") ?: 0
                 var existing by remember(legId) { mutableStateOf<TransportLeg?>(null) }
-                var loaded by remember(legId) { mutableStateOf(legId == 0L) }
+                var loaded by remember(legId) { mutableStateOf(false) }
                 var isSaving by remember(legId) { mutableStateOf(false) }
                 var saveError by remember(legId) { mutableStateOf<String?>(null) }
-                var addScreenVisible by remember(legId) { mutableStateOf(true) }
-                var destinationAfterClose by remember(legId) { mutableStateOf<Long?>(null) }
                 LaunchedEffect(legId) {
-                    if (legId != 0L) existing = viewModel.getLeg(legId)
+                    existing = viewModel.getLeg(legId)
                     loaded = true
                 }
                 val trip = trips.firstOrNull { it.trip.id == tripId }
                 val initialTripId = trip?.trip?.takeUnless { it.isAutomatic }?.id
-                val isAdding = legId == 0L
-                val closeEditor = {
-                    if (!isSaving) {
-                        if (isAdding) addScreenVisible = false else nav.popBackStack()
-                    }
-                }
-                BackHandler(enabled = isAdding && addScreenVisible) { closeEditor() }
+                LegEditorScreen(
+                    initialTripId = existing?.let { leg ->
+                        trips.firstOrNull { it.trip.id == leg.tripId }?.trip?.takeUnless { it.isAutomatic }?.id
+                    } ?: initialTripId,
+                    availableTrips = trips.map { it.trip },
+                    existing = existing,
+                    previous = trip?.legs?.lastOrNull(),
+                    defaultZoneId = settings.defaultZoneId,
+                    isLoading = !loaded,
+                    isSaving = isSaving,
+                    saveError = saveError,
+                    onBack = { if (!isSaving) nav.popBackStack() },
+                    onSave = { leg, standalone ->
+                        if (!isSaving) {
+                            isSaving = true
+                            saveError = null
+                            viewModel.saveLeg(
+                                leg = leg,
+                                standalone = standalone,
+                                onSaved = { destinationTripId ->
+                                    selectedTripId = destinationTripId
+                                    nav.popBackStack()
+                                    nav.navigate("trip/$destinationTripId") { launchSingleTop = true }
+                                },
+                                onError = {
+                                    isSaving = false
+                                    saveError = "保存できませんでした。入力内容を確認して、もう一度お試しください。"
+                                },
+                            )
+                        }
+                    },
+                    onDelete = { viewModel.deleteLeg(it) { nav.popBackStack() } },
+                )
+            }
+            composable("settings") {
+                SettingsScreen(
+                    settings = settings,
+                    onUpdate = viewModel::updateSettings,
+                    onOpenSection = { settingsDialogSection = it },
+                )
+            }
+        }
 
-                @Composable
-                fun EditorContent() {
+        addingTripId?.let { tripId ->
+            key(tripId) {
+                var isSaving by remember { mutableStateOf(false) }
+                var saveError by remember { mutableStateOf<String?>(null) }
+                var destinationAfterClose by remember { mutableStateOf<Long?>(null) }
+                val trip = trips.firstOrNull { it.trip.id == tripId }
+                val initialTripId = trip?.trip?.takeUnless { it.isAutomatic }?.id
+                val closeEditor = {
+                    if (!isSaving) addScreenVisible = false
+                }
+                BackHandler(enabled = addScreenVisible) { closeEditor() }
+
+                BubbleReveal(
+                    visible = addScreenVisible,
+                    modifier = Modifier.zIndex(1f),
+                    originXFraction = 0.06f,
+                    originYFraction = 0.96f,
+                    onHidden = {
+                        addingTripId = null
+                        destinationAfterClose?.let { destinationTripId ->
+                            nav.navigate("trip/$destinationTripId") { launchSingleTop = true }
+                        }
+                    },
+                ) {
                     LegEditorScreen(
-                        initialTripId = existing?.let { leg ->
-                            trips.firstOrNull { it.trip.id == leg.tripId }?.trip?.takeUnless { it.isAutomatic }?.id
-                        } ?: initialTripId,
+                        initialTripId = initialTripId,
                         availableTrips = trips.map { it.trip },
-                        existing = existing,
+                        existing = null,
                         previous = trip?.legs?.lastOrNull(),
                         defaultZoneId = settings.defaultZoneId,
-                        isLoading = !loaded,
+                        isLoading = false,
                         isSaving = isSaving,
                         saveError = saveError,
                         onBack = closeEditor,
@@ -313,13 +348,8 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                                     standalone = standalone,
                                     onSaved = { destinationTripId ->
                                         selectedTripId = destinationTripId
-                                        if (isAdding) {
-                                            destinationAfterClose = destinationTripId
-                                            addScreenVisible = false
-                                        } else {
-                                            nav.popBackStack()
-                                            nav.navigate("trip/$destinationTripId") { launchSingleTop = true }
-                                        }
+                                        destinationAfterClose = destinationTripId
+                                        addScreenVisible = false
                                     },
                                     onError = {
                                         isSaving = false
@@ -328,36 +358,14 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                                 )
                             }
                         },
-                        onDelete = if (isAdding) null else ({
-                            viewModel.deleteLeg(it) { nav.popBackStack() }
-                        }),
+                        onDelete = null,
                     )
                 }
-
-                if (isAdding) {
-                    BubbleReveal(
-                        visible = addScreenVisible,
-                        onHidden = {
-                            nav.popBackStack()
-                            destinationAfterClose?.let { destinationTripId ->
-                                nav.navigate("trip/$destinationTripId") { launchSingleTop = true }
-                            }
-                        },
-                    ) { EditorContent() }
-                } else {
-                    EditorContent()
-                }
-            }
-            composable("settings") {
-                SettingsScreen(
-                    settings = settings,
-                    onUpdate = viewModel::updateSettings,
-                )
             }
         }
 
-        if (destination != null || isAddRoute) {
-            val barDestination = destination ?: retainedDestination
+        if (destination != null && addingTripId == null) {
+            val barDestination = destination
             val today = java.time.LocalDate.now()
             val homeTripId = trips.firstOrNull {
                 !it.trip.isAutomatic && today in it.trip.startDate..it.trip.endDate
@@ -365,13 +373,17 @@ private fun TabilineRoot(viewModel: MainViewModel) {
             val routeTripId = currentEntry?.arguments?.getLong("tripId")
             AppBottomBar(
                 selected = barDestination,
-                modifier = Modifier.align(Alignment.BottomCenter).zIndex(1f),
+                modifier = Modifier.align(Alignment.BottomCenter).zIndex(2f),
                 onAdd = when (barDestination) {
                     AppDestination.TODAY -> ({
-                        nav.navigate("leg/${homeTripId ?: 0L}/0") { launchSingleTop = true }
+                        addingTripId = homeTripId ?: 0L
+                        addScreenVisible = true
                     })
                     AppDestination.TIMELINE -> routeTripId?.let { tripId ->
-                        { nav.navigate("leg/$tripId/0") { launchSingleTop = true } }
+                        {
+                            addingTripId = tripId
+                            addScreenVisible = true
+                        }
                     }
                     AppDestination.PLANS -> ({ showNewTrip = true })
                     AppDestination.SETTINGS -> ({
@@ -396,13 +408,33 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                 }
             }
         }
-
-        if (showNewTrip) TripEditorDialog(null, { showNewTrip = false }) {
-            viewModel.saveTrip(it) { id -> selectedTripId = id; showNewTrip = false; nav.navigate("trip/$id") }
         }
-        tripDialog?.let { trip -> TripEditorDialog(trip, { tripDialog = null }) {
-            viewModel.saveTrip(it) { tripDialog = null }
-        } }
+
+        settingsDialogSection?.let { section ->
+            SettingsDetailPopup(
+                section = section,
+                settings = settings,
+                onUpdate = viewModel::updateSettings,
+                onDismiss = { settingsDialogSection = null },
+                onProgress = { popupBlurProgress = it },
+            )
+        }
+        if (showNewTrip) TripEditorDialog(
+            existing = null,
+            onDismiss = { showNewTrip = false },
+            onSave = { trip ->
+                viewModel.saveTrip(trip) { id -> selectedTripId = id; showNewTrip = false; nav.navigate("trip/$id") }
+            },
+            onProgress = { popupBlurProgress = it },
+        )
+        tripDialog?.let { trip ->
+            TripEditorDialog(
+                existing = trip,
+                onDismiss = { tripDialog = null },
+                onSave = { updated -> viewModel.saveTrip(updated) { tripDialog = null } },
+                onProgress = { popupBlurProgress = it },
+            )
+        }
         }
     }
 }

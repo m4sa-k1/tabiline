@@ -20,12 +20,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -62,10 +60,8 @@ private val timeFormat = DateTimeFormatter.ofPattern("HH:mm")
 @Composable
 fun HomeScreen(
     trips: List<TripWithLegs>,
-    onCreateTrip: () -> Unit,
     onOpenTrip: (Long) -> Unit,
     onEditLeg: (Long, Long) -> Unit,
-    onAddLeg: (Long) -> Unit,
 ) {
     var clock by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) { while (true) { delay(60_000); clock = System.currentTimeMillis() } }
@@ -88,9 +84,7 @@ fun HomeScreen(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
     ) { _ ->
         if (hero == null || focus == null) {
-            EmptyToday(Modifier.fillMaxSize().statusBarsPadding()) {
-                if (focus == null) onCreateTrip() else onAddLeg(focus.trip.id)
-            }
+            EmptyToday(Modifier.fillMaxSize().statusBarsPadding())
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().statusBarsPadding(),
@@ -256,14 +250,15 @@ private fun TightTransferChip(minutes: Long, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun EmptyToday(modifier: Modifier, onAdd: () -> Unit) {
+private fun EmptyToday(modifier: Modifier) {
     Box(modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-        Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, shape = RoundedCornerShape(40.dp)) {
-            Column(Modifier.padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("今日の移動はありません", style = MaterialTheme.typography.headlineSmall)
-                Spacer(Modifier.height(16.dp))
-                ExtendedFloatingActionButton(onClick = onAdd, icon = { Icon(Icons.Rounded.Add, null) }, text = { Text("追加する") })
-            }
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text("(˶ᵔ ᵕ ᵔ˶)", style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.primary)
+            Text("今日の移動はありません", style = MaterialTheme.typography.headlineSmall)
+            Text("次の予定まで、のんびり過ごしましょう", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
