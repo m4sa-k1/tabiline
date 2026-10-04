@@ -1,0 +1,60 @@
+package io.github.m4sak1.tabiline.core.model
+
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZonedDateTime
+
+data class Trip(
+    val id: Long = 0,
+    val name: String,
+    val startDate: LocalDate,
+    val endDate: LocalDate,
+    val note: String = "",
+    val createdAt: Instant = Instant.now(),
+    val updatedAt: Instant = Instant.now(),
+)
+
+data class TransportLeg(
+    val id: Long = 0,
+    val tripId: Long,
+    val departure: Instant,
+    val arrival: Instant,
+    val departureZoneId: String,
+    val arrivalZoneId: String,
+    val departurePlace: String,
+    val arrivalPlace: String,
+    val mode: TransportMode,
+    val trainType: TrainType? = null,
+    val departurePlatform: String = "",
+    val arrivalPlatform: String = "",
+    val memo: String = "",
+    val sortOrder: Int = 0,
+) {
+    val departureLocal: ZonedDateTime get() = departure.atZone(ZoneId.of(departureZoneId))
+    val arrivalLocal: ZonedDateTime get() = arrival.atZone(ZoneId.of(arrivalZoneId))
+}
+
+data class TripWithLegs(
+    val trip: Trip,
+    val legs: List<TransportLeg>,
+)
+
+enum class ThemePreference { SYSTEM, LIGHT, DARK }
+
+data class UserSettings(
+    val theme: ThemePreference = ThemePreference.SYSTEM,
+    val trainMinutes: Int = 10,
+    val busMinutes: Int = 10,
+    val flightMinutes: Int = 60,
+    val ferryMinutes: Int = 30,
+    val otherMinutes: Int = 15,
+) {
+    fun thresholdFor(mode: TransportMode): Int = when (mode) {
+        TransportMode.TRAIN -> trainMinutes
+        TransportMode.BUS -> busMinutes
+        TransportMode.FLIGHT -> flightMinutes
+        TransportMode.FERRY -> ferryMinutes
+        TransportMode.OTHER -> otherMinutes
+    }
+}
