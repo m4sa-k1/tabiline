@@ -162,6 +162,11 @@ private fun TabilineRoot(viewModel: MainViewModel) {
             "trip/{tripId}", "timeline-empty" -> AppDestination.TIMELINE
             else -> null
         }
+        LaunchedEffect(destination) {
+            if (destination == AppDestination.SETTINGS) {
+                footerFace = footerFaces.filterNot { it == footerFace }.random()
+            }
+        }
         Box(
             Modifier.fillMaxSize().blur(
                 radius = 12.dp * popupBlurProgress,

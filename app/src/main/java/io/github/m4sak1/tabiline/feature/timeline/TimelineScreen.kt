@@ -45,6 +45,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -139,18 +140,17 @@ fun TimelineScreen(
         if (item == null || selectedDate == null) Box(Modifier.fillMaxSize().statusBarsPadding(), contentAlignment = Alignment.Center) { Text("読み込み中…") }
         else Box(Modifier.fillMaxSize().statusBarsPadding()) {
             Column(Modifier.fillMaxSize()) {
-                Surface(
-                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 10.dp, end = 16.dp, bottom = 8.dp),
-                shape = RoundedCornerShape(28.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerLow,
-            ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(start = 20.dp, top = 14.dp, end = 8.dp, bottom = 14.dp),
+                    modifier = Modifier.fillMaxWidth()
+                        .padding(start = 36.dp, top = 24.dp, end = 24.dp, bottom = 22.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(item.trip.name, style = MaterialTheme.typography.headlineLarge, modifier = Modifier.weight(1f))
                     Box {
-                        IconButton(onClick = { menuOpen = true }) { Icon(Icons.Rounded.MoreVert, "旅行メニュー") }
+                        IconButton(
+                            onClick = { menuOpen = true },
+                            colors = IconButtonDefaults.iconButtonColors(containerColor = Color.Transparent),
+                        ) { Icon(Icons.Rounded.MoreVert, "旅行メニュー") }
                         DropdownMenu(menuOpen, { menuOpen = false }) {
                             if (!item.trip.isAutomatic) {
                                 DropdownMenuItem(text = { Text("旅行を編集") }, leadingIcon = { Icon(Icons.Rounded.Edit, null) }, onClick = { menuOpen = false; onEditTrip() })
@@ -163,7 +163,6 @@ fun TimelineScreen(
                         }
                     }
                 }
-            }
                 if (dates.size > 1) RelativeDaySelector(dates, selectedDate) { selectedEpochDay = it.toEpochDay() }
                 if (dayLegs.isNotEmpty()) {
                     LazyColumn(
@@ -544,16 +543,19 @@ private fun GapType.icon() = when (this) {
 
 @Composable
 private fun EmptyDay(modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxSize().padding(24.dp)) {
-        Text(
-            "この日の移動はありません",
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.align(Alignment.Center),
-        )
-        Text(
-            "追加するとタイムラインに表示されます",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.align(Alignment.Center).offset(y = 38.dp),
-        )
+    Box(modifier.fillMaxSize().padding(horizontal = 24.dp), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("( ｡•ᴗ•｡ )", style = MaterialTheme.typography.headlineMedium)
+            Text(
+                "この日の移動はありません",
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(top = 14.dp),
+            )
+            Text(
+                "別の日を選ぶか、移動を追加してください",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 6.dp),
+            )
+        }
     }
 }
