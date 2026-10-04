@@ -44,6 +44,9 @@ import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.SettingsBrightness
 import androidx.compose.material.icons.rounded.SyncAlt
 import androidx.compose.material.icons.rounded.Notifications
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import io.github.m4sak1.tabiline.R
 import androidx.compose.material3.Icon
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
@@ -129,6 +132,7 @@ fun SettingsScreen(
                 }
             }
         }
+        SupportCard()
         AboutCard()
     }
 }
@@ -261,6 +265,31 @@ fun SettingsDetailPopup(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun SupportCard() {
+    val uriHandler = LocalUriHandler.current
+    var openFailed by remember { mutableStateOf(false) }
+    Surface(
+        onClick = {
+            openFailed = runCatching { uriHandler.openUri("https://ko-fi.com/m4sak1") }.isFailure
+        },
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+    ) {
+        Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Image(painterResource(R.drawable.kofi_logo), contentDescription = "Ko-fi", modifier = Modifier.size(36.dp))
+                Text("開発者を応援する", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
+            }
+            Text("Ko-fiで任意の支援ができます。支援の有無でアプリの機能は変わりません。")
+            Text("ブラウザで開く ↗", style = MaterialTheme.typography.labelLarge)
+            if (openFailed) Text("ブラウザを開けませんでした。https://ko-fi.com/m4sak1 をブラウザで開いてください。")
         }
     }
 }

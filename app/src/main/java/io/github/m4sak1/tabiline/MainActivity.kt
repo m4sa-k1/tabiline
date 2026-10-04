@@ -428,6 +428,8 @@ private fun TabilineRoot(
                     )
                 }
             }
+        }
+
         if (destination != null && (addingTripId == null || addScreenProgress < 0.999f)) {
             val barDestination = destination
             val today = java.time.LocalDate.now()
@@ -442,7 +444,10 @@ private fun TabilineRoot(
             val routeTripId = currentEntry?.arguments?.getLong("tripId")
             AppBottomBar(
                 selected = barDestination,
-                modifier = Modifier.align(Alignment.BottomCenter).zIndex(2f),
+                modifier = Modifier.align(Alignment.BottomCenter).zIndex(2f).blur(
+                    radius = 12.dp * popupBlurProgress,
+                    edgeTreatment = BlurredEdgeTreatment.Unbounded,
+                ),
                 onAdd = when (barDestination) {
                     AppDestination.TODAY -> ({
                         addingTripId = homeTripId ?: 0L
@@ -478,8 +483,10 @@ private fun TabilineRoot(
                 }
             }
         }
-        }
 
+        // Popups must cover the fixed footer (z=2) and editor (z=3),
+        // while only the background layers receive the animated blur.
+        Box(Modifier.fillMaxSize().zIndex(4f)) {
         settingsDialogSection?.let { section ->
             SettingsDetailPopup(
                 section = section,
@@ -521,6 +528,7 @@ private fun TabilineRoot(
                 onSave = { updated -> viewModel.saveTrip(updated) { tripDialog = null } },
                 onProgress = { popupBlurProgress = it },
             )
+        }
         }
         if (launchAnimationVisible) {
             TabilineLaunchAnimation(

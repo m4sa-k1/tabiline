@@ -73,10 +73,14 @@ jobs:
         shell: bash
         run: |
           version="${{ steps.version.outputs.name }}"
+          notes_args=(--generate-notes)
+          if [[ -f "releases/${version}.md" ]]; then
+            notes_args=(--notes-file "releases/${version}.md")
+          fi
           gh release create "v${version}" "tabiline-${version}.apk" \
             --target "$GITHUB_SHA" \
             --title "Tabiline v${version}" \
-            --generate-notes
+            "${notes_args[@]}"
 
       - name: Remove temporary signing key
         if: always()
