@@ -28,6 +28,7 @@ import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Signpost
+import androidx.compose.material.icons.rounded.Train
 import androidx.compose.material.icons.rounded.TripOrigin
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.AlertDialog
@@ -90,7 +91,9 @@ fun LegEditorScreen(
     val initialDeparture = existing?.departureLocal?.toLocalDateTime()
         ?: previous?.arrivalLocal?.toLocalDateTime()?.plusMinutes(10)
         ?: LocalDateTime.now().plusHours(1).withMinute(0)
-    val initialArrival = existing?.arrivalLocal?.toLocalDateTime() ?: initialDeparture.plusHours(1)
+    val initialArrival = existing?.arrivalLocal?.toLocalDateTime()
+        ?.takeIf { existing.mode != TransportMode.FREE_TIME || it.isAfter(initialDeparture) }
+        ?: initialDeparture.plusHours(1)
     var departureDate by remember(existing?.id) { mutableStateOf(initialDeparture.toLocalDate()) }
     var departureTime by remember(existing?.id) { mutableStateOf(initialDeparture.toLocalTime()) }
     var arrivalDate by remember(existing?.id) { mutableStateOf(initialArrival.toLocalDate()) }
@@ -109,6 +112,7 @@ fun LegEditorScreen(
         )
     }
     var trainType by remember(existing?.id) { mutableStateOf(existing?.trainType ?: previous?.trainType ?: TrainType.LOCAL) }
+    var trainLine by remember(existing?.id) { mutableStateOf(existing?.trainLine ?: previous?.trainLine.orEmpty()) }
     var trainTypeMenu by remember { mutableStateOf(false) }
     var memo by remember(existing?.id) { mutableStateOf(existing?.memo.orEmpty()) }
     var confirmDelete by remember { mutableStateOf(false) }
@@ -118,18 +122,20 @@ fun LegEditorScreen(
         mutableStateOf(if (existingTripIsAutomatic) null else initialTripId)
     }
 
+    val isFreeTime = mode == TransportMode.FREE_TIME
     val departureZoneId = runCatching { ZoneId.of(departureZone) }.getOrNull()
     val arrivalZoneId = runCatching { ZoneId.of(arrivalZone) }.getOrNull()
     val departureInstant = departureZoneId?.let { LocalDateTime.of(departureDate, departureTime).atZone(it).toInstant() }
-    val arrivalInstant = arrivalZoneId?.let { LocalDateTime.of(arrivalDate, arrivalTime).atZone(it).toInstant() }
-    val isFreeTime = mode == TransportMode.FREE_TIME
+    val arrivalInstant = (if (isFreeTime) departureZoneId else arrivalZoneId)?.let {
+        LocalDateTime.of(arrivalDate, arrivalTime).atZone(it).toInstant()
+    }
     val valid = if (isFreeTime) {
-        departureInstant != null
+        departureInstant != null && arrivalInstant != null && arrivalInstant > departureInstant
     } else {
         departurePlace.isNotBlank() && arrivalPlace.isNotBlank() && departureInstant != null &&
             arrivalInstant != null && arrivalInstant > departureInstant
     }
-    val scheduleEndDate = if (isFreeTime) departureDate else arrivalDate
+    val scheduleEndDate = arrivalDate
     val overlapsRegularTrip = selectedTripId == null && selectableTrips.any {
         !scheduleEndDate.isBefore(it.startDate) && !departureDate.isAfter(it.endDate)
     }
@@ -215,6 +221,13 @@ fun LegEditorScreen(
                     }
                 }
                 if (mode == TransportMode.TRAIN) {
+                    EditorField(
+                        trainLine,
+                        { trainLine = it },
+                        "路線名（任意）",
+                        { Icon(Icons.Rounded.Train, null) },
+                        "例：予讃線、山手線",
+                    )
                     ExposedDropdownMenuBox(expanded = trainTypeMenu, onExpandedChange = { trainTypeMenu = it }) {
                         OutlinedTextField(
                             value = trainType.label, onValueChange = {}, readOnly = true,
@@ -240,7 +253,10 @@ fun LegEditorScreen(
                         { Icon(Icons.AutoMirrored.Rounded.Notes, null) },
                         "未入力の場合は「空き時間」と表示されます",
                     )
+                    Text("開始", style = MaterialTheme.typography.titleMedium)
                     DateTimeRow(departureDate, departureTime, { departureDate = it }, { departureTime = it })
+                    Text("終了", style = MaterialTheme.typography.titleMedium)
+                    DateTimeRow(arrivalDate, arrivalTime, { arrivalDate = it }, { arrivalTime = it })
                     EditorField(departureZone, { departureZone = it }, "タイムゾーン", isError = departureZoneId == null)
                 }
             } else {
@@ -252,10 +268,7 @@ fun LegEditorScreen(
                 }
                 EditorSection("到着") {
                     EditorField(arrivalPlace, { arrivalPlace = it }, "到着地", { Icon(Icons.Rounded.LocationOn, null) })
-                    DateTimeRow(arrivalDate, arrivalTime, { arrivalDate = it }, {
-                        arrivalTime = it
-                        if (arrivalDate == departureDate && !it.isAfter(departureTime)) arrivalDate = departureDate.plusDays(1)
-                    })
+                    DateTimeRow(arrivalDate, arrivalTime, { arrivalDate = it }, { arrivalTime = it })
                     EditorField(arrivalPlatform, { arrivalPlatform = it }, "到着の乗り場", { Icon(Icons.Rounded.Signpost, null) }, "ホーム番号・ゲート・バースなど")
                     EditorField(arrivalZone, { arrivalZone = it }, "到着地のタイムゾーン", isError = arrivalZoneId == null)
                 }
@@ -268,7 +281,7 @@ fun LegEditorScreen(
                 }
             }
             if (!valid) Text(
-                if (isFreeTime) "有効なタイムゾーンを入力してください。"
+                if (isFreeTime) "有効なタイムゾーンを入力し、終了を開始より後にしてください。"
                 else "出発地・到着地と有効なタイムゾーンを入力し、到着を出発より後にしてください。",
                 color = MaterialTheme.colorScheme.error,
             )
@@ -282,13 +295,14 @@ fun LegEditorScreen(
                         id = existing?.id ?: 0,
                         tripId = selectedTripId ?: existing?.tripId ?: 0,
                         departure = departureInstant!!,
-                        arrival = if (isFreeTime) departureInstant else arrivalInstant!!,
+                        arrival = arrivalInstant!!,
                         departureZoneId = departureZone,
                         arrivalZoneId = if (isFreeTime) departureZone else arrivalZone,
                         departurePlace = departurePlace.trim(),
                         arrivalPlace = if (isFreeTime) "" else arrivalPlace.trim(),
                         mode = mode,
                         trainType = trainType.takeIf { mode == TransportMode.TRAIN },
+                        trainLine = trainLine.trim().takeIf { mode == TransportMode.TRAIN }.orEmpty(),
                         departurePlatform = if (isFreeTime) "" else departurePlatform.trim(),
                         arrivalPlatform = if (isFreeTime) "" else arrivalPlatform.trim(),
                         memo = if (isFreeTime) "" else memo.trim(),

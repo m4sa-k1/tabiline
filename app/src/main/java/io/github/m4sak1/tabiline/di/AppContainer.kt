@@ -22,6 +22,7 @@ class AppContainer(context: Context) {
     ).addMigrations(
         TabilineDatabase.MIGRATION_1_2,
         TabilineDatabase.MIGRATION_2_3,
+        TabilineDatabase.MIGRATION_3_4,
     ).build()
 
     val trips: TabilineRepository = OfflineTabilineRepository(database, database.dao())

@@ -5,7 +5,7 @@ import androidx.room.migration.Migration
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [TripEntity::class, TransportLegEntity::class], version = 3, exportSchema = true)
+@Database(entities = [TripEntity::class, TransportLegEntity::class], version = 4, exportSchema = true)
 abstract class TabilineDatabase : RoomDatabase() {
     abstract fun dao(): TabilineDao
 
@@ -20,6 +20,18 @@ abstract class TabilineDatabase : RoomDatabase() {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL(
                     "ALTER TABLE transport_legs ADD COLUMN precedingGapType TEXT NOT NULL DEFAULT 'WAIT'",
+                )
+            }
+        }
+
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "ALTER TABLE transport_legs ADD COLUMN trainLine TEXT NOT NULL DEFAULT ''",
+                )
+                database.execSQL(
+                    "UPDATE transport_legs SET arrivalMillis = departureMillis + 3600000 " +
+                        "WHERE mode = 'FREE_TIME' AND arrivalMillis <= departureMillis",
                 )
             }
         }

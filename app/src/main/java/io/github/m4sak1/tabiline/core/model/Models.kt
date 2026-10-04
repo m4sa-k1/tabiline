@@ -27,6 +27,7 @@ data class TransportLeg(
     val arrivalPlace: String,
     val mode: TransportMode,
     val trainType: TrainType? = null,
+    val trainLine: String = "",
     val departurePlatform: String = "",
     val arrivalPlatform: String = "",
     val memo: String = "",

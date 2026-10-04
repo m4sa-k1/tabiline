@@ -76,10 +76,7 @@ fun LegCard(
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text(
-                        buildString {
-                            append(leg.mode.detailLabel)
-                            leg.trainType?.let { append("・${it.label}") }
-                        },
+                        leg.serviceLabel,
                         style = MaterialTheme.typography.labelLarge,
                         color = visual.color,
                     )

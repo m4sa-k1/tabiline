@@ -7,6 +7,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
@@ -59,6 +60,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
@@ -72,6 +75,7 @@ import io.github.m4sak1.tabiline.core.model.GapType
 import io.github.m4sak1.tabiline.core.model.TripWithLegs
 import io.github.m4sak1.tabiline.core.model.UserSettings
 import io.github.m4sak1.tabiline.ui.components.detailLabel
+import io.github.m4sak1.tabiline.ui.components.serviceLabel
 import io.github.m4sak1.tabiline.ui.components.CenterPopup
 import io.github.m4sak1.tabiline.ui.components.visual
 import java.time.Duration
@@ -79,7 +83,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 private val timelineTime = DateTimeFormatter.ofPattern("HH:mm")
-private val shortDateTime = DateTimeFormatter.ofPattern("M/d HH:mm")
+private val shortDate = DateTimeFormatter.ofPattern("M/d")
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -286,53 +290,41 @@ private fun TimelineLeg(
                 fontSize = 20.sp,
                 lineHeight = 24.sp,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.align(if (isFreeTime) Alignment.CenterStart else Alignment.TopStart),
+                modifier = Modifier.align(Alignment.TopStart),
             )
-            if (!isFreeTime) {
-                val arrival = if (leg.arrivalLocal.toLocalDate() == leg.departureLocal.toLocalDate()) leg.arrivalLocal.format(timelineTime)
-                    else leg.arrivalLocal.format(shortDateTime)
-                Text(
-                    arrival,
-                    fontSize = 16.sp,
-                    lineHeight = 20.sp,
-                    fontWeight = FontWeight.Normal,
-                    modifier = Modifier.align(Alignment.BottomStart),
-                    maxLines = 1,
-                )
-            }
+            val crossesDate = leg.arrivalLocal.toLocalDate() != leg.departureLocal.toLocalDate()
+            Text(
+                if (crossesDate) {
+                    "${leg.arrivalLocal.format(shortDate)}\n${leg.arrivalLocal.format(timelineTime)}"
+                } else {
+                    leg.arrivalLocal.format(timelineTime)
+                },
+                fontSize = if (crossesDate) 14.sp else 16.sp,
+                lineHeight = 17.sp,
+                fontWeight = FontWeight.Normal,
+                modifier = Modifier.align(Alignment.BottomStart),
+                maxLines = if (crossesDate) 2 else 1,
+            )
         }
         Box(Modifier.width(24.dp).fillMaxHeight()) {
-            if (isFreeTime) {
-                if (hasPrevious) Box(
-                    Modifier.align(Alignment.TopCenter).width(4.dp).height(52.dp)
+            if (hasPrevious) {
+                Box(
+                    Modifier.align(Alignment.TopCenter).width(4.dp).height(13.dp)
                         .background(MaterialTheme.colorScheme.surfaceContainerHighest),
                 )
-                if (hasNext) Box(
-                    Modifier.align(Alignment.TopCenter).offset(y = 52.dp).width(4.dp).height(52.dp)
-                        .background(MaterialTheme.colorScheme.surfaceContainerHighest),
-                )
-                Box(Modifier.align(Alignment.Center).size(14.dp)
-                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(7.dp)))
-            } else {
-                if (hasPrevious) {
-                    Box(
-                        Modifier.align(Alignment.TopCenter).width(4.dp).height(13.dp)
-                            .background(MaterialTheme.colorScheme.surfaceContainerHighest),
-                    )
-                }
-                Box(Modifier.align(Alignment.TopCenter).offset(y = 13.dp).width(4.dp).height(80.dp)
-                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(2.dp)))
-                if (hasNext) {
-                    Box(
-                        Modifier.align(Alignment.TopCenter).offset(y = 93.dp).width(4.dp).height(11.dp)
-                            .background(MaterialTheme.colorScheme.surfaceContainerHighest),
-                    )
-                }
-                Box(Modifier.align(Alignment.TopCenter).offset(y = 6.dp).size(14.dp)
-                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(7.dp)))
-                Box(Modifier.align(Alignment.TopCenter).offset(y = 86.dp).size(14.dp)
-                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(7.dp)))
             }
+            Box(Modifier.align(Alignment.TopCenter).offset(y = 13.dp).width(4.dp).height(80.dp)
+                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(2.dp)))
+            if (hasNext) {
+                Box(
+                    Modifier.align(Alignment.TopCenter).offset(y = 93.dp).width(4.dp).height(11.dp)
+                        .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+                )
+            }
+            Box(Modifier.align(Alignment.TopCenter).offset(y = 6.dp).size(14.dp)
+                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(7.dp)))
+            Box(Modifier.align(Alignment.TopCenter).offset(y = 86.dp).size(14.dp)
+                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(7.dp)))
         }
         Card(
             onClick = onClick,
@@ -380,7 +372,7 @@ private fun TimelineLeg(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
-                        val type = if (leg.mode == TransportMode.TRAIN) leg.trainType?.label ?: leg.mode.detailLabel else leg.mode.detailLabel
+                        val type = leg.serviceLabel
                         if (hasPlatform) {
                             Text(
                                 route,
@@ -435,8 +427,19 @@ private fun TimelineGap(
     Row(Modifier.fillMaxWidth().height(80.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.width(62.dp))
         Box(Modifier.width(24.dp).fillMaxHeight(), contentAlignment = Alignment.Center) {
-            Box(Modifier.width(4.dp).fillMaxHeight()
-                .background(MaterialTheme.colorScheme.surfaceContainerHighest, RoundedCornerShape(2.dp)))
+            val lineColor = MaterialTheme.colorScheme.outlineVariant
+            Canvas(Modifier.width(4.dp).fillMaxHeight()) {
+                drawLine(
+                    color = lineColor,
+                    start = androidx.compose.ui.geometry.Offset(size.width / 2f, 0f),
+                    end = androidx.compose.ui.geometry.Offset(size.width / 2f, size.height),
+                    strokeWidth = 4.dp.toPx(),
+                    cap = StrokeCap.Round,
+                    pathEffect = PathEffect.dashPathEffect(
+                        floatArrayOf(4.dp.toPx(), 8.dp.toPx()),
+                    ),
+                )
+            }
         }
         Box(Modifier.weight(1f).padding(start = 12.dp), contentAlignment = Alignment.CenterStart) {
             Surface(

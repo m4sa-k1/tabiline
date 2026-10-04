@@ -20,7 +20,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,9 +46,21 @@ fun TabilineLaunchAnimation(
     val routeProgress = remember { Animatable(0f) }
     val exitProgress = remember { Animatable(0f) }
     val density = LocalDensity.current
+    var readyToAnimate by remember { mutableStateOf(started) }
+    var animationStarted by remember { mutableStateOf(false) }
 
     LaunchedEffect(started) {
-        if (!started) return@LaunchedEffect
+        if (started) readyToAnimate = true
+    }
+    LaunchedEffect(Unit) {
+        // A few vendor implementations never dispatch the platform splash exit
+        // callback. Never let that leave the branded overlay on screen forever.
+        delay(1_000)
+        readyToAnimate = true
+    }
+    LaunchedEffect(readyToAnimate) {
+        if (!readyToAnimate || animationStarted) return@LaunchedEffect
+        animationStarted = true
         // Some Android builds keep the outgoing splash surface for a few frames
         // after the callback. Holding this branded first frame prevents the
         // route animation from finishing behind that surface.
@@ -59,6 +74,11 @@ fun TabilineLaunchAnimation(
             targetValue = 1f,
             animationSpec = tween(durationMillis = 420, easing = LaunchEasing),
         )
+        onFinished()
+    }
+    LaunchedEffect(Unit) {
+        // Final safety net for interrupted or non-conforming animation clocks.
+        delay(4_500)
         onFinished()
     }
 
