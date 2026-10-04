@@ -3,6 +3,7 @@ package io.github.m4sak1.tabiline.ui.theme
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -11,6 +12,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontSynthesis
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.m4sak1.tabiline.R
@@ -84,7 +87,12 @@ private val TabilineTypography = Typography().run {
 }
 
 private fun TextStyle.withFont(weight: FontWeight = fontWeight ?: FontWeight.Normal) =
-    copy(fontFamily = RobotoFlex, fontWeight = weight)
+    copy(
+        fontFamily = RobotoFlex,
+        fontWeight = weight,
+        fontStyle = FontStyle.Normal,
+        fontSynthesis = FontSynthesis.None,
+    )
 
 @Composable
 fun TabilineTheme(preference: ThemePreference, accentPalette: AccentPalette, content: @Composable () -> Unit) {
@@ -119,6 +127,8 @@ fun TabilineTheme(preference: ThemePreference, accentPalette: AccentPalette, con
             medium = RoundedCornerShape(16.dp), large = RoundedCornerShape(20.dp),
             extraLarge = RoundedCornerShape(28.dp),
         ),
-        content = content,
-    )
+    ) {
+        // Plain Text composables also use the bundled family instead of an OEM font fallback.
+        ProvideTextStyle(value = TabilineTypography.bodyLarge, content = content)
+    }
 }
