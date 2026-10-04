@@ -82,9 +82,14 @@ fun LegDetailPopup(
                         Text(leg.serviceLabel, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleMedium)
                         val formatter = DateTimeFormatter.ofPattern("yyyy/M/d HH:mm")
                         DetailField(if (freeTime) "開始" else "出発", leg.departureLocal.format(formatter))
-                        if (!freeTime && leg.departurePlatform.isNotBlank()) DetailField("出発の乗り場", leg.departurePlatform)
+                        val flight = leg.mode == TransportMode.FLIGHT
+                        if (flight && leg.flightNumber.isNotBlank()) DetailField("便番号", leg.flightNumber)
+                        if (flight && leg.boardingGroup.isNotBlank()) DetailField("搭乗Group", leg.boardingGroup)
+                        if (flight && leg.departureTerminal.isNotBlank()) DetailField("出発ターミナル", leg.departureTerminal)
+                        if (!freeTime && leg.departurePlatform.isNotBlank()) DetailField(if (flight) "出発ゲート" else "出発の乗り場", leg.departurePlatform)
                         DetailField(if (freeTime) "終了" else "到着", leg.arrivalLocal.format(formatter))
-                        if (!freeTime && leg.arrivalPlatform.isNotBlank()) DetailField("到着の乗り場", leg.arrivalPlatform)
+                        if (flight && leg.arrivalTerminal.isNotBlank()) DetailField("到着ターミナル", leg.arrivalTerminal)
+                        if (!freeTime && leg.arrivalPlatform.isNotBlank()) DetailField(if (flight) "到着ゲート" else "到着の乗り場", leg.arrivalPlatform)
                         DetailField("タイムゾーン", if (leg.departureZoneId == leg.arrivalZoneId) leg.departureZoneId else "${leg.departureZoneId} → ${leg.arrivalZoneId}")
                         if (leg.memo.isNotBlank()) DetailField("メモ", leg.memo)
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {

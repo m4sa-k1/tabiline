@@ -102,6 +102,10 @@ fun LegEditorScreen(
     var arrivalPlace by remember(existing?.id) { mutableStateOf(existing?.arrivalPlace.orEmpty()) }
     var departurePlatform by remember(existing?.id) { mutableStateOf(existing?.departurePlatform.orEmpty()) }
     var arrivalPlatform by remember(existing?.id) { mutableStateOf(existing?.arrivalPlatform.orEmpty()) }
+    var departureTerminal by remember(existing?.id) { mutableStateOf(existing?.departureTerminal.orEmpty()) }
+    var arrivalTerminal by remember(existing?.id) { mutableStateOf(existing?.arrivalTerminal.orEmpty()) }
+    var boardingGroup by remember(existing?.id) { mutableStateOf(existing?.boardingGroup.orEmpty()) }
+    var flightNumber by remember(existing?.id) { mutableStateOf(existing?.flightNumber.orEmpty()) }
     var departureZone by remember(existing?.id) { mutableStateOf(existing?.departureZoneId ?: previous?.arrivalZoneId ?: defaultZone) }
     var arrivalZone by remember(existing?.id) { mutableStateOf(existing?.arrivalZoneId ?: departureZone) }
     var mode by remember(existing?.id) {
@@ -244,6 +248,12 @@ fun LegEditorScreen(
                     }
                 }
             }
+            if (mode == TransportMode.FLIGHT) {
+                EditorSection("フライト情報") {
+                    EditorField(flightNumber, { flightNumber = it }, "便番号", supporting = "例：NH540、JL123")
+                    EditorField(boardingGroup, { boardingGroup = it }, "搭乗Group", supporting = "例：2、A")
+                }
+            }
             if (isFreeTime) {
                 EditorSection("空き時間") {
                     EditorField(
@@ -263,13 +273,15 @@ fun LegEditorScreen(
                 EditorSection("出発") {
                     EditorField(departurePlace, { departurePlace = it }, "出発地", { Icon(Icons.Rounded.TripOrigin, null) })
                     DateTimeRow(departureDate, departureTime, { departureDate = it }, { departureTime = it })
-                    EditorField(departurePlatform, { departurePlatform = it }, "出発の乗り場", { Icon(Icons.Rounded.Signpost, null) }, "ホーム番号・ゲート・バースなど")
+                    if (mode == TransportMode.FLIGHT) EditorField(departureTerminal, { departureTerminal = it }, "出発ターミナル")
+                    EditorField(departurePlatform, { departurePlatform = it }, if (mode == TransportMode.FLIGHT) "出発ゲート" else "出発の乗り場", { Icon(Icons.Rounded.Signpost, null) })
                     EditorField(departureZone, { departureZone = it }, "出発地のタイムゾーン", isError = departureZoneId == null)
                 }
                 EditorSection("到着") {
                     EditorField(arrivalPlace, { arrivalPlace = it }, "到着地", { Icon(Icons.Rounded.LocationOn, null) })
                     DateTimeRow(arrivalDate, arrivalTime, { arrivalDate = it }, { arrivalTime = it })
-                    EditorField(arrivalPlatform, { arrivalPlatform = it }, "到着の乗り場", { Icon(Icons.Rounded.Signpost, null) }, "ホーム番号・ゲート・バースなど")
+                    if (mode == TransportMode.FLIGHT) EditorField(arrivalTerminal, { arrivalTerminal = it }, "到着ターミナル")
+                    EditorField(arrivalPlatform, { arrivalPlatform = it }, if (mode == TransportMode.FLIGHT) "到着ゲート" else "到着の乗り場", { Icon(Icons.Rounded.Signpost, null) })
                     EditorField(arrivalZone, { arrivalZone = it }, "到着地のタイムゾーン", isError = arrivalZoneId == null)
                 }
                 EditorSection("詳細") {
@@ -303,6 +315,10 @@ fun LegEditorScreen(
                         mode = mode,
                         trainType = trainType.takeIf { mode == TransportMode.TRAIN },
                         trainLine = trainLine.trim().takeIf { mode == TransportMode.TRAIN }.orEmpty(),
+                        departureTerminal = departureTerminal.trim().takeIf { mode == TransportMode.FLIGHT }.orEmpty(),
+                        arrivalTerminal = arrivalTerminal.trim().takeIf { mode == TransportMode.FLIGHT }.orEmpty(),
+                        boardingGroup = boardingGroup.trim().takeIf { mode == TransportMode.FLIGHT }.orEmpty(),
+                        flightNumber = flightNumber.trim().takeIf { mode == TransportMode.FLIGHT }.orEmpty(),
                         departurePlatform = if (isFreeTime) "" else departurePlatform.trim(),
                         arrivalPlatform = if (isFreeTime) "" else arrivalPlatform.trim(),
                         memo = if (isFreeTime) "" else memo.trim(),

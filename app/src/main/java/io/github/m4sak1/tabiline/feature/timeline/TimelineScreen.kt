@@ -60,6 +60,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.Modifier
@@ -78,10 +79,15 @@ import io.github.m4sak1.tabiline.core.model.TripWithLegs
 import io.github.m4sak1.tabiline.core.model.UserSettings
 import io.github.m4sak1.tabiline.ui.components.detailLabel
 import io.github.m4sak1.tabiline.ui.components.serviceLabel
+import io.github.m4sak1.tabiline.ui.components.departureBoardingLabel
 import io.github.m4sak1.tabiline.ui.components.CenterPopup
 import io.github.m4sak1.tabiline.ui.components.visual
 import java.time.Duration
 import java.time.LocalDate
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.HazeTint
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.hazeEffect
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -147,6 +153,8 @@ fun TimelineScreen(
     val timeColumnWidth = if (wideTimes) 88.dp else 62.dp
     val density = LocalDensity.current
     var headerHeight by remember { mutableStateOf(0.dp) }
+    val headerHaze = remember { HazeState() }
+    val surfaceColor = MaterialTheme.colorScheme.surface
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -155,6 +163,23 @@ fun TimelineScreen(
     ) { _ ->
         if (item == null || selectedDate == null) Box(Modifier.fillMaxSize().statusBarsPadding(), contentAlignment = Alignment.Center) { Text("読み込み中…") }
         else Box(Modifier.fillMaxSize()) {
+            // Capture only the scrolling list, never the foreground title or controls.
+            // The blur stays full strength behind controls and fades below their edge.
+            Box(Modifier.fillMaxWidth().height(headerHeight + 48.dp).zIndex(0.5f)
+                .hazeEffect(headerHaze) {
+                    backgroundColor = surfaceColor
+                    blurRadius = 24.dp
+                    noiseFactor = 0f
+                    tints = emptyList()
+                    fallbackTint = HazeTint(surfaceColor.copy(alpha = 0.85f))
+                    val fadeStart = with(density) { (headerHeight - 8.dp).coerceAtLeast(0.dp).toPx() }
+                    val fadeEnd = with(density) { (headerHeight + 48.dp).toPx() }
+                    mask = Brush.verticalGradient(
+                        colors = listOf(Color.Black, Color.Transparent),
+                        startY = fadeStart,
+                        endY = fadeEnd,
+                    )
+                })
             // The header floats above the full-window scrolling viewport.
             // Its height is initial content padding, never a clipping boundary.
             Column(Modifier.fillMaxWidth().zIndex(1f)
@@ -191,7 +216,7 @@ fun TimelineScreen(
             }
                 if (dayLegs.isNotEmpty()) {
                     LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier.fillMaxSize().hazeSource(headerHaze),
                         contentPadding = PaddingValues(start = 16.dp, top = headerHeight + 12.dp, end = 16.dp, bottom = 144.dp),
                     ) {
                         dayLegs.forEachIndexed { index, leg ->
@@ -384,14 +409,14 @@ private fun TimelineLeg(
                         )
                     } else {
                         val route = "${leg.departurePlace} → ${leg.arrivalPlace}"
-                        val hasPlatform = leg.departurePlatform.isNotBlank()
-                        val title = leg.departurePlatform.ifBlank { route }
+                        val hasPlatform = leg.departureBoardingLabel.isNotBlank()
+                        val title = leg.departureBoardingLabel.ifBlank { route }
                         Text(
                             title,
-                            fontSize = if (hasPlatform) 18.sp else 16.sp,
+                            fontSize = if (leg.mode == TransportMode.FLIGHT) 14.sp else if (hasPlatform) 18.sp else 16.sp,
                             lineHeight = 22.sp,
                             fontWeight = FontWeight.Bold,
-                            maxLines = 1,
+                            maxLines = if (leg.mode == TransportMode.FLIGHT) 2 else 1,
                             overflow = TextOverflow.Ellipsis,
                         )
                         val type = leg.serviceLabel

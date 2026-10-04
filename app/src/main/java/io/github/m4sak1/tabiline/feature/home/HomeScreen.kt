@@ -49,6 +49,7 @@ import io.github.m4sak1.tabiline.core.model.TransportMode
 import io.github.m4sak1.tabiline.core.model.TripWithLegs
 import io.github.m4sak1.tabiline.ui.components.detailLabel
 import io.github.m4sak1.tabiline.ui.components.serviceLabel
+import io.github.m4sak1.tabiline.ui.components.departureBoardingLabel
 import io.github.m4sak1.tabiline.ui.components.visual
 import java.time.Duration
 import java.time.Instant
@@ -178,8 +179,8 @@ private fun HeroCard(leg: TransportLeg, remaining: String, onClick: () -> Unit) 
             }
             Text(
                 if (isFreeTime) leg.departurePlace.ifBlank { "空き時間" }
-                else leg.departurePlatform.ifBlank { "乗り場未設定" },
-                fontSize = 30.sp,
+                else leg.departureBoardingLabel.ifBlank { "乗り場未設定" },
+                fontSize = if (leg.mode == TransportMode.FLIGHT) 18.sp else 30.sp,
                 lineHeight = 38.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.offset(24.dp, 140.dp),
@@ -241,7 +242,7 @@ private fun FutureLegRow(leg: TransportLeg, first: Boolean, last: Boolean, onCli
                     fontWeight = FontWeight.Medium,
                 )
                 val type = leg.serviceLabel
-                val platform = leg.departurePlatform.takeIf(String::isNotBlank)
+                val platform = leg.departureBoardingLabel.takeIf(String::isNotBlank)
                 Text(
                     if (isFreeTime) listOf(leg.departurePlace.ifBlank { "空き時間" }, type).joinToString(" ・ ")
                     else listOfNotNull("${leg.departurePlace} → ${leg.arrivalPlace}", type, platform).joinToString(" ・ "),
