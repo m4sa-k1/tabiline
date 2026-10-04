@@ -79,7 +79,7 @@ class DepartureReminders(private val context: Context) {
             else "${leg.departurePlace} → ${leg.arrivalPlace}"
         val text = listOf(leg.serviceLabel, leg.departureBoardingLabel).filter(String::isNotBlank).joinToString(" ・ ")
         val notification = NotificationCompat.Builder(context, CHANNEL)
-            .setSmallIcon(R.drawable.ic_notification).setContentTitle("${leg.departureLocal.format(DateTimeFormatter.ofPattern("M/d(E) HH:mm", java.util.Locale.JAPANESE))} $route")
+            .setSmallIcon(R.drawable.ic_notification).setContentTitle("${leg.departureLocal.format(DateTimeFormatter.ofPattern("HH:mm"))} $route")
             .setContentText(text).setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setContentIntent(open).setAutoCancel(true).setOnlyAlertOnce(true)
             .setCategory(NotificationCompat.CATEGORY_REMINDER).setPriority(NotificationCompat.PRIORITY_HIGH)

@@ -371,8 +371,6 @@ private fun TabilineRoot(
             }
         }
 
-        }
-
         addingTripId?.let { tripId ->
             key(tripId) {
                 var isSaving by remember { mutableStateOf(false) }
@@ -386,7 +384,7 @@ private fun TabilineRoot(
 
                 EditorSlideTransition(
                     visible = addScreenVisible,
-                    modifier = Modifier.zIndex(3f),
+                    modifier = Modifier.zIndex(1f),
                     onProgress = { addScreenProgress = it },
                     onHidden = {
                         addingTripId = null
@@ -428,6 +426,8 @@ private fun TabilineRoot(
                     )
                 }
             }
+        }
+
         if (destination != null && (addingTripId == null || addScreenProgress < 0.999f)) {
             val barDestination = destination
             val today = java.time.LocalDate.now()
