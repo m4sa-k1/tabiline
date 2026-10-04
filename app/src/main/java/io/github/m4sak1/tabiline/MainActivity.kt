@@ -60,7 +60,7 @@ import io.github.m4sak1.tabiline.feature.timeline.EmptyTimelineScreen
 import io.github.m4sak1.tabiline.feature.timeline.TimelineScreen
 import io.github.m4sak1.tabiline.ui.components.AppDestination
 import io.github.m4sak1.tabiline.ui.components.AppBottomBar
-import io.github.m4sak1.tabiline.ui.components.BubbleReveal
+import io.github.m4sak1.tabiline.ui.components.EditorSlideTransition
 import io.github.m4sak1.tabiline.ui.components.TabilineLaunchAnimation
 import io.github.m4sak1.tabiline.ui.theme.TabilineTheme
 
@@ -89,6 +89,14 @@ class MainActivity : ComponentActivity() {
         MainViewModel.Factory((application as TabilineApplication).container)
     }
 
+    private var notificationOpen by mutableStateOf(0)
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.action == io.github.m4sak1.tabiline.notifications.DepartureReminders.ACTION_TODAY) notificationOpen++
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -112,12 +120,14 @@ class MainActivity : ComponentActivity() {
             window.isNavigationBarContrastEnforced = false
         }
         requestHighRefreshRate()
-        setContent { TabilineRoot(viewModel, window, systemSplashExited) }
+        if (intent.action == io.github.m4sak1.tabiline.notifications.DepartureReminders.ACTION_TODAY) notificationOpen++
+        setContent { TabilineRoot(viewModel, window, systemSplashExited, notificationOpen) }
     }
 
     override fun onResume() {
         super.onResume()
         requestHighRefreshRate()
+        (application as TabilineApplication).container.refreshReminders()
     }
 
     private fun requestHighRefreshRate() {
@@ -147,6 +157,7 @@ private fun TabilineRoot(
     viewModel: MainViewModel,
     window: Window,
     systemSplashExited: Boolean,
+    notificationOpen: Int,
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     TabilineTheme(settings.theme, settings.accentPalette) {
@@ -176,6 +187,19 @@ private fun TabilineRoot(
         var addScreenProgress by remember { mutableFloatStateOf(0f) }
         var popupBlurProgress by remember { mutableFloatStateOf(0f) }
         var launchAnimationVisible by remember { mutableStateOf(true) }
+        LaunchedEffect(notificationOpen) {
+            if (notificationOpen > 0) {
+                tripDialog = null
+                showNewTrip = false
+                gapTypePicker = null
+                detailLeg = null
+                settingsDialogSection = null
+                addingTripId = null
+                addScreenVisible = false
+                popupBlurProgress = 0f
+                nav.navigate("home") { popUpTo("home") { inclusive = true }; launchSingleTop = true }
+            }
+        }
         LaunchedEffect(trips) {
             if (trips.none { it.trip.id == selectedTripId }) {
                 val today = java.time.LocalDate.now()
@@ -357,13 +381,10 @@ private fun TabilineRoot(
                 val closeEditor = {
                     if (!isSaving) addScreenVisible = false
                 }
-                BackHandler(enabled = addScreenVisible) { closeEditor() }
 
-                BubbleReveal(
+                EditorSlideTransition(
                     visible = addScreenVisible,
                     modifier = Modifier.zIndex(1f),
-                    originXFraction = 0.78f,
-                    originYFraction = 0.91f,
                     onProgress = { addScreenProgress = it },
                     onHidden = {
                         addingTripId = null

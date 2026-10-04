@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -154,6 +155,7 @@ fun TimelineScreen(
     val density = LocalDensity.current
     var headerHeight by remember { mutableStateOf(0.dp) }
     val headerHaze = remember { HazeState() }
+    val timelineScroll = rememberLazyListState()
     val surfaceColor = MaterialTheme.colorScheme.surface
 
     Scaffold(
@@ -167,6 +169,8 @@ fun TimelineScreen(
             // The blur stays full strength behind controls and fades below their edge.
             Box(Modifier.fillMaxWidth().height(headerHeight + 48.dp).zIndex(0.5f)
                 .hazeEffect(headerHaze) {
+                    alpha = if (dayLegs.isEmpty()) 0f else if (timelineScroll.firstVisibleItemIndex > 0) 1f else
+                        (timelineScroll.firstVisibleItemScrollOffset / with(density) { 48.dp.toPx() }).coerceIn(0f, 1f)
                     backgroundColor = surfaceColor
                     blurRadius = 24.dp
                     noiseFactor = 0f
@@ -209,6 +213,11 @@ fun TimelineScreen(
                     }
                 }
                 if (dates.size > 1) RelativeDaySelector(dates, if (showAll) null else selectedDate) {
+                    if (it == null && !showAll) {
+                        // Reset on the same remeasure as the data change, rather than
+                        // retaining the selected day's first visible item by its key.
+                        timelineScroll.requestScrollToItem(0)
+                    }
                     showAll = it == null
                     if (it != null) selectedEpochDay = it.toEpochDay()
                 }
@@ -216,6 +225,7 @@ fun TimelineScreen(
             }
                 if (dayLegs.isNotEmpty()) {
                     LazyColumn(
+                        state = timelineScroll,
                         modifier = Modifier.fillMaxSize().hazeSource(headerHaze),
                         contentPadding = PaddingValues(start = 16.dp, top = headerHeight + 12.dp, end = 16.dp, bottom = 144.dp),
                     ) {

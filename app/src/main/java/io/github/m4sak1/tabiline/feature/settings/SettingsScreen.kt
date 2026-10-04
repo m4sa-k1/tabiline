@@ -43,6 +43,7 @@ import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.SettingsBrightness
 import androidx.compose.material.icons.rounded.SyncAlt
+import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -76,8 +77,10 @@ enum class SettingsSection(
     val icon: ImageVector,
 ) {
     ACCENT("accent", "アクセントカラー", "アプリの色を選択", Icons.Rounded.Palette),
+    ICON("icon", "アプリアイコン", "アイコンと起動アニメーションの色", Icons.Rounded.Palette),
     REGION("region", "デフォルト地域", "新しい移動のタイムゾーン", Icons.Rounded.Language),
     TRANSFER("transfer", "乗り継ぎ警告", "交通手段ごとの警告時間", Icons.Rounded.SyncAlt),
+    NOTIFICATIONS("notifications", "出発通知", "オン・オフと交通手段ごとの通知時間", Icons.Rounded.Notifications),
     ABOUT("about", "Tabilineについて", "バージョンとアプリ情報", Icons.Rounded.Info),
     ;
 
@@ -194,6 +197,7 @@ fun SettingsDetailPopup(
                     }
 
                     when (section) {
+                        SettingsSection.ICON -> AppIconSettings()
                         SettingsSection.ACCENT -> SettingsCard {
                             AccentPalette.entries.chunked(2).forEach { row ->
                                 Row(
@@ -246,6 +250,7 @@ fun SettingsDetailPopup(
                             ThresholdStepper("その他", settings.otherMinutes) { onUpdate(settings.copy(otherMinutes = it)) }
                         }
 
+                        SettingsSection.NOTIFICATIONS -> NotificationSettings(settings, onUpdate)
                         SettingsSection.ABOUT -> AboutCard()
                     }
                 }
@@ -342,6 +347,7 @@ private fun ThemeSelector(selected: ThemePreference, onSelect: (ThemePreference)
 }
 
 @Composable
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 private fun SettingsScaffold(content: @Composable ColumnScope.() -> Unit) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -483,7 +489,7 @@ private fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
 }
 
 @Composable
-private fun ThresholdStepper(label: String, value: Int, onValue: (Int) -> Unit) {
+internal fun ThresholdStepper(label: String, value: Int, onValue: (Int) -> Unit) {
     Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceContainerLowest) {
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp),

@@ -31,6 +31,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import io.github.m4sak1.tabiline.R
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
@@ -46,6 +50,8 @@ fun TabilineLaunchAnimation(
     val routeProgress = remember { Animatable(0f) }
     val exitProgress = remember { Animatable(0f) }
     val density = LocalDensity.current
+    val context = LocalContext.current
+    val iconColor = remember { AppIconChoice.current(context).color }
     var readyToAnimate by remember { mutableStateOf(started) }
     var animationStarted by remember { mutableStateOf(false) }
 
@@ -96,8 +102,8 @@ fun TabilineLaunchAnimation(
                 modifier = Modifier.size(width = 112.dp, height = 168.dp),
                 contentAlignment = Alignment.TopCenter,
             ) {
-                val primary = MaterialTheme.colorScheme.primary
-                val quiet = MaterialTheme.colorScheme.primaryContainer
+                val primary = iconColor
+                val quiet = iconColor.copy(alpha = 0.25f)
                 Canvas(Modifier.fillMaxSize()) {
                     val x = size.width / 2f
                     val top = with(density) { 22.dp.toPx() }
@@ -133,14 +139,14 @@ fun TabilineLaunchAnimation(
                         .offset(y = 42.dp + 76.dp * routeProgress.value)
                         .size(64.dp)
                         .clip(RoundedCornerShape(22.dp))
-                        .background(MaterialTheme.colorScheme.primary),
+                        .background(iconColor),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Train,
+                        painter = painterResource(R.drawable.ic_notification),
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(34.dp),
+                        tint = Color.White,
+                        modifier = Modifier.size(64.dp),
                     )
                 }
             }

@@ -26,13 +26,11 @@ private const val bubbleMotionMillis = 360
 private const val centerPopupMotionMillis = 280
 private val bubbleEasing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
 
-/** Reveals full-size content through a circle growing from the fixed add-button position. */
+/** Slides the full-size editor vertically without scaling, fading or overshoot. */
 @Composable
-fun BubbleReveal(
+fun EditorSlideTransition(
     visible: Boolean,
     modifier: Modifier = Modifier,
-    originXFraction: Float = 0.78f,
-    originYFraction: Float = 0.91f,
     onProgress: (Float) -> Unit = {},
     onHidden: () -> Unit = {},
     content: @Composable BoxScope.() -> Unit,
@@ -43,7 +41,7 @@ fun BubbleReveal(
         onProgress(progress.value)
         progress.animateTo(
             targetValue = if (visible) 1f else 0f,
-            animationSpec = tween(bubbleMotionMillis, easing = LinearEasing),
+            animationSpec = tween(240, easing = bubbleEasing),
         ) { onProgress(value) }
         if (!visible) onHidden()
     }
@@ -51,19 +49,8 @@ fun BubbleReveal(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .drawWithContent {
-                val origin = Offset(
-                    x = size.width * originXFraction,
-                    y = size.height * originYFraction,
-                )
-                val farthestX = max(origin.x, size.width - origin.x)
-                val farthestY = max(origin.y, size.height - origin.y)
-                val maximumRadius = hypot(farthestX, farthestY)
-                val radius = maximumRadius * progress.value
-                val path = Path().apply {
-                    addOval(Rect(origin - Offset(radius, radius), origin + Offset(radius, radius)))
-                }
-                clipPath(path) { this@drawWithContent.drawContent() }
+            .graphicsLayer {
+                translationY = size.height * (1f - progress.value)
             },
         content = content,
     )

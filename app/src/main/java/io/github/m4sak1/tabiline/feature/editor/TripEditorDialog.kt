@@ -1,6 +1,6 @@
 package io.github.m4sak1.tabiline.feature.editor
 
-import android.app.DatePickerDialog
+import io.github.m4sak1.tabiline.ui.components.AppDatePopup
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -39,6 +39,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import io.github.m4sak1.tabiline.core.model.Trip
 import io.github.m4sak1.tabiline.ui.components.CenterPopup
+import io.github.m4sak1.tabiline.ui.components.DiscardChangesDialog
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -59,15 +60,27 @@ fun TripEditorDialog(
     var closing by remember { mutableStateOf(false) }
     var pendingSave by remember { mutableStateOf<Trip?>(null) }
     val valid = name.isNotBlank() && !end.isBefore(start)
+    val draft = listOf(name, start, end, note)
+    val initialDraft = remember(existing) { draft }
+    var confirmDiscard by remember { mutableStateOf(false) }
+    var discardApproved by remember { mutableStateOf(false) }
 
     fun closeAfterMotion(trip: Trip? = null) {
         if (closing) return
+        if (trip == null && draft != initialDraft && !discardApproved) {
+            confirmDiscard = true
+            return
+        }
         pendingSave = trip
         closing = true
         dialogVisible = false
     }
 
     BackHandler(enabled = dialogVisible && !closing) { closeAfterMotion() }
+    if (confirmDiscard) DiscardChangesDialog(
+        onKeepEditing = { confirmDiscard = false },
+        onDiscard = { confirmDiscard = false; discardApproved = true; closeAfterMotion() },
+    )
 
     CenterPopup(
         visible = dialogVisible,
@@ -159,14 +172,11 @@ fun TripEditorDialog(
 
 @Composable
 private fun TripDateCard(label: String, date: LocalDate, modifier: Modifier, onDate: (LocalDate) -> Unit) {
-    val context = LocalContext.current
+    var pickingDate by remember { mutableStateOf(false) }
+    if (pickingDate) AppDatePopup(date, { pickingDate = false }, onDate)
     Surface(
         modifier = modifier.clickable {
-            DatePickerDialog(
-                context,
-                { _, year, month, day -> onDate(LocalDate.of(year, month + 1, day)) },
-                date.year, date.monthValue - 1, date.dayOfMonth,
-            ).show()
+            pickingDate = true
         },
         shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surfaceContainerHighest,

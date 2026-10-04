@@ -8,6 +8,9 @@ import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -104,10 +107,10 @@ fun TabilineTheme(preference: ThemePreference, accentPalette: AccentPalette, con
     val accent = accentColors(accentPalette)
     val colors = if (dark) {
         DarkColors.copy(
-            primary = accent.medium,
-            onPrimary = Color.White,
-            primaryContainer = accent.strong,
-            onPrimaryContainer = Color.White,
+            primary = accent.soft,
+            onPrimary = Color(0xFF17151C),
+            primaryContainer = lerp(DarkColors.surface, accent.strong, 0.45f),
+            onPrimaryContainer = accent.soft,
             inversePrimary = accent.strong,
         )
     } else {
@@ -129,6 +132,8 @@ fun TabilineTheme(preference: ThemePreference, accentPalette: AccentPalette, con
         ),
     ) {
         // Plain Text composables also use the bundled family instead of an OEM font fallback.
-        ProvideTextStyle(value = TabilineTypography.bodyLarge, content = content)
+        CompositionLocalProvider(LocalContentColor provides colors.onSurface) {
+            ProvideTextStyle(value = TabilineTypography.bodyLarge, content = content)
+        }
     }
 }

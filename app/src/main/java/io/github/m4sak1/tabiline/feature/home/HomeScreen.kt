@@ -68,7 +68,7 @@ fun HomeScreen(
     onEditLeg: (Long, Long) -> Unit,
 ) {
     var clock by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    LaunchedEffect(Unit) { while (true) { delay(60_000); clock = System.currentTimeMillis() } }
+    LaunchedEffect(Unit) { while (true) { delay(1_000); clock = System.currentTimeMillis() } }
     val now = Instant.ofEpochMilli(clock)
     val today = LocalDate.now()
     val focus = trips.firstOrNull { !it.trip.isAutomatic && today in it.trip.startDate..it.trip.endDate }
@@ -288,10 +288,11 @@ private fun EmptyToday(modifier: Modifier) {
     }
 }
 
-private fun countdown(target: Instant, now: Instant): String {
+internal fun countdown(target: Instant, now: Instant): String {
+    val seconds = Duration.between(now, target).seconds.coerceAtLeast(0)
     val minutes = Duration.between(now, target).toMinutes().coerceAtLeast(0)
     return when {
-        minutes < 60 -> "あと ${minutes}分"
+        seconds < 3600 -> "あと ${seconds / 60}分${(seconds % 60).toString().padStart(2, '0')}秒"
         minutes < 24 * 60 -> "あと ${minutes / 60}時間${minutes % 60}分"
         else -> "あと ${minutes / 1440}日${minutes % 1440 / 60}時間"
     }

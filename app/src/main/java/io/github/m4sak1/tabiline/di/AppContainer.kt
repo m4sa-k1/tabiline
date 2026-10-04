@@ -12,6 +12,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import io.github.m4sak1.tabiline.notifications.DepartureReminders
 
 class AppContainer(context: Context) {
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -28,8 +31,17 @@ class AppContainer(context: Context) {
 
     val trips: TabilineRepository = OfflineTabilineRepository(database, database.dao())
     val settings: SettingsRepository = DataStoreSettingsRepository(context)
+    val reminders = DepartureReminders(context.applicationContext)
+
+    fun refreshReminders() {
+        applicationScope.launch { reminders.sync(trips.observeTrips().first(), settings.settings.first()) }
+    }
 
     init {
         applicationScope.launch { SampleDataSeeder(context, database).seedIfNeeded() }
+        applicationScope.launch {
+            combine(trips.observeTrips(), settings.settings) { trips, settings -> trips to settings }
+                .collect { (trips, settings) -> reminders.sync(trips, settings) }
+        }
     }
 }

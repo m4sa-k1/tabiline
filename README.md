@@ -17,8 +17,11 @@
 
 ### 🌟 できること
 
-- 🕒 **「今日」を即確認** — 次の移動、出発までの残り時間、乗り場、経路を大きく表示
-- 🧵 **一本のタイムライン** — 日をまたぐ旅程も日付ごとに整理して表示
+- 🕒 **「今日」を即確認** — 次の移動、乗り場、経路を大きく表示。出発まで1時間未満なら秒単位でカウントダウン
+- 🧵 **一本のタイムライン** — 日別・「すべて」を切り替え。夜行便は通過する各日に表示し、前・翌・翌々の時刻で整理
+- 🔎 **タップで詳細** — 詳細ポップアップから編集・削除へ。未保存の入力を閉じるときは確認します
+- ✈️ **フライト情報** — 出発・到着のターミナルとゲート、搭乗Group、便番号を保存。一覧は出発側の情報を表示
+- 🔔 **出発前にお知らせ** — 設定から任意で有効化し、交通手段ごとに通知時間を指定
 - 🚉 **幅広い移動手段** — 電車、飛行機、船、バス、徒歩、その他に対応
 - ☕ **空き時間も予定化** — 用事名と時間を、移動と同じ流れの中で管理
 - 🔁 **乗り継ぎを見える化** — 待ち時間を自動計算し、「待ち」「移動」を選択可能
@@ -38,6 +41,8 @@
 | **旅行** | 進行中・予定・終了済みの旅行と、単独スケジュールをまとめて管理します。 |
 | **設定** | テーマ、アクセントカラー、標準タイムゾーン、アプリ情報を変更できます。 |
 
+タイムライン上部はスクロール時に背後がぼけ、下端へ自然に透明になります。最上部ではぼかしをかけません。移動追加はシンプルな上下スライドで開閉します。
+
 ### 📝 登録できる情報
 
 - 出発時刻・到着時刻
@@ -45,6 +50,7 @@
 - 交通手段
 - 電車の路線名と種別（特急・急行・快速・普通・新幹線など）
 - ホーム番号、ゲート番号、バースなどの乗り場
+- 飛行機の出発・到着ターミナル／ゲート、搭乗Group、便番号
 - 列車名・便名、座席、予約番号などのメモ
 - 空き時間の用事名と開始・終了時刻
 
@@ -71,8 +77,15 @@
 
 - **テーマ**：ライト、ダーク、端末設定に合わせる
 - **アクセントカラー**：Purple、Blue、Green、Coral、Amber、Teal、Monoなど
+- **アプリアイコン**：Green、Purple、Blue、Teal、Coral、Monoの6色。変更時にアプリを自動で開き直し、起動アニメーションも同じ色に。アプリ内のアクセントカラーとは別設定です
 - **標準タイムゾーン**：初期値は東京。登録時の基準地域を変更可能
 - **乗り継ぎ警告**：短いと判断する待ち時間の基準を調整
+
+### 🔔 出発前の通知（任意）
+
+設定 → **出発通知**でオンにし、交通手段ごとに何分前に通知するか選べます（初期状態はオフ、0分は出発時刻）。通知をタップすると「今日」が開きます。空き時間は開始前の通知です。
+
+Androidの通知許可が必要です。「正確なアラーム」が未許可の場合や端末の省電力設定によって通知が遅れることがあります。設定済みの通知時刻を過ぎた予定は通知せず、移動の編集・削除や通知設定の変更で予約を更新します。端末再起動後も未来の通知を再登録します。アプリを強制停止した場合は再度開いてください。大切な出発は通知だけに頼らず確認してください。
 
 ### 🔒 データとプライバシー
 
@@ -103,6 +116,8 @@ Tabiline本体のソースコード、デザイン、画像、文書などの権
 
 Roboto FlexとNoto Sans JPは、Tabiline本体とは別にSIL Open Font License 1.1の条件で使用しています。各ライセンス全文は[第三者ライセンス](app/src/main/assets/third_party_licenses)にあります。フォントのOFLはTabiline本体をオープンライセンスにするものではありません。
 
+背景ぼかしにはApache License 2.0のHazeを使用しています。Androidのバージョンによってはグラデーション表示に切り替わります。
+
 ---
 
 ## 🇬🇧 English
@@ -115,8 +130,12 @@ Large time displays, mode-specific icons, automatic connection calculations, and
 
 ### 🌟 Highlights
 
-- 🕒 **Today at a glance** — see the next journey, countdown, platform, and route prominently
-- 🧵 **One continuous timeline** — browse multi-day itineraries one day at a time
+- 🔔 **Optional departure reminders** — enable in Settings → departure notifications (off by default), choose a lead time per transport mode, and tap a notification to open Today. Zero minutes means departure time; free-time entries use their start time. Notification permission is required. Without exact-alarm access, or under battery restrictions, reminders may be delayed. Past reminder times are skipped; future reminders are updated after edits and restored after reboot. Reopen the app after force-stopping it, and do not rely solely on notifications for important departures.
+
+- 🕒 **Today at a glance** — see the next journey, platform and route, with a seconds countdown below one hour
+- 🧵 **One continuous timeline** — switch between individual days and All; overnight journeys appear on each day they span with relative-day time labels
+- 🔎 **Details first** — tap an entry for a detail popup, then edit or delete; discarding unsaved trip or journey changes requires confirmation
+- ✈️ **Flight details** — save both terminals and gates, boarding group and flight number; lists show departure-side boarding information
 - 🚉 **Many transport modes** — train, flight, ferry, bus, walking, and other
 - ☕ **Free-time entries** — place activities and breaks naturally between journeys
 - 🔁 **Clear connections** — calculate gaps automatically and mark them as waiting or moving
@@ -143,6 +162,7 @@ Large time displays, mode-specific icons, automatic connection calculations, and
 - Transport mode
 - Train line name and service type, such as limited express, rapid, local, or Shinkansen
 - Platform, gate, berth, or another boarding location
+- Departure/arrival airport terminals and gates, boarding group, and flight number
 - Train/flight name, seat, booking reference, and other notes
 - Activity name and start/end time for free-time entries
 
@@ -169,6 +189,7 @@ No trip yet? Save the journey without assigning it. Tabiline creates a standalon
 
 - **Theme:** light, dark, or follow the device
 - **Accent color:** Purple, Blue, Green, Coral, Amber, Teal, Mono, and more
+- **App icon:** Green, Purple, Blue, Teal, Coral, or Mono. Changing it automatically reopens the app and also colors the launch animation; this is independent of the in-app accent palette. Launchers may take a moment to refresh the icon.
 - **Default time zone:** Tokyo initially; choose the region used for new entries
 - **Connection warning:** adjust the threshold for a tight connection
 
@@ -200,3 +221,5 @@ For unresolved problems and feature ideas, visit [GitHub Issues](https://github.
 Except for identified third-party materials, all rights in the Tabiline source code, design, artwork, and documentation are reserved by **@m4sak1**. The official APK may be used for personal, non-commercial purposes. Copying, modifying, redistributing, or selling the source code or APK requires the rights holder's prior written permission. See [LICENSE](LICENSE) for the full terms.
 
 Roboto Flex and Noto Sans JP are used separately under the SIL Open Font License 1.1. Their complete license texts are stored under [Third-party licenses](app/src/main/assets/third_party_licenses). The fonts' OFL terms do not make Tabiline itself open source.
+
+Background blur uses Haze under Apache License 2.0, with a gradient fallback on older Android versions. The timeline header fades its blur into the content while scrolling; blur is disabled at the very top. The add-journey screen uses a simple vertical slide transition.
