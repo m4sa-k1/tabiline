@@ -6,13 +6,18 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDropDown
@@ -34,12 +39,12 @@ import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.TextField
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -102,71 +107,71 @@ fun LegEditorScreen(
         arrivalInstant != null && arrivalInstant > departureInstant
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(if (existing == null) "移動を追加" else "移動を編集") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Rounded.Close, "閉じる") } },
-                actions = {
-                    if (existing != null && onDelete != null) IconButton(onClick = { confirmDelete = true }) {
-                        Icon(Icons.Rounded.Delete, "削除")
-                    }
-                },
-            )
-        },
+        modifier = Modifier.statusBarsPadding(),
     ) { padding ->
         Column(
             Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(PaddingValues(16.dp)),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text("交通手段", style = MaterialTheme.typography.titleLarge)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TransportMode.entries.forEach { value ->
-                    val visual = value.visual()
-                    FilterChip(
-                        selected = mode == value, onClick = { mode = value },
-                        label = { Text(value.label) }, leadingIcon = { Icon(visual.icon, null) },
-                    )
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                IconButton(onClick = onBack) { Icon(Icons.Rounded.Close, "閉じる") }
+                Column(Modifier.weight(1f).padding(start = 8.dp)) {
+                    Text(if (existing == null) "移動を追加" else "移動を編集", style = MaterialTheme.typography.headlineMedium)
+                    Text("時刻と乗り場をまとめて登録", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                if (existing != null && onDelete != null) IconButton(onClick = { confirmDelete = true }) {
+                    Icon(Icons.Rounded.Delete, "削除", tint = MaterialTheme.colorScheme.error)
                 }
             }
-            if (mode == TransportMode.TRAIN) {
-                ExposedDropdownMenuBox(expanded = trainTypeMenu, onExpandedChange = { trainTypeMenu = it }) {
-                    TextField(
-                        value = trainType.label, onValueChange = {}, readOnly = true,
-                        label = { Text("電車の種別") },
-                        trailingIcon = { Icon(Icons.Rounded.ArrowDropDown, null) },
-                        modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
-                    )
-                    ExposedDropdownMenu(expanded = trainTypeMenu, onDismissRequest = { trainTypeMenu = false }) {
-                        TrainType.entries.forEach { value ->
-                            DropdownMenuItem(text = { Text(value.label) }, onClick = { trainType = value; trainTypeMenu = false })
+            EditorSection("交通手段") {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TransportMode.entries.forEach { value ->
+                        val visual = value.visual()
+                        FilterChip(
+                            selected = mode == value, onClick = { mode = value },
+                            label = { Text(value.label) }, leadingIcon = { Icon(visual.icon, null) },
+                        )
+                    }
+                }
+                if (mode == TransportMode.TRAIN) {
+                    ExposedDropdownMenuBox(expanded = trainTypeMenu, onExpandedChange = { trainTypeMenu = it }) {
+                        OutlinedTextField(
+                            value = trainType.label, onValueChange = {}, readOnly = true,
+                            label = { Text("電車の種別") },
+                            trailingIcon = { Icon(Icons.Rounded.ArrowDropDown, null) },
+                            shape = RoundedCornerShape(20.dp),
+                            modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+                        )
+                        ExposedDropdownMenu(expanded = trainTypeMenu, onDismissRequest = { trainTypeMenu = false }) {
+                            TrainType.entries.forEach { value ->
+                                DropdownMenuItem(text = { Text(value.label) }, onClick = { trainType = value; trainTypeMenu = false })
+                            }
                         }
                     }
                 }
             }
-            Text("出発", style = MaterialTheme.typography.titleLarge)
-            TextField(departurePlace, { departurePlace = it }, label = { Text("出発地") },
-                leadingIcon = { Icon(Icons.Rounded.TripOrigin, null) }, modifier = Modifier.fillMaxWidth())
-            DateTimeRow(departureDate, departureTime, { departureDate = it }, { departureTime = it })
-            TextField(departurePlatform, { departurePlatform = it }, label = { Text("出発の乗り場") },
-                supportingText = { Text("ホーム番号・ゲート・バースなど") }, leadingIcon = { Icon(Icons.Rounded.Signpost, null) }, modifier = Modifier.fillMaxWidth())
-            TextField(departureZone, { departureZone = it }, label = { Text("出発地のタイムゾーン") }, isError = departureZoneId == null, modifier = Modifier.fillMaxWidth())
-
-            Text("到着", style = MaterialTheme.typography.titleLarge)
-            TextField(arrivalPlace, { arrivalPlace = it }, label = { Text("到着地") },
-                leadingIcon = { Icon(Icons.Rounded.LocationOn, null) }, modifier = Modifier.fillMaxWidth())
-            DateTimeRow(arrivalDate, arrivalTime, { arrivalDate = it }, {
-                arrivalTime = it
-                if (arrivalDate == departureDate && !it.isAfter(departureTime)) arrivalDate = departureDate.plusDays(1)
-            })
-            TextField(arrivalPlatform, { arrivalPlatform = it }, label = { Text("到着の乗り場") },
-                supportingText = { Text("ホーム番号・ゲート・バースなど") }, leadingIcon = { Icon(Icons.Rounded.Signpost, null) }, modifier = Modifier.fillMaxWidth())
-            TextField(arrivalZone, { arrivalZone = it }, label = { Text("到着地のタイムゾーン") }, isError = arrivalZoneId == null, modifier = Modifier.fillMaxWidth())
-
-            TextField(
-                memo, { memo = it }, label = { Text("メモ") }, supportingText = { Text("列車名・便名、座席、予約番号など") },
-                leadingIcon = { Icon(Icons.AutoMirrored.Rounded.Notes, null) },
-                minLines = 2, modifier = Modifier.fillMaxWidth(),
-            )
+            EditorSection("出発") {
+                EditorField(departurePlace, { departurePlace = it }, "出発地", { Icon(Icons.Rounded.TripOrigin, null) })
+                DateTimeRow(departureDate, departureTime, { departureDate = it }, { departureTime = it })
+                EditorField(departurePlatform, { departurePlatform = it }, "出発の乗り場", { Icon(Icons.Rounded.Signpost, null) }, "ホーム番号・ゲート・バースなど")
+                EditorField(departureZone, { departureZone = it }, "出発地のタイムゾーン", isError = departureZoneId == null)
+            }
+            EditorSection("到着") {
+                EditorField(arrivalPlace, { arrivalPlace = it }, "到着地", { Icon(Icons.Rounded.LocationOn, null) })
+                DateTimeRow(arrivalDate, arrivalTime, { arrivalDate = it }, {
+                    arrivalTime = it
+                    if (arrivalDate == departureDate && !it.isAfter(departureTime)) arrivalDate = departureDate.plusDays(1)
+                })
+                EditorField(arrivalPlatform, { arrivalPlatform = it }, "到着の乗り場", { Icon(Icons.Rounded.Signpost, null) }, "ホーム番号・ゲート・バースなど")
+                EditorField(arrivalZone, { arrivalZone = it }, "到着地のタイムゾーン", isError = arrivalZoneId == null)
+            }
+            EditorSection("詳細") {
+                OutlinedTextField(
+                    memo, { memo = it }, label = { Text("メモ") }, supportingText = { Text("列車名・便名、座席、予約番号など") },
+                    leadingIcon = { Icon(Icons.AutoMirrored.Rounded.Notes, null) }, shape = RoundedCornerShape(20.dp),
+                    minLines = 2, modifier = Modifier.fillMaxWidth(),
+                )
+            }
             if (!valid) Text(
                 "出発地・到着地と有効なタイムゾーンを入力し、到着を出発より後にしてください。",
                 color = MaterialTheme.colorScheme.error,
@@ -191,7 +196,8 @@ fun LegEditorScreen(
                         sortOrder = existing?.sortOrder ?: 0,
                     ))
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().height(64.dp),
+                shape = RoundedCornerShape(22.dp),
             ) { Icon(Icons.Rounded.Check, null); Text("保存", Modifier.padding(start = 8.dp)) }
         }
     }
@@ -204,6 +210,40 @@ fun LegEditorScreen(
 }
 
 @Composable
+private fun EditorSection(title: String, content: @Composable ColumnScope.() -> Unit) {
+    Surface(shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
+        Column(
+            Modifier.fillMaxWidth().padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(title, style = MaterialTheme.typography.titleLarge)
+            content()
+        }
+    }
+}
+
+@Composable
+private fun EditorField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    leadingIcon: (@Composable () -> Unit)? = null,
+    supporting: String? = null,
+    isError: Boolean = false,
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        leadingIcon = leadingIcon,
+        supportingText = supporting?.let { { Text(it) } },
+        isError = isError,
+        shape = RoundedCornerShape(20.dp),
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+@Composable
 private fun DateTimeRow(
     date: LocalDate,
     time: LocalTime,
@@ -212,31 +252,29 @@ private fun DateTimeRow(
 ) {
     val context = LocalContext.current
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Box(Modifier.weight(1f).clickable {
-            DatePickerDialog(context, { _, y, m, d -> onDate(LocalDate.of(y, m + 1, d)) }, date.year, date.monthValue - 1, date.dayOfMonth).show()
-        }) {
-            TextField(
-                value = date.format(dateFormatter), onValueChange = {}, enabled = false,
-                label = { Text("日付") }, leadingIcon = { Icon(Icons.Rounded.Schedule, null) }, modifier = Modifier.fillMaxWidth(),
-                colors = dateTimeFieldColors(),
-            )
+        Surface(
+            onClick = { DatePickerDialog(context, { _, y, m, d -> onDate(LocalDate.of(y, m + 1, d)) }, date.year, date.monthValue - 1, date.dayOfMonth).show() },
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerHighest,
+        ) {
+            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Icon(Icons.Rounded.Schedule, null, Modifier.size(20.dp))
+                Text("日付", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(date.format(dateFormatter), style = MaterialTheme.typography.titleSmall)
+            }
         }
-        Box(Modifier.weight(1f).clickable {
-            TimePickerDialog(context, { _, h, m -> onTime(LocalTime.of(h, m)) }, time.hour, time.minute, true).show()
-        }) {
-            TextField(
-                value = time.format(timeFormatter), onValueChange = {}, enabled = false,
-                label = { Text("時刻") }, leadingIcon = { Icon(Icons.Rounded.Schedule, null) }, modifier = Modifier.fillMaxWidth(),
-                colors = dateTimeFieldColors(),
-            )
+        Surface(
+            onClick = { TimePickerDialog(context, { _, h, m -> onTime(LocalTime.of(h, m)) }, time.hour, time.minute, true).show() },
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerHighest,
+        ) {
+            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Icon(Icons.Rounded.Schedule, null, Modifier.size(20.dp))
+                Text("時刻", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(time.format(timeFormatter), style = MaterialTheme.typography.titleSmall)
+            }
         }
     }
 }
-
-@Composable
-private fun dateTimeFieldColors() = TextFieldDefaults.colors(
-    disabledTextColor = MaterialTheme.colorScheme.onSurface,
-    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-    disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-    disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-)

@@ -131,7 +131,7 @@ fun TimelineScreen(
                 }
             }
             if (dates.size > 1) RelativeDaySelector(dates, selectedDate) { selectedEpochDay = it.toEpochDay() }
-            if (dayLegs.isEmpty()) EmptyDay(onAddLeg)
+            if (dayLegs.isEmpty()) EmptyDay()
             else LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 104.dp),
@@ -359,11 +359,12 @@ private fun TimelineGap(minutes: Long, threshold: Int) {
 }
 
 @Composable
-private fun EmptyDay(onAddLeg: () -> Unit) {
+private fun EmptyDay() {
     Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("(;-;)", style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.primary)
             Text("この日の移動はありません", style = MaterialTheme.typography.headlineSmall)
-            FloatingActionButton(onClick = onAddLeg, modifier = Modifier.padding(top = 16.dp)) { Icon(Icons.Rounded.Add, "移動を追加") }
+            Text("追加するとタイムラインに表示されます", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

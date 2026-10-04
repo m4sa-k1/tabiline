@@ -80,7 +80,11 @@ fun AppBottomBar(
                         } else {
                             Text(
                                 text = addText,
-                                fontSize = 18.sp,
+                                fontSize = when {
+                                    addText.length >= 10 -> 13.sp
+                                    addText.length >= 7 -> 15.sp
+                                    else -> 18.sp
+                                },
                                 fontWeight = FontWeight.SemiBold,
                                 maxLines = 1,
                             )
