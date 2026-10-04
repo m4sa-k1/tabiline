@@ -1,4 +1,8 @@
-# 🚆 Tabiline
+<p align="center">
+  <img src="docs/images/app-icon.svg" alt="Tabiline アプリアイコン / App icon" width="112" height="112">
+</p>
+
+<h1 align="center">Tabiline</h1>
 
 > **旅の移動を、一本の線に。**<br>
 > 電車・飛行機・船・バス・徒歩まで、旅行中の「次どう動く？」がひと目で分かるAndroidアプリです。
@@ -6,6 +10,14 @@
 [![Latest Release](https://img.shields.io/github/v/release/m4sa-k1/tabiline?label=Latest&color=675496)](https://github.com/m4sa-k1/tabiline/releases/latest)
 [![Android 8+](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)](#-対応環境)
 [![All Rights Reserved](https://img.shields.io/badge/License-All%20Rights%20Reserved-555)](LICENSE)
+
+<p align="center">
+  <a href="docs/images/tabiline-promo.png">
+    <img src="docs/images/tabiline-promo.png" alt="京都旅行のタイムラインと移動の詳細。乗り換え時間・ホーム移動・注意表示を確認できるTabilineの実画面 / Actual Tabiline screenshots showing a Kyoto itinerary, transfers, and journey details." width="100%">
+  </a>
+</p>
+
+<p align="center"><sub>実際のアプリ画面を使用しています。旅程・時刻は架空のサンプルです。<br>Actual app screenshots with a fictional sample itinerary and times.</sub></p>
 
 ## 🇯🇵 日本語
 
