@@ -7,6 +7,10 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -81,7 +85,46 @@ private fun TabilineRoot(viewModel: MainViewModel) {
             }
         }
 
-        NavHost(navController = nav, startDestination = "home") {
+        NavHost(
+            navController = nav,
+            startDestination = "home",
+            enterTransition = {
+                slideInHorizontally(
+                    initialOffsetX = { it / 14 },
+                    animationSpec = spring(
+                        dampingRatio = 0.9f,
+                        stiffness = Spring.StiffnessMedium,
+                    ),
+                )
+            },
+            exitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { -it / 18 },
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessMedium,
+                    ),
+                )
+            },
+            popEnterTransition = {
+                slideInHorizontally(
+                    initialOffsetX = { -it / 14 },
+                    animationSpec = spring(
+                        dampingRatio = 0.9f,
+                        stiffness = Spring.StiffnessMedium,
+                    ),
+                )
+            },
+            popExitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { it / 18 },
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessMedium,
+                    ),
+                )
+            },
+        ) {
             composable("home") {
                 HomeScreen(
                     trips = trips,

@@ -1,7 +1,6 @@
 package io.github.m4sak1.tabiline.feature.timeline
 
 import android.annotation.SuppressLint
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
@@ -189,62 +188,55 @@ private fun RelativeDaySelector(
     onSelect: (LocalDate) -> Unit,
 ) {
     val selectorWidth = (dates.size * 72 + (dates.size - 1) * 4).coerceAtMost(360).dp
+    val selectedIndex = dates.indexOf(selectedDate).coerceAtLeast(0)
+    val selectedOffset by animateDpAsState(
+        targetValue = (selectedIndex * 76).dp,
+        animationSpec = spring(
+            dampingRatio = 0.82f,
+            stiffness = Spring.StiffnessMedium,
+        ),
+        label = "day-indicator-position",
+    )
     Box(
         modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
         contentAlignment = Alignment.Center,
     ) {
-        LazyRow(
-            modifier = Modifier.width(selectorWidth),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            itemsIndexed(dates, key = { _, date -> date.toEpochDay() }) { index, date ->
-                val selected = date == selectedDate
-                val containerColor by animateColorAsState(
-                    targetValue = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer,
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioNoBouncy,
-                        stiffness = Spring.StiffnessMediumLow,
-                    ),
-                    label = "day-container",
-                )
-                val contentColor by animateColorAsState(
-                    targetValue = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer,
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioNoBouncy,
-                        stiffness = Spring.StiffnessMediumLow,
-                    ),
-                    label = "day-content",
-                )
-                val startRadius by animateDpAsState(
-                    targetValue = if (selected || index == 0) 22.dp else 5.dp,
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessMediumLow,
-                    ),
-                    label = "day-start-shape",
-                )
-                val endRadius by animateDpAsState(
-                    targetValue = if (selected || index == dates.lastIndex) 22.dp else 5.dp,
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessMediumLow,
-                    ),
-                    label = "day-end-shape",
-                )
-                Surface(
-                    onClick = { onSelect(date) },
-                    modifier = Modifier.size(width = 72.dp, height = 44.dp),
-                    shape = RoundedCornerShape(
-                        topStart = startRadius,
-                        bottomStart = startRadius,
-                        topEnd = endRadius,
-                        bottomEnd = endRadius,
-                    ),
-                    color = containerColor,
-                    contentColor = contentColor,
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text("${index + 1}", fontWeight = FontWeight.Bold)
+        Box(Modifier.width(selectorWidth).height(44.dp)) {
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                itemsIndexed(dates, key = { _, date -> "day-background-${date.toEpochDay()}" }) { index, _ ->
+                    Surface(
+                        modifier = Modifier.size(width = 72.dp, height = 44.dp),
+                        shape = RoundedCornerShape(
+                            topStart = if (index == 0) 22.dp else 5.dp,
+                            bottomStart = if (index == 0) 22.dp else 5.dp,
+                            topEnd = if (index == dates.lastIndex) 22.dp else 5.dp,
+                            bottomEnd = if (index == dates.lastIndex) 22.dp else 5.dp,
+                        ),
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                    ) {}
+                }
+            }
+            Surface(
+                modifier = Modifier.offset(x = selectedOffset).size(width = 72.dp, height = 44.dp),
+                shape = RoundedCornerShape(22.dp),
+                color = MaterialTheme.colorScheme.primary,
+                shadowElevation = 0.dp,
+                tonalElevation = 0.dp,
+            ) {}
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                itemsIndexed(dates, key = { _, date -> "day-control-${date.toEpochDay()}" }) { index, date ->
+                    val selected = date == selectedDate
+                    Surface(
+                        onClick = { onSelect(date) },
+                        modifier = Modifier.size(width = 72.dp, height = 44.dp),
+                        shape = RoundedCornerShape(22.dp),
+                        color = Color.Transparent,
+                        contentColor = if (selected) MaterialTheme.colorScheme.onPrimary
+                        else MaterialTheme.colorScheme.onPrimaryContainer,
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text("${index + 1}", fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }

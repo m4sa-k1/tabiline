@@ -1,6 +1,5 @@
 package io.github.m4sak1.tabiline.ui.components
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
@@ -50,10 +49,8 @@ fun LegCard(
 ) {
     val visual = leg.mode.visual()
     var dragY by remember { mutableFloatStateOf(0f) }
-    val container by animateColorAsState(
-        if (highlighted) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer,
-        label = "legColor",
-    )
+    val container = if (highlighted) MaterialTheme.colorScheme.primaryContainer
+    else MaterialTheme.colorScheme.surfaceContainer
     Card(
         onClick = onClick,
         modifier = modifier
