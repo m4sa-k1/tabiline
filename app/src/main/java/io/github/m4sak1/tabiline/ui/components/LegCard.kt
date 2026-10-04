@@ -80,7 +80,7 @@ fun LegCard(
                 Column(Modifier.weight(1f)) {
                     Text(
                         buildString {
-                            append(leg.mode.label)
+                            append(leg.mode.detailLabel)
                             leg.trainType?.let { append("・${it.label}") }
                         },
                         style = MaterialTheme.typography.labelLarge,

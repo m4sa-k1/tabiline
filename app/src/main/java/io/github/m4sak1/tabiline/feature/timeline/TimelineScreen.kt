@@ -63,6 +63,7 @@ import io.github.m4sak1.tabiline.core.model.TripWithLegs
 import io.github.m4sak1.tabiline.core.model.UserSettings
 import io.github.m4sak1.tabiline.ui.components.AppBottomBar
 import io.github.m4sak1.tabiline.ui.components.AppDestination
+import io.github.m4sak1.tabiline.ui.components.detailLabel
 import java.time.Duration
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -245,7 +246,7 @@ private fun TimelineLeg(leg: TransportLeg, onClick: () -> Unit, onMove: (Int) ->
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    val type = if (leg.mode == TransportMode.TRAIN) leg.trainType?.label ?: leg.mode.label else leg.mode.label
+                    val type = if (leg.mode == TransportMode.TRAIN) leg.trainType?.label ?: leg.mode.detailLabel else leg.mode.detailLabel
                     val detail = if (leg.departurePlatform.isBlank()) type else "${leg.departurePlace} → ${leg.arrivalPlace} ・ $type"
                     Text(detail, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Normal, color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1, overflow = TextOverflow.Ellipsis)

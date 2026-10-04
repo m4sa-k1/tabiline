@@ -20,14 +20,14 @@ import io.github.m4sak1.tabiline.core.model.ThemePreference
 
 private val LightColors = lightColorScheme(
     primary = Color(0xFF4A4459), onPrimary = Color(0xFFFFFFFF),
-    primaryContainer = Color(0xFFE7DFF8), onPrimaryContainer = Color(0xFF332D41),
+    primaryContainer = Color(0xFFE7DFF8), onPrimaryContainer = Color.Black,
     secondary = Color(0xFF48464D), secondaryContainer = Color(0xFFE4E1EA),
     onSecondaryContainer = Color(0xFF312F36), tertiaryContainer = Color(0xFFF0DEE2),
     onTertiaryContainer = Color(0xFF3A2D30), surface = Color(0xFFFAF8FE),
     surfaceContainerLowest = Color(0xFFFFFFFF), surfaceContainerLow = Color(0xFFF4F3F8),
     surfaceContainer = Color(0xFFEFEDF3), surfaceContainerHigh = Color(0xFFE9E7ED),
-    surfaceContainerHighest = Color(0xFFE3E2E7), onSurface = Color(0xFF1C1B1F),
-    onSurfaceVariant = Color(0xFF3D3A44), outline = Color(0xFF605D68),
+    surfaceContainerHighest = Color(0xFFE3E2E7), onSurface = Color.Black,
+    onSurfaceVariant = Color(0xFF303036), outline = Color(0xFF605D68),
     outlineVariant = Color(0xFFA09CA8), inverseSurface = Color(0xFF313034),
     inverseOnSurface = Color(0xFFF2F0F5), inversePrimary = Color(0xFFCAC3DC),
     error = Color(0xFFB3261E), onError = Color(0xFFFFFFFF),

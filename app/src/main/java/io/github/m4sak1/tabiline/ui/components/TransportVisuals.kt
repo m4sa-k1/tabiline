@@ -14,6 +14,9 @@ import io.github.m4sak1.tabiline.core.model.TransportMode
 
 data class TransportVisual(val icon: ImageVector, val color: Color, val container: Color)
 
+val TransportMode.detailLabel: String
+    get() = if (this == TransportMode.FERRY) "フェリー" else label
+
 @Composable
 fun TransportMode.visual(): TransportVisual = when (this) {
     TransportMode.TRAIN -> TransportVisual(Icons.Rounded.Train, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primaryContainer)

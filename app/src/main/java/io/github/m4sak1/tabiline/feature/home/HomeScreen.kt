@@ -19,7 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.CalendarMonth
-import androidx.compose.material.icons.rounded.Warning
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -49,6 +49,7 @@ import io.github.m4sak1.tabiline.core.model.TransportMode
 import io.github.m4sak1.tabiline.core.model.TripWithLegs
 import io.github.m4sak1.tabiline.ui.components.AppBottomBar
 import io.github.m4sak1.tabiline.ui.components.AppDestination
+import io.github.m4sak1.tabiline.ui.components.detailLabel
 import io.github.m4sak1.tabiline.ui.components.visual
 import java.time.Duration
 import java.time.Instant
@@ -128,7 +129,9 @@ fun HomeScreen(
                     )
                 }
                 if (following.isNotEmpty()) {
-                    val wait = Duration.between(hero.arrival, following.first().departure).toMinutes()
+                    val tightWait = (listOf(hero) + following).zipWithNext()
+                        .map { (before, after) -> Duration.between(before.arrival, after.departure).toMinutes() }
+                        .firstOrNull { it in 0..<15 }
                     item {
                         Column(Modifier.padding(top = 16.dp)) {
                             Text(
@@ -147,7 +150,7 @@ fun HomeScreen(
                                 )
                                 if (index < following.lastIndex) Spacer(Modifier.height(3.dp))
                             }
-                            if (wait in 0..<15) {
+                            tightWait?.let { wait ->
                                 TightTransferChip(wait, Modifier.padding(start = 8.dp, top = 16.dp))
                             }
                         }
@@ -212,7 +215,7 @@ private fun HeroCard(leg: TransportLeg, remaining: String, onClick: () -> Unit) 
                 modifier = Modifier.offset(24.dp, 186.dp),
             )
             val detail = buildList {
-                add(if (leg.mode == TransportMode.TRAIN) leg.trainType?.label ?: leg.mode.label else leg.mode.label)
+                add(if (leg.mode == TransportMode.TRAIN) leg.trainType?.label ?: leg.mode.detailLabel else leg.mode.detailLabel)
                 if (leg.memo.isNotBlank()) add(leg.memo)
             }.joinToString(" ・ ")
             Text(
@@ -251,7 +254,7 @@ private fun FutureLegRow(leg: TransportLeg, first: Boolean, last: Boolean, onCli
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium,
                 )
-                val type = if (leg.mode == TransportMode.TRAIN) leg.trainType?.label ?: leg.mode.label else leg.mode.label
+                val type = if (leg.mode == TransportMode.TRAIN) leg.trainType?.label ?: leg.mode.detailLabel else leg.mode.detailLabel
                 val platform = leg.departurePlatform.takeIf(String::isNotBlank)
                 Text(
                     listOfNotNull("${leg.departurePlace} → ${leg.arrivalPlace}", type, platform).joinToString(" ・ "),
@@ -267,7 +270,7 @@ private fun FutureLegRow(leg: TransportLeg, first: Boolean, last: Boolean, onCli
 private fun TightTransferChip(minutes: Long, modifier: Modifier = Modifier) {
     Surface(modifier = modifier, color = MaterialTheme.colorScheme.secondaryContainer, shape = RoundedCornerShape(16.dp)) {
         Row(Modifier.padding(horizontal = 12.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Rounded.Warning, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer)
+            Icon(Icons.Rounded.Check, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer)
             Text("次の乗り継ぎ 待ち ${minutes}分", Modifier.padding(start = 6.dp),
                 color = MaterialTheme.colorScheme.onSecondaryContainer, style = MaterialTheme.typography.labelLarge)
         }

@@ -11,6 +11,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TabilineDao {
+    @Query("SELECT COUNT(*) FROM trips")
+    suspend fun tripCount(): Int
+
     @Transaction
     @Query("SELECT * FROM trips ORDER BY startEpochDay ASC, createdAtMillis ASC")
     fun observeTrips(): Flow<List<TripWithLegsEntity>>
