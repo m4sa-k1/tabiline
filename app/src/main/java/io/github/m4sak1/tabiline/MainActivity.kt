@@ -4,17 +4,16 @@ import android.os.Bundle
 import android.os.Build
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -29,7 +28,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavType
@@ -48,6 +46,7 @@ import io.github.m4sak1.tabiline.feature.settings.SettingsScreen
 import io.github.m4sak1.tabiline.feature.timeline.TimelineScreen
 import io.github.m4sak1.tabiline.ui.components.AppDestination
 import io.github.m4sak1.tabiline.ui.components.AppBottomBar
+import io.github.m4sak1.tabiline.ui.components.BubbleReveal
 import io.github.m4sak1.tabiline.ui.theme.TabilineTheme
 
 private val footerFaces = listOf(
@@ -55,6 +54,18 @@ private val footerFaces = listOf(
     "(•‿•)", "(･ω･)", "(≧▽≦)", "(¬‿¬)", "(•̀ᴗ•́)و",
     "(╹▽╹)", "(ᵕ—ᴗ—)", "(｡•́︿•̀｡)",
 )
+
+private const val SCREEN_TRANSITION_MILLIS = 320
+private val emphasizedEasing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
+
+private fun routePosition(route: String?): Int = when (route) {
+    "home" -> 0
+    "trip/{tripId}" -> 1
+    "plans" -> 2
+    "settings" -> 3
+    "leg/{tripId}/{legId}" -> 4
+    else -> 0
+}
 
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels {
@@ -77,7 +88,34 @@ class MainActivity : ComponentActivity() {
             window.isStatusBarContrastEnforced = false
             window.isNavigationBarContrastEnforced = false
         }
+        requestHighRefreshRate()
         setContent { TabilineRoot(viewModel) }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        requestHighRefreshRate()
+    }
+
+    private fun requestHighRefreshRate() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return
+        window.decorView.post {
+            val display = window.decorView.display ?: return@post
+            val currentMode = display.mode
+            val refreshRate = display.supportedModes
+                .asSequence()
+                .filter {
+                    it.physicalWidth == currentMode.physicalWidth &&
+                        it.physicalHeight == currentMode.physicalHeight
+                }
+                .maxOfOrNull { it.refreshRate }
+                ?: display.supportedModes.maxOfOrNull { it.refreshRate }
+                ?: return@post
+            window.attributes = window.attributes.apply {
+                preferredDisplayModeId = 0
+                preferredRefreshRate = refreshRate
+            }
+        }
     }
 }
 
@@ -122,21 +160,14 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                 val opensFromAddButton = targetState.destination.route == "leg/{tripId}/{legId}" &&
                     targetState.arguments?.getLong("legId") == 0L
                 if (opensFromAddButton) {
-                    scaleIn(
-                        initialScale = 0.12f,
-                        transformOrigin = TransformOrigin(0.78f, 0.9f),
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioNoBouncy,
-                            stiffness = Spring.StiffnessMedium,
-                        ),
-                    )
+                    EnterTransition.None
                 } else {
+                    val direction = if (
+                        routePosition(targetState.destination.route) >= routePosition(initialState.destination.route)
+                    ) 1 else -1
                     slideInHorizontally(
-                        initialOffsetX = { it / 14 },
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioNoBouncy,
-                            stiffness = Spring.StiffnessMedium,
-                        ),
+                        initialOffsetX = { direction * it },
+                        animationSpec = tween(SCREEN_TRANSITION_MILLIS, easing = emphasizedEasing),
                     )
                 }
             },
@@ -144,45 +175,42 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                 val opensFromAddButton = targetState.destination.route == "leg/{tripId}/{legId}" &&
                     targetState.arguments?.getLong("legId") == 0L
                 if (opensFromAddButton) ExitTransition.None
-                else slideOutHorizontally(
-                        targetOffsetX = { -it / 18 },
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioNoBouncy,
-                            stiffness = Spring.StiffnessMedium,
-                        ),
+                else {
+                    val direction = if (
+                        routePosition(targetState.destination.route) >= routePosition(initialState.destination.route)
+                    ) 1 else -1
+                    slideOutHorizontally(
+                        targetOffsetX = { -direction * it },
+                        animationSpec = tween(SCREEN_TRANSITION_MILLIS, easing = emphasizedEasing),
                     )
+                }
             },
             popEnterTransition = {
                 val closesIntoAddButton = initialState.destination.route == "leg/{tripId}/{legId}" &&
                     initialState.arguments?.getLong("legId") == 0L
                 if (closesIntoAddButton) EnterTransition.None
-                else slideInHorizontally(
-                        initialOffsetX = { -it / 14 },
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioNoBouncy,
-                            stiffness = Spring.StiffnessMedium,
-                        ),
+                else {
+                    val direction = if (
+                        routePosition(targetState.destination.route) >= routePosition(initialState.destination.route)
+                    ) 1 else -1
+                    slideInHorizontally(
+                        initialOffsetX = { direction * it },
+                        animationSpec = tween(SCREEN_TRANSITION_MILLIS, easing = emphasizedEasing),
                     )
+                }
             },
             popExitTransition = {
                 val closesIntoAddButton = initialState.destination.route == "leg/{tripId}/{legId}" &&
                     initialState.arguments?.getLong("legId") == 0L
                 if (closesIntoAddButton) {
-                    scaleOut(
-                        targetScale = 0.12f,
-                        transformOrigin = TransformOrigin(0.78f, 0.9f),
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioNoBouncy,
-                            stiffness = Spring.StiffnessMedium,
-                        ),
-                    )
+                    ExitTransition.None
                 } else {
+                    val direction = if (
+                        routePosition(targetState.destination.route) >= routePosition(initialState.destination.route)
+                    ) 1 else -1
                     slideOutHorizontally(
-                        targetOffsetX = { it / 18 },
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioNoBouncy,
-                            stiffness = Spring.StiffnessMedium,
-                        ),
+                        targetOffsetX = { -direction * it },
+                        animationSpec = tween(SCREEN_TRANSITION_MILLIS, easing = emphasizedEasing),
                     )
                 }
             },
@@ -246,45 +274,79 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                 var loaded by remember(legId) { mutableStateOf(legId == 0L) }
                 var isSaving by remember(legId) { mutableStateOf(false) }
                 var saveError by remember(legId) { mutableStateOf<String?>(null) }
+                var addScreenVisible by remember(legId) { mutableStateOf(true) }
+                var destinationAfterClose by remember(legId) { mutableStateOf<Long?>(null) }
                 LaunchedEffect(legId) {
                     if (legId != 0L) existing = viewModel.getLeg(legId)
                     loaded = true
                 }
                 val trip = trips.firstOrNull { it.trip.id == tripId }
                 val initialTripId = trip?.trip?.takeUnless { it.isAutomatic }?.id
-                LegEditorScreen(
-                    initialTripId = existing?.let { leg ->
-                        trips.firstOrNull { it.trip.id == leg.tripId }?.trip?.takeUnless { it.isAutomatic }?.id
-                    } ?: initialTripId,
-                    availableTrips = trips.map { it.trip },
-                    existing = existing,
-                    previous = trip?.legs?.lastOrNull(),
-                    defaultZoneId = settings.defaultZoneId,
-                    isLoading = !loaded,
-                    isSaving = isSaving,
-                    saveError = saveError,
-                    onBack = { nav.popBackStack() },
-                    onSave = { leg, standalone ->
-                        if (!isSaving) {
-                            isSaving = true
-                            saveError = null
-                            viewModel.saveLeg(
-                                leg = leg,
-                                standalone = standalone,
-                                onSaved = { destinationTripId ->
-                                    selectedTripId = destinationTripId
-                                    nav.popBackStack()
-                                    nav.navigate("trip/$destinationTripId") { launchSingleTop = true }
-                                },
-                                onError = {
-                                    isSaving = false
-                                    saveError = "保存できませんでした。入力内容を確認して、もう一度お試しください。"
-                                },
-                            )
-                        }
-                    },
-                    onDelete = if (legId == 0L) null else ({ viewModel.deleteLeg(it) { nav.popBackStack() } }),
-                )
+                val isAdding = legId == 0L
+                val closeEditor = {
+                    if (!isSaving) {
+                        if (isAdding) addScreenVisible = false else nav.popBackStack()
+                    }
+                }
+                BackHandler(enabled = isAdding && addScreenVisible) { closeEditor() }
+
+                @Composable
+                fun EditorContent() {
+                    LegEditorScreen(
+                        initialTripId = existing?.let { leg ->
+                            trips.firstOrNull { it.trip.id == leg.tripId }?.trip?.takeUnless { it.isAutomatic }?.id
+                        } ?: initialTripId,
+                        availableTrips = trips.map { it.trip },
+                        existing = existing,
+                        previous = trip?.legs?.lastOrNull(),
+                        defaultZoneId = settings.defaultZoneId,
+                        isLoading = !loaded,
+                        isSaving = isSaving,
+                        saveError = saveError,
+                        onBack = closeEditor,
+                        onSave = { leg, standalone ->
+                            if (!isSaving) {
+                                isSaving = true
+                                saveError = null
+                                viewModel.saveLeg(
+                                    leg = leg,
+                                    standalone = standalone,
+                                    onSaved = { destinationTripId ->
+                                        selectedTripId = destinationTripId
+                                        if (isAdding) {
+                                            destinationAfterClose = destinationTripId
+                                            addScreenVisible = false
+                                        } else {
+                                            nav.popBackStack()
+                                            nav.navigate("trip/$destinationTripId") { launchSingleTop = true }
+                                        }
+                                    },
+                                    onError = {
+                                        isSaving = false
+                                        saveError = "保存できませんでした。入力内容を確認して、もう一度お試しください。"
+                                    },
+                                )
+                            }
+                        },
+                        onDelete = if (isAdding) null else ({
+                            viewModel.deleteLeg(it) { nav.popBackStack() }
+                        }),
+                    )
+                }
+
+                if (isAdding) {
+                    BubbleReveal(
+                        visible = addScreenVisible,
+                        onHidden = {
+                            nav.popBackStack()
+                            destinationAfterClose?.let { destinationTripId ->
+                                nav.navigate("trip/$destinationTripId") { launchSingleTop = true }
+                            }
+                        },
+                    ) { EditorContent() }
+                } else {
+                    EditorContent()
+                }
             }
             composable("settings") {
                 SettingsScreen(

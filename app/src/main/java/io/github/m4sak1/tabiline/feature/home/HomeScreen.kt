@@ -166,7 +166,10 @@ private fun HeroCard(leg: TransportLeg, remaining: String, onClick: () -> Unit) 
                 modifier = Modifier.offset(24.dp, 52.dp),
             )
             Surface(
-                modifier = Modifier.offset(x = 268.dp, y = 52.dp).size(96.dp),
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 52.dp, end = 24.dp)
+                    .size(96.dp),
                 shape = RoundedCornerShape(28.dp),
                 color = MaterialTheme.colorScheme.primary,
                 shadowElevation = 6.dp,
