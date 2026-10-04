@@ -1,4 +1,8 @@
-# 🚆 Tabiline
+<p align="center">
+  <img src="docs/images/app-icon.svg" alt="Tabiline アプリアイコン / App icon" width="112" height="112">
+</p>
+
+<h1 align="center">Tabiline</h1>
 
 > **旅の移動を、一本の線に。**<br>
 > 電車・飛行機・船・バス・徒歩まで、旅行中の「次どう動く？」がひと目で分かるAndroidアプリです。
@@ -6,6 +10,14 @@
 [![Latest Release](https://img.shields.io/github/v/release/m4sa-k1/tabiline?label=Latest&color=675496)](https://github.com/m4sa-k1/tabiline/releases/latest)
 [![Android 8+](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)](#-対応環境)
 [![All Rights Reserved](https://img.shields.io/badge/License-All%20Rights%20Reserved-555)](LICENSE)
+
+<p align="center">
+  <a href="docs/images/tabiline-promo.png">
+    <img src="docs/images/tabiline-promo.png" alt="京都旅行のタイムラインと移動の詳細。乗り換え時間・ホーム移動・注意表示を確認できるTabilineの実画面 / Actual Tabiline screenshots showing a Kyoto itinerary, transfers, and journey details." width="100%">
+  </a>
+</p>
+
+<p align="center"><sub>実際のアプリ画面を使用しています。旅程・時刻は架空のサンプルです。<br>Actual app screenshots with a fictional sample itinerary and times.</sub></p>
 
 ## 🇯🇵 日本語
 
@@ -97,6 +109,8 @@ Androidの通知許可が必要です。「正確なアラーム」が未許可�
 
 Tabilineはアカウントを要求せず、旅行・移動・設定データを端末内に保存します。これらの情報をTabilineが外部サーバーへ送信することはありません。
 
+ただし、Androidのバックアップ機能は有効です。端末の設定により、旅行・移動データなどがOSによってGoogle Driveなどへバックアップされたり、新しい端末へ転送されたりする場合があります。これはTabiline独自のクラウド同期ではありません。バックアップの管理は端末の設定で行ってください。
+
 > [!IMPORTANT]
 > アプリを削除すると端末内のデータも失われる場合があります。予約番号や航空券などの重要情報は、必ず別の安全な場所にも保管してください。
 
@@ -121,6 +135,10 @@ Tabilineはアカウントを要求せず、旅行・移動・設定データを
 Tabiline本体のソースコード、デザイン、画像、文書などの権利は、第三者素材を除き **@m4sa-k1** が留保します。公式APKは個人的かつ非商用の目的で利用できます。ソースコードやAPKの複製、改変、再配布、販売などには、権利者の事前の書面による許可が必要です。詳細は[LICENSE](LICENSE)をご確認ください。
 
 🌐 作者のWebサイト：[https://m4sak1.me](https://m4sak1.me)
+
+公開リポジトリの閲覧・GitHub上でのフォークなど、GitHub利用規約または適用法令で認められる利用は上記制限の例外です。公開は、一般的な改変・再配布・商用利用の許可を意味しません。
+
+ライブラリの構成と同梱通知は[第三者コンテンツ一覧](app/src/main/assets/third_party_licenses/DEPENDENCIES.md)をご確認ください。
 
 Roboto FlexとNoto Sans JPは、Tabiline本体とは別にSIL Open Font License 1.1の条件で使用しています。各ライセンス全文は[第三者ライセンス](app/src/main/assets/third_party_licenses)にあります。フォントのOFLはTabiline本体をオープンライセンスにするものではありません。
 
@@ -205,6 +223,8 @@ No trip yet? Save the journey without assigning it. Tabiline creates a standalon
 
 Tabiline requires no account. Trip, journey, and preference data is stored locally on your device, and Tabiline does not send it to an external server.
 
+Android backup is enabled. Depending on device settings, the operating system may back up trip and journey data to a service such as Google Drive or transfer it to another device. This is separate from app-operated cloud synchronization. Manage backups in your device settings.
+
 ### ☕ Support development
 
 Tap the separate **Support the developer** card in Settings to open [Ko-fi](https://ko-fi.com/m4sak1) in your browser. Contributions are optional and do not unlock or change app features.
@@ -235,6 +255,10 @@ For unresolved problems and feature ideas, visit [GitHub Issues](https://github.
 Except for identified third-party materials, all rights in the Tabiline source code, design, artwork, and documentation are reserved by **@m4sa-k1**. The official APK may be used for personal, non-commercial purposes. Copying, modifying, redistributing, or selling the source code or APK requires the rights holder's prior written permission. See [LICENSE](LICENSE) for the full terms.
 
 🌐 Author's website: [https://m4sak1.me](https://m4sak1.me)
+
+Uses permitted by applicable law or GitHub's Terms of Service, including viewing and forking through GitHub, are exceptions to these restrictions. Public availability does not grant general modification, redistribution, or commercial-use rights.
+
+See the [third-party component inventory](app/src/main/assets/third_party_licenses/DEPENDENCIES.md) for library versions and bundled notices.
 
 Roboto Flex and Noto Sans JP are used separately under the SIL Open Font License 1.1. Their complete license texts are stored under [Third-party licenses](app/src/main/assets/third_party_licenses). The fonts' OFL terms do not make Tabiline itself open source.
 

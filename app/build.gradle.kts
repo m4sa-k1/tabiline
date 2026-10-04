@@ -7,8 +7,8 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
-val releaseVersionName = providers.gradleProperty("versionName").orElse("1.0.0")
-val releaseVersionCode = providers.gradleProperty("versionCode").map(String::toInt).orElse(1000000)
+val releaseVersionName = providers.gradleProperty("versionName").orElse("1.0.1")
+val releaseVersionCode = providers.gradleProperty("versionCode").map(String::toInt).orElse(1000001)
 
 val keystorePath = providers.environmentVariable("ANDROID_KEYSTORE_PATH")
 val keystorePassword = providers.environmentVariable("ANDROID_KEYSTORE_PASSWORD")
@@ -67,7 +67,22 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
-    packaging.resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
+    // Preserve dependency licenses instead of discarding duplicate license resources.
+    packaging.resources.merges += setOf("META-INF/AL2.0", "META-INF/LGPL2.1")
+}
+
+// Inputs for tools/update-third-party-notices.py; only resolves the release runtime.
+tasks.register("exportReleaseLicenseInputs") {
+    doLast {
+        val artifacts = configurations.getByName("releaseRuntimeClasspath")
+            .resolvedConfiguration.resolvedArtifacts
+        val output = layout.buildDirectory.file("license-inputs.tsv").get().asFile
+        output.parentFile.mkdirs()
+        output.writeText(artifacts.sortedBy { it.moduleVersion.id.toString() }.joinToString("\n") {
+            val id = it.moduleVersion.id
+            "${id.group}\t${id.name}\t${id.version}\t${it.file.absolutePath}"
+        })
+    }
 }
 
 ksp {
