@@ -57,6 +57,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import io.github.m4sak1.tabiline.core.model.TransportLeg
 import io.github.m4sak1.tabiline.core.model.TransportMode
 import io.github.m4sak1.tabiline.core.model.TripWithLegs
@@ -193,7 +194,10 @@ fun TimelineScreen(
 @Composable
 private fun TimelineLeg(leg: TransportLeg, onClick: () -> Unit, onMove: (Int) -> Unit) {
     var drag by remember { mutableFloatStateOf(0f) }
-    Row(Modifier.fillMaxWidth().height(104.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        Modifier.fillMaxWidth().height(104.dp).zIndex(1f),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Box(Modifier.width(62.dp).fillMaxHeight()) {
             Text(
                 leg.departureLocal.format(timelineTime),
