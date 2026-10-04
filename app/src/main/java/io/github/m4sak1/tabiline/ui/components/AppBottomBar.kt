@@ -54,21 +54,13 @@ fun AppBottomBar(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.Bottom,
         ) {
-            Surface(
-                shape = RoundedCornerShape(36.dp),
-                color = MaterialTheme.colorScheme.primaryContainer,
-                shadowElevation = 0.dp,
-                tonalElevation = 0.dp,
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                    horizontalArrangement = Arrangement.spacedBy(2.dp),
-                ) {
-                    FooterButton(AppDestination.TODAY, selected, Icons.Rounded.Today, "今日", onSelect)
-                    FooterButton(AppDestination.TIMELINE, selected, Icons.Rounded.Timeline, "タイムライン", onSelect)
-                    FooterButton(AppDestination.PLANS, selected, Icons.Rounded.Luggage, "旅行", onSelect)
-                    FooterButton(AppDestination.SETTINGS, selected, Icons.Rounded.Settings, "設定", onSelect)
-                }
+                FooterButton(AppDestination.TODAY, selected, Icons.Rounded.Today, "今日", onSelect)
+                FooterButton(AppDestination.TIMELINE, selected, Icons.Rounded.Timeline, "タイムライン", onSelect)
+                FooterButton(AppDestination.PLANS, selected, Icons.Rounded.Luggage, "旅行", onSelect)
+                FooterButton(AppDestination.SETTINGS, selected, Icons.Rounded.Settings, "設定", onSelect)
             }
             if (onAdd != null) {
                 Surface(
@@ -127,18 +119,31 @@ private fun FooterButton(
         ),
         label = "footer-content",
     )
-    val cornerRadius by animateDpAsState(
-        targetValue = if (isSelected) 26.dp else 18.dp,
+    val startRadius by animateDpAsState(
+        targetValue = if (isSelected || destination == AppDestination.TODAY) 26.dp else 5.dp,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
             stiffness = Spring.StiffnessMediumLow,
         ),
-        label = "footer-shape",
+        label = "footer-start-shape",
+    )
+    val endRadius by animateDpAsState(
+        targetValue = if (isSelected || destination == AppDestination.SETTINGS) 26.dp else 5.dp,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMediumLow,
+        ),
+        label = "footer-end-shape",
     )
     IconButton(
         onClick = { onSelect(destination) },
         modifier = Modifier.size(52.dp),
-        shape = RoundedCornerShape(cornerRadius),
+        shape = RoundedCornerShape(
+            topStart = startRadius,
+            bottomStart = startRadius,
+            topEnd = endRadius,
+            bottomEnd = endRadius,
+        ),
         colors = IconButtonDefaults.iconButtonColors(
             containerColor = containerColor,
             contentColor = contentColor,
