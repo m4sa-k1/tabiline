@@ -45,7 +45,6 @@ import io.github.m4sak1.tabiline.feature.editor.LegEditorScreen
 import io.github.m4sak1.tabiline.feature.editor.TripEditorDialog
 import io.github.m4sak1.tabiline.feature.home.HomeScreen
 import io.github.m4sak1.tabiline.feature.home.PlansScreen
-import io.github.m4sak1.tabiline.feature.settings.AboutScreen
 import io.github.m4sak1.tabiline.feature.settings.SettingsScreen
 import io.github.m4sak1.tabiline.feature.settings.SettingsDetailPopup
 import io.github.m4sak1.tabiline.feature.settings.SettingsSection
@@ -69,7 +68,6 @@ private fun routePosition(route: String?): Int = when (route) {
     "trip/{tripId}" -> 1
     "plans" -> 2
     "settings" -> 3
-    "settings/about" -> 3
     "leg/{tripId}/{legId}" -> 4
     else -> 0
 }
@@ -157,7 +155,6 @@ private fun TabilineRoot(viewModel: MainViewModel) {
             "home" -> AppDestination.TODAY
             "plans" -> AppDestination.PLANS
             "settings" -> AppDestination.SETTINGS
-            "settings/about" -> AppDestination.SETTINGS
             "trip/{tripId}" -> AppDestination.TIMELINE
             else -> null
         }
@@ -304,17 +301,8 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                 SettingsScreen(
                     settings = settings,
                     onUpdate = viewModel::updateSettings,
-                    onOpenSection = { section ->
-                        if (section == SettingsSection.ABOUT) {
-                            nav.navigate("settings/about") { launchSingleTop = true }
-                        } else {
-                            settingsDialogSection = section
-                        }
-                    },
+                    onOpenSection = { settingsDialogSection = it },
                 )
-            }
-            composable("settings/about") {
-                AboutScreen(onBack = { nav.popBackStack() })
             }
         }
 

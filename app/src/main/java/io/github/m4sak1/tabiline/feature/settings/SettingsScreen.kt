@@ -30,7 +30,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
@@ -116,11 +115,12 @@ fun SettingsScreen(
             color = MaterialTheme.colorScheme.surfaceContainerLow,
         ) {
             Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
-                SettingsSection.entries.forEach { section ->
+                SettingsSection.entries.filterNot { it == SettingsSection.ABOUT }.forEach { section ->
                     SettingsRow(section = section, onClick = { onOpenSection(section) })
                 }
             }
         }
+        AboutCard()
     }
 }
 
@@ -251,25 +251,6 @@ fun SettingsDetailPopup(
                 }
             }
         }
-    }
-}
-
-@Composable
-fun AboutScreen(onBack: () -> Unit) {
-    SettingsScaffold {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Rounded.ArrowBack, "設定へ戻る")
-            }
-            Column(Modifier.padding(start = 4.dp)) {
-                Text(SettingsSection.ABOUT.title, style = MaterialTheme.typography.headlineLarge)
-                Text(SettingsSection.ABOUT.subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-        AboutCard()
     }
 }
 
