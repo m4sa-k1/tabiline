@@ -141,11 +141,11 @@ fun LegEditorScreen(
     }
 
     Scaffold(
-        modifier = Modifier.statusBarsPadding(),
+        modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.surface,
     ) { padding ->
         Column(
-            Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(PaddingValues(16.dp)),
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(padding).padding(PaddingValues(16.dp)),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {

@@ -167,6 +167,7 @@ private fun TabilineRoot(
         var tripDialog by remember { mutableStateOf<Trip?>(null) }
         var showNewTrip by remember { mutableStateOf(false) }
         var gapTypePicker by remember { mutableStateOf<Pair<Long, GapType>?>(null) }
+        var detailLeg by remember { mutableStateOf<TransportLeg?>(null) }
         var footerFace by rememberSaveable { mutableStateOf(footerFaces.random()) }
         var selectedTripId by rememberSaveable { mutableStateOf<Long?>(null) }
         var settingsDialogSection by remember { mutableStateOf<SettingsSection?>(null) }
@@ -248,7 +249,7 @@ private fun TabilineRoot(
                 HomeScreen(
                     trips = trips,
                     onOpenTrip = { selectedTripId = it; nav.navigate("trip/$it") },
-                    onEditLeg = { tripId, legId -> selectedTripId = tripId; nav.navigate("leg/$tripId/$legId") },
+                    onEditLeg = { tripId, legId -> detailLeg = trips.firstOrNull { it.trip.id == tripId }?.legs?.firstOrNull { it.id == legId } },
                 )
             }
             composable("plans") {
@@ -271,7 +272,7 @@ private fun TabilineRoot(
                     settings = settings,
                     onEditTrip = { tripDialog = item?.trip },
                     onDeleteTrip = { viewModel.deleteTrip(id) { nav.navigate("plans") { popUpTo("home") } } },
-                    onEditLeg = { nav.navigate("leg/$id/$it") },
+                    onEditLeg = { legId -> detailLeg = item?.legs?.firstOrNull { it.id == legId } },
                     onMoveLeg = { legId, direction ->
                         val legs = item?.legs.orEmpty().toMutableList()
                         val from = legs.indexOfFirst { it.id == legId }
@@ -464,6 +465,15 @@ private fun TabilineRoot(
                 settings = settings,
                 onUpdate = viewModel::updateSettings,
                 onDismiss = { settingsDialogSection = null },
+                onProgress = { popupBlurProgress = it },
+            )
+        }
+        detailLeg?.let { leg ->
+            io.github.m4sak1.tabiline.ui.components.LegDetailPopup(
+                leg = leg,
+                onEdit = { selectedTripId = leg.tripId; nav.navigate("leg/${leg.tripId}/${leg.id}") },
+                onDelete = { viewModel.deleteLeg(leg.id) },
+                onDismiss = { detailLeg = null },
                 onProgress = { popupBlurProgress = it },
             )
         }
