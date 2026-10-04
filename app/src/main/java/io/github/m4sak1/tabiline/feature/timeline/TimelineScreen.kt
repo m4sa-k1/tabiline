@@ -14,8 +14,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
@@ -34,15 +37,10 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -72,7 +70,6 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 private val timelineTime = DateTimeFormatter.ofPattern("HH:mm")
-private val tabDate = DateTimeFormatter.ofPattern("M/d E", Locale.JAPAN)
 private val headingDate = DateTimeFormatter.ofPattern("M月d日 EEEE", Locale.JAPAN)
 private val shortDateTime = DateTimeFormatter.ofPattern("M/d HH:mm")
 
@@ -102,21 +99,7 @@ fun TimelineScreen(
     val warningThreshold = settings.otherMinutes
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(trip?.name ?: "タイムライン", fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 48.dp)) },
-                actions = {
-                    Box {
-                        IconButton(onClick = { menuOpen = true }) { Icon(Icons.Rounded.SwapVert, "並べ替えと旅行メニュー") }
-                        DropdownMenu(menuOpen, { menuOpen = false }) {
-                            DropdownMenuItem(text = { Text("旅行を編集") }, leadingIcon = { Icon(Icons.Rounded.Edit, null) }, onClick = { menuOpen = false; onEditTrip() })
-                            DropdownMenuItem(text = { Text("旅行を削除") }, leadingIcon = { Icon(Icons.Rounded.Delete, null) }, onClick = { menuOpen = false; confirmDelete = true })
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-            )
-        },
+        modifier = Modifier.statusBarsPadding(),
         bottomBar = {
             AppBottomBar(
                 selected = AppDestination.TIMELINE,
@@ -134,28 +117,20 @@ fun TimelineScreen(
     ) { padding ->
         if (item == null || selectedDate == null) Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { Text("読み込み中…") }
         else Column(Modifier.fillMaxSize().padding(padding)) {
-            val selectedTabIndex = dates.indexOf(selectedDate).coerceAtLeast(0)
-            if (dates.size < 6) {
-                PrimaryTabRow(selectedTabIndex = selectedTabIndex, modifier = Modifier.fillMaxWidth()) {
-                    dates.forEach { date ->
-                        Tab(
-                            selected = date == selectedDate,
-                            onClick = { selectedEpochDay = date.toEpochDay() },
-                            text = { Text(date.format(tabDate), maxLines = 1, fontSize = 14.sp, fontWeight = FontWeight.Bold) },
-                        )
-                    }
-                }
-            } else {
-                PrimaryScrollableTabRow(selectedTabIndex = selectedTabIndex, modifier = Modifier.fillMaxWidth()) {
-                    dates.forEach { date ->
-                        Tab(
-                            selected = date == selectedDate,
-                            onClick = { selectedEpochDay = date.toEpochDay() },
-                            text = { Text(date.format(tabDate), maxLines = 1, fontSize = 14.sp, fontWeight = FontWeight.Bold) },
-                        )
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(start = 24.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(item.trip.name, style = MaterialTheme.typography.headlineLarge, modifier = Modifier.weight(1f))
+                Box {
+                    IconButton(onClick = { menuOpen = true }) { Icon(Icons.Rounded.SwapVert, "並べ替えと旅行メニュー") }
+                    DropdownMenu(menuOpen, { menuOpen = false }) {
+                        DropdownMenuItem(text = { Text("旅行を編集") }, leadingIcon = { Icon(Icons.Rounded.Edit, null) }, onClick = { menuOpen = false; onEditTrip() })
+                        DropdownMenuItem(text = { Text("旅行を削除") }, leadingIcon = { Icon(Icons.Rounded.Delete, null) }, onClick = { menuOpen = false; confirmDelete = true })
                     }
                 }
             }
+            if (dates.size > 1) RelativeDaySelector(dates, selectedDate) { selectedEpochDay = it.toEpochDay() }
             if (dayLegs.isEmpty()) EmptyDay(onAddLeg)
             else LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -195,6 +170,38 @@ fun TimelineScreen(
         confirmButton = { TextButton(onClick = onDeleteTrip) { Text("削除") } },
         dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("キャンセル") } },
     )
+}
+
+@Composable
+private fun RelativeDaySelector(
+    dates: List<LocalDate>,
+    selectedDate: LocalDate,
+    onSelect: (LocalDate) -> Unit,
+) {
+    val selectorWidth = (dates.size * 68 + 8).coerceAtMost(360).dp
+    LazyRow(
+        modifier = Modifier
+            .padding(start = 16.dp, top = 2.dp, bottom = 2.dp)
+            .width(selectorWidth)
+            .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(28.dp)),
+        contentPadding = PaddingValues(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        itemsIndexed(dates, key = { _, date -> date.toEpochDay() }) { index, date ->
+            val selected = date == selectedDate
+            Surface(
+                onClick = { onSelect(date) },
+                modifier = Modifier.size(width = 64.dp, height = 40.dp),
+                shape = RoundedCornerShape(20.dp),
+                color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer,
+                contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer,
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text("${index + 1}", fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
 }
 
 @Composable

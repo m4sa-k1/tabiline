@@ -1,7 +1,6 @@
 package io.github.m4sak1.tabiline.feature.home
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,8 +26,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,21 +55,7 @@ fun PlansScreen(
     val upcoming = trips.filter { it.trip.startDate > today }
     val completed = trips.filter { it.trip.endDate < today }.sortedByDescending { it.trip.endDate }
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "Tabiline",
-                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                        modifier = Modifier.padding(start = 48.dp).combinedClickable(
-                            onClick = {},
-                            onLongClick = onSettings,
-                        ),
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-            )
-        },
+        modifier = Modifier.statusBarsPadding(),
         bottomBar = {
             AppBottomBar(
                 selected = AppDestination.PLANS,
@@ -98,7 +82,7 @@ fun PlansScreen(
             }
         } else LazyColumn(
             Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 104.dp),
+            contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 104.dp),
         ) {
             item { Text("旅行", style = MaterialTheme.typography.headlineLarge, modifier = Modifier.padding(top = 16.dp, start = 8.dp, bottom = 10.dp)) }
             planSection("進行中", ongoing, onOpenTrip)
