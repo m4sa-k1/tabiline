@@ -2,6 +2,7 @@ package io.github.m4sak1.tabiline.data.repository
 
 import androidx.room.withTransaction
 import io.github.m4sak1.tabiline.core.model.TrainType
+import io.github.m4sak1.tabiline.core.model.GapType
 import io.github.m4sak1.tabiline.core.model.TransportLeg
 import io.github.m4sak1.tabiline.core.model.TransportMode
 import io.github.m4sak1.tabiline.core.model.Trip
@@ -86,6 +87,10 @@ class OfflineTabilineRepository(
         }
     }
 
+    override suspend fun updateGapType(legId: Long, gapType: GapType) {
+        dao.updatePrecedingGapType(legId, gapType.name)
+    }
+
     private suspend fun saveLegInTransaction(leg: TransportLeg): Long {
         val previous = leg.id.takeIf { it != 0L }?.let { dao.getLeg(it) }
         if (previous != null && previous.tripId == leg.tripId) {
@@ -143,12 +148,13 @@ private fun TransportLegEntity.toModel() = TransportLeg(
     departureZoneId, arrivalZoneId, departurePlace, arrivalPlace,
     TransportMode.valueOf(mode), trainType?.let(TrainType::valueOf), departurePlatform,
     arrivalPlatform, memo, sortOrder,
+    runCatching { GapType.valueOf(precedingGapType) }.getOrDefault(GapType.WAIT),
 )
 
 private fun TransportLeg.toEntity() = TransportLegEntity(
     id, tripId, departure.toEpochMilli(), arrival.toEpochMilli(), departureZoneId, arrivalZoneId,
     departurePlace, arrivalPlace, mode.name, trainType?.name, departurePlatform, arrivalPlatform,
-    memo, sortOrder,
+    memo, sortOrder, precedingGapType.name,
 )
 
 private fun TripWithLegsEntity.toModel() = TripWithLegs(

@@ -2,6 +2,8 @@ package io.github.m4sak1.tabiline
 
 import android.os.Bundle
 import android.os.Build
+import android.graphics.drawable.ColorDrawable
+import android.view.Window
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
@@ -20,6 +22,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.foundation.background
@@ -30,15 +33,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.core.view.WindowCompat
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import io.github.m4sak1.tabiline.core.model.GapType
 import io.github.m4sak1.tabiline.core.model.TransportLeg
 import io.github.m4sak1.tabiline.core.model.Trip
 import io.github.m4sak1.tabiline.feature.editor.LegEditorScreen
@@ -48,6 +55,8 @@ import io.github.m4sak1.tabiline.feature.home.PlansScreen
 import io.github.m4sak1.tabiline.feature.settings.SettingsScreen
 import io.github.m4sak1.tabiline.feature.settings.SettingsDetailPopup
 import io.github.m4sak1.tabiline.feature.settings.SettingsSection
+import io.github.m4sak1.tabiline.feature.timeline.GapTypePopup
+import io.github.m4sak1.tabiline.feature.timeline.EmptyTimelineScreen
 import io.github.m4sak1.tabiline.feature.timeline.TimelineScreen
 import io.github.m4sak1.tabiline.ui.components.AppDestination
 import io.github.m4sak1.tabiline.ui.components.AppBottomBar
@@ -65,7 +74,7 @@ private val emphasizedEasing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
 
 private fun routePosition(route: String?): Int = when (route) {
     "home" -> 0
-    "trip/{tripId}" -> 1
+    "trip/{tripId}", "timeline-empty" -> 1
     "plans" -> 2
     "settings" -> 3
     "leg/{tripId}/{legId}" -> 4
@@ -94,7 +103,7 @@ class MainActivity : ComponentActivity() {
             window.isNavigationBarContrastEnforced = false
         }
         requestHighRefreshRate()
-        setContent { TabilineRoot(viewModel) }
+        setContent { TabilineRoot(viewModel, window) }
     }
 
     override fun onResume() {
@@ -125,20 +134,32 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun TabilineRoot(viewModel: MainViewModel) {
+private fun TabilineRoot(viewModel: MainViewModel, window: Window) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     TabilineTheme(settings.theme, settings.accentPalette) {
+        val surfaceColor = MaterialTheme.colorScheme.surface
+        SideEffect {
+            // Keep the decor behind transparent system bars in sync with the app theme.
+            window.setBackgroundDrawable(ColorDrawable(surfaceColor.toArgb()))
+            WindowCompat.getInsetsController(window, window.decorView).apply {
+                val useDarkIcons = surfaceColor.luminance() > 0.5f
+                isAppearanceLightStatusBars = useDarkIcons
+                isAppearanceLightNavigationBars = useDarkIcons
+            }
+        }
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
         val nav = rememberNavController()
         val currentEntry by nav.currentBackStackEntryAsState()
         val trips by viewModel.trips.collectAsStateWithLifecycle()
         var tripDialog by remember { mutableStateOf<Trip?>(null) }
         var showNewTrip by remember { mutableStateOf(false) }
+        var gapTypePicker by remember { mutableStateOf<Pair<Long, GapType>?>(null) }
         var footerFace by rememberSaveable { mutableStateOf(footerFaces.random()) }
         var selectedTripId by rememberSaveable { mutableStateOf<Long?>(null) }
         var settingsDialogSection by remember { mutableStateOf<SettingsSection?>(null) }
         var addingTripId by rememberSaveable { mutableStateOf<Long?>(null) }
         var addScreenVisible by remember { mutableStateOf(false) }
+        var addScreenProgress by remember { mutableFloatStateOf(0f) }
         var popupBlurProgress by remember { mutableFloatStateOf(0f) }
         LaunchedEffect(trips) {
             if (trips.none { it.trip.id == selectedTripId }) {
@@ -154,8 +175,13 @@ private fun TabilineRoot(viewModel: MainViewModel) {
             "home" -> AppDestination.TODAY
             "plans" -> AppDestination.PLANS
             "settings" -> AppDestination.SETTINGS
-            "trip/{tripId}" -> AppDestination.TIMELINE
+            "trip/{tripId}", "timeline-empty" -> AppDestination.TIMELINE
             else -> null
+        }
+        LaunchedEffect(destination) {
+            if (destination == AppDestination.SETTINGS) {
+                footerFace = footerFaces.filterNot { it == footerFace }.random()
+            }
         }
         Box(
             Modifier.fillMaxSize().blur(
@@ -215,10 +241,10 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                 PlansScreen(
                     trips = trips,
                     selectedTripId = selectedTripId,
-                    onCreateTrip = { showNewTrip = true },
                     onOpenTrip = { selectedTripId = it; nav.navigate("trip/$it") },
                 )
             }
+            composable("timeline-empty") { EmptyTimelineScreen() }
             composable(
                 route = "trip/{tripId}",
                 arguments = listOf(navArgument("tripId") { type = NavType.LongType }),
@@ -241,6 +267,7 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                             viewModel.reorder(id, legs.map { it.id })
                         }
                     },
+                    onEditGapType = { legId, type -> gapTypePicker = legId to type },
                 )
             }
             composable(
@@ -320,8 +347,9 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                 BubbleReveal(
                     visible = addScreenVisible,
                     modifier = Modifier.zIndex(1f),
-                    originXFraction = 0.06f,
-                    originYFraction = 0.96f,
+                    originXFraction = 0.78f,
+                    originYFraction = 0.91f,
+                    onProgress = { addScreenProgress = it },
                     onHidden = {
                         addingTripId = null
                         destinationAfterClose?.let { destinationTripId ->
@@ -364,11 +392,16 @@ private fun TabilineRoot(viewModel: MainViewModel) {
             }
         }
 
-        if (destination != null && addingTripId == null) {
+        if (destination != null && (addingTripId == null || addScreenProgress < 0.999f)) {
             val barDestination = destination
             val today = java.time.LocalDate.now()
             val homeTripId = trips.firstOrNull {
                 !it.trip.isAutomatic && today in it.trip.startDate..it.trip.endDate
+            }?.trip?.id
+            val todayTimelineTripId = trips.firstOrNull {
+                !it.trip.isAutomatic && today in it.trip.startDate..it.trip.endDate
+            }?.trip?.id ?: trips.firstOrNull {
+                it.trip.isAutomatic && today in it.trip.startDate..it.trip.endDate
             }?.trip?.id
             val routeTripId = currentEntry?.arguments?.getLong("tripId")
             AppBottomBar(
@@ -379,12 +412,11 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                         addingTripId = homeTripId ?: 0L
                         addScreenVisible = true
                     })
-                    AppDestination.TIMELINE -> routeTripId?.let { tripId ->
-                        {
-                            addingTripId = tripId
-                            addScreenVisible = true
-                        }
-                    }
+                    AppDestination.TIMELINE -> ({
+                        val tripId = routeTripId ?: 0L
+                        addingTripId = tripId
+                        addScreenVisible = true
+                    })
                     AppDestination.PLANS -> ({ showNewTrip = true })
                     AppDestination.SETTINGS -> ({
                         footerFace = footerFaces.filterNot { it == footerFace }.random()
@@ -398,13 +430,15 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                 },
                 addText = footerFace.takeIf { barDestination == AppDestination.SETTINGS },
             ) { target ->
-                when (target) {
-                    AppDestination.TODAY -> nav.popBackStack("home", false)
-                    AppDestination.TIMELINE -> selectedTripId?.let {
-                        nav.navigate("trip/$it") { launchSingleTop = true }
+                if (target != barDestination) {
+                    when (target) {
+                        AppDestination.TODAY -> nav.popBackStack("home", false)
+                        AppDestination.TIMELINE -> todayTimelineTripId?.let {
+                            nav.navigate("trip/$it") { launchSingleTop = true }
+                        } ?: nav.navigate("timeline-empty") { launchSingleTop = true }
+                        AppDestination.PLANS -> nav.navigate("plans") { launchSingleTop = true }
+                        AppDestination.SETTINGS -> nav.navigate("settings") { launchSingleTop = true }
                     }
-                    AppDestination.PLANS -> nav.navigate("plans") { launchSingleTop = true }
-                    AppDestination.SETTINGS -> nav.navigate("settings") { launchSingleTop = true }
                 }
             }
         }
@@ -416,6 +450,14 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                 settings = settings,
                 onUpdate = viewModel::updateSettings,
                 onDismiss = { settingsDialogSection = null },
+                onProgress = { popupBlurProgress = it },
+            )
+        }
+        gapTypePicker?.let { (legId, selectedType) ->
+            GapTypePopup(
+                selected = selectedType,
+                onSelect = { viewModel.updateGapType(legId, it) },
+                onDismiss = { gapTypePicker = null },
                 onProgress = { popupBlurProgress = it },
             )
         }

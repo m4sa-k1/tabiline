@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import io.github.m4sak1.tabiline.core.model.TransportLeg
+import io.github.m4sak1.tabiline.core.model.GapType
 import io.github.m4sak1.tabiline.core.model.Trip
 import io.github.m4sak1.tabiline.core.model.TripWithLegs
 import io.github.m4sak1.tabiline.core.model.UserSettings
@@ -62,6 +63,10 @@ class MainViewModel(
 
     fun reorder(tripId: Long, ids: List<Long>) = viewModelScope.launch {
         repository.reorderLegs(tripId, ids)
+    }
+
+    fun updateGapType(legId: Long, gapType: GapType) = viewModelScope.launch {
+        repository.updateGapType(legId, gapType)
     }
 
     fun updateSettings(value: UserSettings) = viewModelScope.launch { settingsRepository.update(value) }

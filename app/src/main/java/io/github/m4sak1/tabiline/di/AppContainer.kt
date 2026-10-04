@@ -19,7 +19,10 @@ class AppContainer(context: Context) {
         context,
         TabilineDatabase::class.java,
         "tabiline.db",
-    ).addMigrations(TabilineDatabase.MIGRATION_1_2).build()
+    ).addMigrations(
+        TabilineDatabase.MIGRATION_1_2,
+        TabilineDatabase.MIGRATION_2_3,
+    ).build()
 
     val trips: TabilineRepository = OfflineTabilineRepository(database, database.dao())
     val settings: SettingsRepository = DataStoreSettingsRepository(context)

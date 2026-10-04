@@ -15,8 +15,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -39,10 +39,10 @@ import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.SettingsBrightness
 import androidx.compose.material.icons.rounded.SyncAlt
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -66,7 +66,7 @@ import io.github.m4sak1.tabiline.BuildConfig
 import io.github.m4sak1.tabiline.core.model.AccentPalette
 import io.github.m4sak1.tabiline.core.model.ThemePreference
 import io.github.m4sak1.tabiline.core.model.UserSettings
-import io.github.m4sak1.tabiline.ui.components.BubblePopup
+import io.github.m4sak1.tabiline.ui.components.CenterPopup
 import io.github.m4sak1.tabiline.ui.theme.accentColors
 
 enum class SettingsSection(
@@ -115,11 +115,12 @@ fun SettingsScreen(
             color = MaterialTheme.colorScheme.surfaceContainerLow,
         ) {
             Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
-                SettingsSection.entries.forEach { section ->
+                SettingsSection.entries.filterNot { it == SettingsSection.ABOUT }.forEach { section ->
                     SettingsRow(section = section, onClick = { onOpenSection(section) })
                 }
             }
         }
+        AboutCard()
     }
 }
 
@@ -142,10 +143,8 @@ fun SettingsDetailPopup(
 
     BackHandler(enabled = popupVisible && !closing) { closeAfterMotion() }
 
-    BubblePopup(
+    CenterPopup(
         visible = popupVisible,
-        originXFraction = 0.78f,
-        originYFraction = 0.91f,
         onProgress = onProgress,
         onHidden = onDismiss,
     ) { _, motionModifier ->
@@ -196,23 +195,39 @@ fun SettingsDetailPopup(
 
                     when (section) {
                         SettingsSection.ACCENT -> SettingsCard {
-                            AccentPalette.entries.forEach { palette ->
-                                AccentChoice(
-                                    palette = palette,
-                                    selected = settings.accentPalette == palette,
-                                    onClick = { onUpdate(settings.copy(accentPalette = palette)) },
-                                )
+                            AccentPalette.entries.chunked(2).forEach { row ->
+                                Row(
+                                    Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    row.forEach { palette ->
+                                        AccentChoice(
+                                            palette = palette,
+                                            selected = settings.accentPalette == palette,
+                                            modifier = Modifier.weight(1f),
+                                            onClick = { onUpdate(settings.copy(accentPalette = palette)) },
+                                        )
+                                    }
+                                    if (row.size == 1) Spacer(Modifier.weight(1f))
+                                }
                             }
                         }
 
                         SettingsSection.REGION -> SettingsCard {
-                            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                defaultZones.forEach { zone ->
-                                    FilterChip(
-                                        selected = settings.defaultZoneId == zone.zoneId,
-                                        onClick = { onUpdate(settings.copy(defaultZoneId = zone.zoneId)) },
-                                        label = { Text(zone.label) },
-                                    )
+                            defaultZones.chunked(3).forEach { row ->
+                                Row(
+                                    Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                ) {
+                                    row.forEach { zone ->
+                                        ZoneChoiceCard(
+                                            zone = zone,
+                                            selected = settings.defaultZoneId == zone.zoneId,
+                                            modifier = Modifier.weight(1f),
+                                            onClick = { onUpdate(settings.copy(defaultZoneId = zone.zoneId)) },
+                                        )
+                                    }
+                                    repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
                                 }
                             }
                             Text(
@@ -231,27 +246,32 @@ fun SettingsDetailPopup(
                             ThresholdStepper("その他", settings.otherMinutes) { onUpdate(settings.copy(otherMinutes = it)) }
                         }
 
-                        SettingsSection.ABOUT -> Surface(
-                            shape = RoundedCornerShape(28.dp),
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                        ) {
-                            Column(
-                                Modifier.fillMaxWidth().padding(24.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                Icon(Icons.Rounded.Info, null, Modifier.size(40.dp))
-                                Text("Tabiline", style = MaterialTheme.typography.headlineLarge)
-                                Text("Version ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.labelLarge)
-                                Text(
-                                    "旅の移動を、ひとつのタイムラインに。",
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f),
-                                )
-                            }
-                        }
+                        SettingsSection.ABOUT -> AboutCard()
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun AboutCard() {
+    Surface(
+        shape = RoundedCornerShape(28.dp),
+        color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+    ) {
+        Column(
+            Modifier.fillMaxWidth().padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Icon(Icons.Rounded.Info, null, Modifier.size(40.dp))
+            Text("Tabiline", style = MaterialTheme.typography.headlineLarge)
+            Text("Version ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.labelLarge)
+            Text(
+                "旅の移動を、ひとつのタイムラインに。",
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f),
+            )
         }
     }
 }
@@ -367,7 +387,12 @@ private fun SettingsRow(section: SettingsSection, onClick: () -> Unit) {
 }
 
 @Composable
-private fun AccentChoice(palette: AccentPalette, selected: Boolean, onClick: () -> Unit) {
+private fun AccentChoice(
+    palette: AccentPalette,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
     val colors = accentColors(palette)
     val label = when (palette) {
         AccentPalette.PURPLE -> "Purple"
@@ -381,16 +406,17 @@ private fun AccentChoice(palette: AccentPalette, selected: Boolean, onClick: () 
     }
     Surface(
         onClick = onClick,
+        modifier = modifier,
         shape = RoundedCornerShape(20.dp),
         color = if (selected) MaterialTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.surfaceContainerLowest,
     ) {
         Row(
-            Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+            Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                Modifier.size(44.dp).clip(CircleShape).background(colors.soft)
-                    .then(if (selected) Modifier.border(3.dp, colors.strong, CircleShape) else Modifier),
+                Modifier.size(34.dp).clip(CircleShape).background(colors.soft)
+                    .then(if (selected) Modifier.border(2.dp, colors.strong, CircleShape) else Modifier),
             ) {
                 Canvas(Modifier.fillMaxSize()) {
                     drawPath(
@@ -404,8 +430,44 @@ private fun AccentChoice(palette: AccentPalette, selected: Boolean, onClick: () 
                     )
                 }
             }
-            Text(label, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f).padding(start = 14.dp))
-            if (selected) Icon(Icons.Rounded.Check, "選択中", tint = colors.strong)
+            Text(
+                label,
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.weight(1f).padding(start = 9.dp),
+                maxLines = 1,
+            )
+            if (selected) Icon(Icons.Rounded.Check, "選択中", Modifier.size(18.dp), tint = colors.strong)
+        }
+    }
+}
+
+@Composable
+private fun ZoneChoiceCard(
+    zone: ZoneChoice,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier.height(72.dp),
+        shape = RoundedCornerShape(if (selected) 24.dp else 14.dp),
+        color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHighest,
+        contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+    ) {
+        Column(
+            Modifier.fillMaxSize().padding(horizontal = 6.dp, vertical = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Icon(if (selected) Icons.Rounded.Check else Icons.Rounded.Public, null, Modifier.size(20.dp))
+            Text(
+                zone.label,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                modifier = Modifier.padding(top = 4.dp),
+                maxLines = 2,
+            )
         }
     }
 }

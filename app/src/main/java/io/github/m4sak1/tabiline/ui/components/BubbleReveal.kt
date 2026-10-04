@@ -2,6 +2,7 @@ package io.github.m4sak1.tabiline.ui.components
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -18,12 +19,11 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.dp
 import kotlin.math.hypot
 import kotlin.math.max
 
 private const val bubbleMotionMillis = 360
+private const val centerPopupMotionMillis = 280
 private val bubbleEasing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
 
 /** Reveals full-size content through a circle growing from the fixed add-button position. */
@@ -33,17 +33,18 @@ fun BubbleReveal(
     modifier: Modifier = Modifier,
     originXFraction: Float = 0.78f,
     originYFraction: Float = 0.91f,
+    onProgress: (Float) -> Unit = {},
     onHidden: () -> Unit = {},
     content: @Composable BoxScope.() -> Unit,
 ) {
     val progress = remember { Animatable(0f) }
-    val minimumRadius = with(LocalDensity.current) { 56.dp.toPx() }
 
     LaunchedEffect(visible) {
+        onProgress(progress.value)
         progress.animateTo(
             targetValue = if (visible) 1f else 0f,
-            animationSpec = tween(bubbleMotionMillis, easing = bubbleEasing),
-        )
+            animationSpec = tween(bubbleMotionMillis, easing = LinearEasing),
+        ) { onProgress(value) }
         if (!visible) onHidden()
     }
 
@@ -58,7 +59,7 @@ fun BubbleReveal(
                 val farthestX = max(origin.x, size.width - origin.x)
                 val farthestY = max(origin.y, size.height - origin.y)
                 val maximumRadius = hypot(farthestX, farthestY)
-                val radius = minimumRadius + (maximumRadius - minimumRadius) * progress.value
+                val radius = maximumRadius * progress.value
                 val path = Path().apply {
                     addOval(Rect(origin - Offset(radius, radius), origin + Offset(radius, radius)))
                 }
@@ -66,6 +67,38 @@ fun BubbleReveal(
             },
         content = content,
     )
+}
+
+/** Softly grows a compact popup from the center without directional travel. */
+@Composable
+fun CenterPopup(
+    visible: Boolean,
+    modifier: Modifier = Modifier,
+    onProgress: (Float) -> Unit = {},
+    onHidden: () -> Unit = {},
+    content: @Composable BoxScope.(progress: Float, motionModifier: Modifier) -> Unit,
+) {
+    val progress = remember { Animatable(0f) }
+
+    LaunchedEffect(visible) {
+        onProgress(progress.value)
+        progress.animateTo(
+            targetValue = if (visible) 1f else 0f,
+            animationSpec = tween(centerPopupMotionMillis, easing = bubbleEasing),
+        ) { onProgress(value) }
+        if (!visible) onHidden()
+    }
+
+    Box(modifier.fillMaxSize()) {
+        val motionModifier = Modifier.graphicsLayer {
+            val scale = 0.86f + 0.14f * progress.value
+            scaleX = scale
+            scaleY = scale
+            alpha = progress.value
+            transformOrigin = TransformOrigin.Center
+        }
+        content(progress.value, motionModifier)
+    }
 }
 
 /** Moves and scales a compact popup between its final position and the fixed add button. */
