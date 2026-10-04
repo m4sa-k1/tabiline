@@ -26,9 +26,20 @@ val TransportLeg.serviceLabel: String
             trainLine.takeIf(String::isNotBlank),
             trainType?.label,
         ).joinToString(" ").ifBlank { mode.detailLabel }
+    } else if (mode == TransportMode.FLIGHT) {
+        listOf(mode.detailLabel, flightNumber, boardingGroup.takeIf(String::isNotBlank)?.let { "Group $it" }.orEmpty())
+            .filter(String::isNotBlank).joinToString(" ・ ")
     } else {
         mode.detailLabel
     }
+
+val TransportLeg.departureBoardingLabel: String
+    get() = if (mode == TransportMode.FLIGHT) {
+        listOfNotNull(
+            departureTerminal.takeIf(String::isNotBlank)?.let { "ターミナル $it" },
+            departurePlatform.takeIf(String::isNotBlank)?.let { "ゲート $it" },
+        ).joinToString(" ・ ")
+    } else departurePlatform
 
 @Composable
 fun TransportMode.visual(): TransportVisual = when (this) {

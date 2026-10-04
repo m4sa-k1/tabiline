@@ -5,11 +5,19 @@ import androidx.room.migration.Migration
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [TripEntity::class, TransportLegEntity::class], version = 4, exportSchema = true)
+@Database(entities = [TripEntity::class, TransportLegEntity::class], version = 5, exportSchema = true)
 abstract class TabilineDatabase : RoomDatabase() {
     abstract fun dao(): TabilineDao
 
     companion object {
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                listOf("departureTerminal", "arrivalTerminal", "boardingGroup", "flightNumber").forEach { column ->
+                    database.execSQL("ALTER TABLE transport_legs ADD COLUMN $column TEXT NOT NULL DEFAULT ''")
+                }
+            }
+        }
+
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE trips ADD COLUMN isAutomatic INTEGER NOT NULL DEFAULT 0")
