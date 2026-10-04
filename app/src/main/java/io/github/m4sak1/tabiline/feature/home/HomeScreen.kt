@@ -46,6 +46,7 @@ import io.github.m4sak1.tabiline.core.model.TransportLeg
 import io.github.m4sak1.tabiline.core.model.TransportMode
 import io.github.m4sak1.tabiline.core.model.TripWithLegs
 import io.github.m4sak1.tabiline.ui.components.detailLabel
+import io.github.m4sak1.tabiline.ui.components.serviceLabel
 import io.github.m4sak1.tabiline.ui.components.visual
 import java.time.Duration
 import java.time.Instant
@@ -181,7 +182,15 @@ private fun HeroCard(leg: TransportLeg, remaining: String, onClick: () -> Unit) 
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.offset(24.dp, 140.dp),
             )
-            if (!isFreeTime) Text(
+            if (isFreeTime) {
+                Text(
+                    "終了 ${leg.arrivalLocal.format(timeFormat)}",
+                    fontSize = 18.sp,
+                    lineHeight = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.offset(24.dp, 186.dp),
+                )
+            } else Text(
                     "${leg.departurePlace} → ${leg.arrivalPlace}",
                     fontSize = 18.sp,
                     lineHeight = 24.sp,
@@ -189,7 +198,7 @@ private fun HeroCard(leg: TransportLeg, remaining: String, onClick: () -> Unit) 
                     modifier = Modifier.offset(24.dp, 186.dp),
                 )
             val detail = buildList {
-                add(if (leg.mode == TransportMode.TRAIN) leg.trainType?.label ?: leg.mode.detailLabel else leg.mode.detailLabel)
+                add(leg.serviceLabel)
                 if (leg.memo.isNotBlank()) add(leg.memo)
             }.joinToString(" ・ ")
             Text(
@@ -199,7 +208,7 @@ private fun HeroCard(leg: TransportLeg, remaining: String, onClick: () -> Unit) 
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.offset(24.dp, if (isFreeTime) 190.dp else 216.dp).padding(end = 24.dp),
+                modifier = Modifier.offset(24.dp, 216.dp).padding(end = 24.dp),
             )
         }
     }
@@ -225,12 +234,11 @@ private fun FutureLegRow(leg: TransportLeg, first: Boolean, last: Boolean, onCli
             }
             Column(Modifier.padding(start = 12.dp).weight(1f)) {
                 Text(
-                    if (isFreeTime) leg.departureLocal.format(timeFormat)
-                    else "${leg.departureLocal.format(timeFormat)} → ${leg.arrivalLocal.format(timeFormat)}",
+                    "${leg.departureLocal.format(timeFormat)} → ${leg.arrivalLocal.format(timeFormat)}",
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium,
                 )
-                val type = if (leg.mode == TransportMode.TRAIN) leg.trainType?.label ?: leg.mode.detailLabel else leg.mode.detailLabel
+                val type = leg.serviceLabel
                 val platform = leg.departurePlatform.takeIf(String::isNotBlank)
                 Text(
                     if (isFreeTime) listOf(leg.departurePlace.ifBlank { "空き時間" }, type).joinToString(" ・ ")

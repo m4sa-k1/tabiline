@@ -40,6 +40,7 @@ data class TransportLegEntity(
     val arrivalPlace: String,
     val mode: String,
     val trainType: String?,
+    val trainLine: String = "",
     val departurePlatform: String,
     val arrivalPlatform: String,
     val memo: String,

@@ -43,7 +43,7 @@
 - 出発時刻・到着時刻
 - 出発地・到着地
 - 交通手段
-- 電車の種別（特急・急行・快速・普通・新幹線など）
+- 電車の路線名と種別（特急・急行・快速・普通・新幹線など）
 - ホーム番号、ゲート番号、バースなどの乗り場
 - 列車名・便名、座席、予約番号などのメモ
 - 空き時間の用事名と開始・終了時刻
@@ -141,7 +141,7 @@ Large time displays, mode-specific icons, automatic connection calculations, and
 - Departure and arrival times
 - Origin and destination
 - Transport mode
-- Train service type, such as limited express, rapid, local, or Shinkansen
+- Train line name and service type, such as limited express, rapid, local, or Shinkansen
 - Platform, gate, berth, or another boarding location
 - Train/flight name, seat, booking reference, and other notes
 - Activity name and start/end time for free-time entries

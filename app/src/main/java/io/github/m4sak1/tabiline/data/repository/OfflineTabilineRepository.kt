@@ -144,17 +144,41 @@ private fun Trip.toEntity() = TripEntity(
 )
 
 private fun TransportLegEntity.toModel() = TransportLeg(
-    id, tripId, Instant.ofEpochMilli(departureMillis), Instant.ofEpochMilli(arrivalMillis),
-    departureZoneId, arrivalZoneId, departurePlace, arrivalPlace,
-    TransportMode.valueOf(mode), trainType?.let(TrainType::valueOf), departurePlatform,
-    arrivalPlatform, memo, sortOrder,
-    runCatching { GapType.valueOf(precedingGapType) }.getOrDefault(GapType.WAIT),
+    id = id,
+    tripId = tripId,
+    departure = Instant.ofEpochMilli(departureMillis),
+    arrival = Instant.ofEpochMilli(arrivalMillis),
+    departureZoneId = departureZoneId,
+    arrivalZoneId = arrivalZoneId,
+    departurePlace = departurePlace,
+    arrivalPlace = arrivalPlace,
+    mode = TransportMode.valueOf(mode),
+    trainType = trainType?.let(TrainType::valueOf),
+    trainLine = trainLine,
+    departurePlatform = departurePlatform,
+    arrivalPlatform = arrivalPlatform,
+    memo = memo,
+    sortOrder = sortOrder,
+    precedingGapType = runCatching { GapType.valueOf(precedingGapType) }.getOrDefault(GapType.WAIT),
 )
 
 private fun TransportLeg.toEntity() = TransportLegEntity(
-    id, tripId, departure.toEpochMilli(), arrival.toEpochMilli(), departureZoneId, arrivalZoneId,
-    departurePlace, arrivalPlace, mode.name, trainType?.name, departurePlatform, arrivalPlatform,
-    memo, sortOrder, precedingGapType.name,
+    id = id,
+    tripId = tripId,
+    departureMillis = departure.toEpochMilli(),
+    arrivalMillis = arrival.toEpochMilli(),
+    departureZoneId = departureZoneId,
+    arrivalZoneId = arrivalZoneId,
+    departurePlace = departurePlace,
+    arrivalPlace = arrivalPlace,
+    mode = mode.name,
+    trainType = trainType?.name,
+    trainLine = trainLine,
+    departurePlatform = departurePlatform,
+    arrivalPlatform = arrivalPlatform,
+    memo = memo,
+    sortOrder = sortOrder,
+    precedingGapType = precedingGapType.name,
 )
 
 private fun TripWithLegsEntity.toModel() = TripWithLegs(

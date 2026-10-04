@@ -13,11 +13,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import io.github.m4sak1.tabiline.core.model.TransportMode
+import io.github.m4sak1.tabiline.core.model.TransportLeg
 
 data class TransportVisual(val icon: ImageVector, val color: Color, val container: Color)
 
 val TransportMode.detailLabel: String
     get() = if (this == TransportMode.FERRY) "フェリー" else label
+
+val TransportLeg.serviceLabel: String
+    get() = if (mode == TransportMode.TRAIN) {
+        listOfNotNull(
+            trainLine.takeIf(String::isNotBlank),
+            trainType?.label,
+        ).joinToString(" ").ifBlank { mode.detailLabel }
+    } else {
+        mode.detailLabel
+    }
 
 @Composable
 fun TransportMode.visual(): TransportVisual = when (this) {
