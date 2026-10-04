@@ -87,6 +87,12 @@
 
 Androidの通知許可が必要です。「正確なアラーム」が未許可の場合や端末の省電力設定によって通知が遅れることがあります。設定済みの通知時刻を過ぎた予定は通知せず、移動の編集・削除や通知設定の変更で予約を更新します。端末再起動後も未来の通知を再登録します。アプリを強制停止した場合は再度開いてください。大切な出発は通知だけに頼らず確認してください。
 
+### ☕ 開発を応援する
+
+設定の独立した「開発者を応援する」カードから、ブラウザで[Ko-fi](https://ko-fi.com/m4sak1)を開いて任意の支援ができます。支援の有無でアプリの機能は変わりません。
+
+アプリ内にKo-fiのコンテンツは読み込みません。旅行データをKo-fiへ渡すこともありません。ブラウザでのログイン・決済には各サービスの規約・プライバシーポリシーが適用されます。
+
 ### 🔒 データとプライバシー
 
 Tabilineはアカウントを要求せず、旅行・移動・設定データを端末内に保存します。これらの情報をTabilineが外部サーバーへ送信することはありません。
@@ -98,7 +104,7 @@ Tabilineはアカウントを要求せず、旅行・移動・設定データを
 
 - Android 8.0（API 26）以降
 - スマートフォン向け
-- インターネット接続不要
+- 旅行の管理はオフライン対応（ブラウザでのKo-fi利用にはインターネット接続が必要）
 - 高リフレッシュレート端末の滑らかなアニメーションに対応
 
 ### 🛠️ 困ったとき
@@ -199,6 +205,12 @@ No trip yet? Save the journey without assigning it. Tabiline creates a standalon
 
 Tabiline requires no account. Trip, journey, and preference data is stored locally on your device, and Tabiline does not send it to an external server.
 
+### ☕ Support development
+
+Tap the separate **Support the developer** card in Settings to open [Ko-fi](https://ko-fi.com/m4sak1) in your browser. Contributions are optional and do not unlock or change app features.
+
+The app does not embed Ko-fi content or pass trip data to Ko-fi. The services' terms and privacy policies apply to login and payment in your browser.
+
 > [!IMPORTANT]
 > Uninstalling the app may remove its local data. Keep booking references, tickets, and other critical information in another secure place as well.
 
@@ -206,7 +218,7 @@ Tabiline requires no account. Trip, journey, and preference data is stored local
 
 - Android 8.0 (API 26) or later
 - Designed for smartphones
-- No internet connection required
+- Trip management works offline; using Ko-fi in your browser requires internet access
 - Smooth animation support on high-refresh-rate displays
 
 ### 🛠️ Help and feedback
