@@ -178,26 +178,33 @@ private fun RelativeDaySelector(
     selectedDate: LocalDate,
     onSelect: (LocalDate) -> Unit,
 ) {
-    val selectorWidth = (dates.size * 68 + 8).coerceAtMost(360).dp
-    LazyRow(
-        modifier = Modifier
-            .padding(start = 16.dp, top = 2.dp, bottom = 2.dp)
-            .width(selectorWidth)
-            .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(28.dp)),
-        contentPadding = PaddingValues(6.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    val selectorWidth = (dates.size * 72 + (dates.size - 1) * 4).coerceAtMost(360).dp
+    Box(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+        contentAlignment = Alignment.Center,
     ) {
-        itemsIndexed(dates, key = { _, date -> date.toEpochDay() }) { index, date ->
-            val selected = date == selectedDate
-            Surface(
-                onClick = { onSelect(date) },
-                modifier = Modifier.size(width = 64.dp, height = 40.dp),
-                shape = RoundedCornerShape(20.dp),
-                color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer,
-                contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer,
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text("${index + 1}", fontWeight = FontWeight.Bold)
+        LazyRow(
+            modifier = Modifier.width(selectorWidth),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            itemsIndexed(dates, key = { _, date -> date.toEpochDay() }) { index, date ->
+                val selected = date == selectedDate
+                val shape = when {
+                    selected -> RoundedCornerShape(22.dp)
+                    index == 0 -> RoundedCornerShape(topStart = 22.dp, bottomStart = 22.dp, topEnd = 10.dp, bottomEnd = 10.dp)
+                    index == dates.lastIndex -> RoundedCornerShape(topStart = 10.dp, bottomStart = 10.dp, topEnd = 22.dp, bottomEnd = 22.dp)
+                    else -> RoundedCornerShape(10.dp)
+                }
+                Surface(
+                    onClick = { onSelect(date) },
+                    modifier = Modifier.size(width = 72.dp, height = 44.dp),
+                    shape = shape,
+                    color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer,
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text("${index + 1}", fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }

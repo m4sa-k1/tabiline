@@ -19,11 +19,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 enum class AppDestination { TODAY, TIMELINE, PLANS, SETTINGS }
 
@@ -32,6 +35,7 @@ fun AppBottomBar(
     selected: AppDestination,
     onAdd: (() -> Unit)? = null,
     addContentDescription: String = "追加",
+    addText: String? = null,
     onSelect: (AppDestination) -> Unit,
 ) {
     Box(
@@ -71,7 +75,16 @@ fun AppBottomBar(
                     shadowElevation = 4.dp,
                 ) {
                     Box(Modifier.size(104.dp), contentAlignment = Alignment.Center) {
-                        Icon(Icons.Rounded.Add, addContentDescription, Modifier.size(40.dp))
+                        if (addText == null) {
+                            Icon(Icons.Rounded.Add, addContentDescription, Modifier.size(40.dp))
+                        } else {
+                            Text(
+                                text = addText,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1,
+                            )
+                        }
                     }
                 }
             }

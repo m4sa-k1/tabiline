@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
@@ -30,6 +31,8 @@ import io.github.m4sak1.tabiline.core.model.UserSettings
 import io.github.m4sak1.tabiline.ui.components.AppBottomBar
 import io.github.m4sak1.tabiline.ui.components.AppDestination
 
+private val footerFaces = listOf("(·_·)", "(≥o≤)", "(;-;)", "(^-^*)", "(o^^)o")
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
@@ -37,9 +40,20 @@ fun SettingsScreen(
     onUpdate: (UserSettings) -> Unit,
     onDestination: (AppDestination) -> Unit,
 ) {
+    var footerFace by rememberSaveable { mutableStateOf(footerFaces.random()) }
     Scaffold(
         modifier = Modifier.statusBarsPadding(),
-        bottomBar = { AppBottomBar(AppDestination.SETTINGS, onSelect = onDestination) },
+        bottomBar = {
+            AppBottomBar(
+                selected = AppDestination.SETTINGS,
+                onAdd = {
+                    footerFace = footerFaces.filterNot { it == footerFace }.random()
+                },
+                addContentDescription = "表情を変える",
+                addText = footerFace,
+                onSelect = onDestination,
+            )
+        },
     ) { padding ->
         Column(
             Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp),
