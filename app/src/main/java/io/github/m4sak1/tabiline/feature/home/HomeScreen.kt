@@ -251,15 +251,17 @@ private fun TightTransferChip(minutes: Long, modifier: Modifier = Modifier) {
 
 @Composable
 private fun EmptyToday(modifier: Modifier) {
-    Box(modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text("(˶ᵔ ᵕ ᵔ˶)", style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.primary)
-            Text("今日の移動はありません", style = MaterialTheme.typography.headlineSmall)
-            Text("次の予定まで、のんびり過ごしましょう", color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
+    Box(modifier.fillMaxSize().padding(24.dp)) {
+        Text(
+            "今日の移動はありません",
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.align(Alignment.Center),
+        )
+        Text(
+            "次の予定まで、のんびり過ごしましょう",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.align(Alignment.Center).offset(y = 38.dp),
+        )
     }
 }
 

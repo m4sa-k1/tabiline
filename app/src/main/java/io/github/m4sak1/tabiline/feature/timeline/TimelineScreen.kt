@@ -100,8 +100,9 @@ fun TimelineScreen(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
     ) { _ ->
         if (item == null || selectedDate == null) Box(Modifier.fillMaxSize().statusBarsPadding(), contentAlignment = Alignment.Center) { Text("読み込み中…") }
-        else Column(Modifier.fillMaxSize().statusBarsPadding()) {
-            Surface(
+        else Box(Modifier.fillMaxSize().statusBarsPadding()) {
+            Column(Modifier.fillMaxSize()) {
+                Surface(
                 modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 10.dp, end = 16.dp, bottom = 8.dp),
                 shape = RoundedCornerShape(28.dp),
                 color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -126,30 +127,33 @@ fun TimelineScreen(
                     }
                 }
             }
-            if (dates.size > 1) RelativeDaySelector(dates, selectedDate) { selectedEpochDay = it.toEpochDay() }
-            if (dayLegs.isEmpty()) EmptyDay(Modifier.weight(1f))
-            else LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 144.dp),
-            ) {
-                dayLegs.forEachIndexed { index, leg ->
-                    item(key = "leg-${leg.id}") {
-                        TimelineLeg(
-                            leg = leg,
-                            hasPrevious = index > 0,
-                            hasNext = index < dayLegs.lastIndex,
-                            onClick = { onEditLeg(leg.id) },
-                            onMove = { onMoveLeg(leg.id, it) },
-                        )
-                    }
-                    if (index < dayLegs.lastIndex) {
-                        item(key = "wait-${leg.id}") {
-                            val minutes = Duration.between(leg.arrival, dayLegs[index + 1].departure).toMinutes()
-                            TimelineGap(minutes, warningThreshold)
+                if (dates.size > 1) RelativeDaySelector(dates, selectedDate) { selectedEpochDay = it.toEpochDay() }
+                if (dayLegs.isNotEmpty()) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 144.dp),
+                    ) {
+                        dayLegs.forEachIndexed { index, leg ->
+                            item(key = "leg-${leg.id}") {
+                                TimelineLeg(
+                                    leg = leg,
+                                    hasPrevious = index > 0,
+                                    hasNext = index < dayLegs.lastIndex,
+                                    onClick = { onEditLeg(leg.id) },
+                                    onMove = { onMoveLeg(leg.id, it) },
+                                )
+                            }
+                            if (index < dayLegs.lastIndex) {
+                                item(key = "wait-${leg.id}") {
+                                    val minutes = Duration.between(leg.arrival, dayLegs[index + 1].departure).toMinutes()
+                                    TimelineGap(minutes, warningThreshold)
+                                }
+                            }
                         }
                     }
                 }
             }
+            if (dayLegs.isEmpty()) EmptyDay(Modifier.fillMaxSize())
         }
     }
     if (confirmDelete && item != null) AlertDialog(
@@ -365,11 +369,16 @@ private fun TimelineGap(minutes: Long, threshold: Int) {
 
 @Composable
 private fun EmptyDay(modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("(;-;)", style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.primary)
-            Text("この日の移動はありません", style = MaterialTheme.typography.headlineSmall)
-            Text("追加するとタイムラインに表示されます", color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
+    Box(modifier.fillMaxSize().padding(24.dp)) {
+        Text(
+            "この日の移動はありません",
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.align(Alignment.Center),
+        )
+        Text(
+            "追加するとタイムラインに表示されます",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.align(Alignment.Center).offset(y = 38.dp),
+        )
     }
 }
