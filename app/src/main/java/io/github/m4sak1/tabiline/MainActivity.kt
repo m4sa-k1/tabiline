@@ -45,7 +45,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun TabilineRoot(viewModel: MainViewModel) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
-    TabilineTheme(settings.theme) {
+    TabilineTheme(settings.theme, settings.accentPalette) {
         val nav = rememberNavController()
         val trips by viewModel.trips.collectAsStateWithLifecycle()
         var tripDialog by remember { mutableStateOf<Trip?>(null) }

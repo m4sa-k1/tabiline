@@ -70,8 +70,8 @@ fun AppBottomBar(
                     onClick = onAdd,
                     modifier = Modifier.size(104.dp),
                     shape = RoundedCornerShape(34.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    color = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
                     shadowElevation = 4.dp,
                 ) {
                     Box(Modifier.size(104.dp), contentAlignment = Alignment.Center) {
@@ -109,8 +109,8 @@ private fun FooterButton(
         onClick = { onSelect(destination) },
         modifier = Modifier.size(52.dp),
         colors = IconButtonDefaults.iconButtonColors(
-            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLowest,
-            contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+            containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerLowest,
+            contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
         ),
     ) {
         Icon(

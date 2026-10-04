@@ -42,8 +42,11 @@ data class TripWithLegs(
 
 enum class ThemePreference { SYSTEM, LIGHT, DARK }
 
+enum class AccentPalette { PURPLE, ORCHID, BLUE, GREEN, CORAL, AMBER, TEAL, MONO }
+
 data class UserSettings(
     val theme: ThemePreference = ThemePreference.SYSTEM,
+    val accentPalette: AccentPalette = AccentPalette.PURPLE,
     val trainMinutes: Int = 10,
     val busMinutes: Int = 10,
     val flightMinutes: Int = 60,

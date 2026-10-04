@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import io.github.m4sak1.tabiline.core.model.ThemePreference
+import io.github.m4sak1.tabiline.core.model.AccentPalette
 import io.github.m4sak1.tabiline.core.model.UserSettings
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -22,6 +23,8 @@ class DataStoreSettingsRepository(private val context: Context) : SettingsReposi
         UserSettings(
             theme = prefs[Keys.theme]?.let { runCatching { ThemePreference.valueOf(it) }.getOrNull() }
                 ?: ThemePreference.SYSTEM,
+            accentPalette = prefs[Keys.accent]?.let { runCatching { AccentPalette.valueOf(it) }.getOrNull() }
+                ?: AccentPalette.PURPLE,
             trainMinutes = prefs[Keys.train] ?: 10,
             busMinutes = prefs[Keys.bus] ?: 10,
             flightMinutes = prefs[Keys.flight] ?: 60,
@@ -33,6 +36,7 @@ class DataStoreSettingsRepository(private val context: Context) : SettingsReposi
     override suspend fun update(settings: UserSettings) {
         context.settingsDataStore.edit {
             it[Keys.theme] = settings.theme.name
+            it[Keys.accent] = settings.accentPalette.name
             it[Keys.train] = settings.trainMinutes
             it[Keys.bus] = settings.busMinutes
             it[Keys.flight] = settings.flightMinutes
@@ -43,6 +47,7 @@ class DataStoreSettingsRepository(private val context: Context) : SettingsReposi
 
     private object Keys {
         val theme = stringPreferencesKey("theme")
+        val accent = stringPreferencesKey("accent_palette")
         val train = intPreferencesKey("train_minutes")
         val bus = intPreferencesKey("bus_minutes")
         val flight = intPreferencesKey("flight_minutes")

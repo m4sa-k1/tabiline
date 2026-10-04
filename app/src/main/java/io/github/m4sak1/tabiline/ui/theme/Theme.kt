@@ -16,7 +16,21 @@ import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.m4sak1.tabiline.R
+import io.github.m4sak1.tabiline.core.model.AccentPalette
 import io.github.m4sak1.tabiline.core.model.ThemePreference
+
+data class AccentColors(val strong: Color, val soft: Color)
+
+fun accentColors(palette: AccentPalette): AccentColors = when (palette) {
+    AccentPalette.PURPLE -> AccentColors(Color(0xFF675496), Color(0xFFC8B3FD))
+    AccentPalette.ORCHID -> AccentColors(Color(0xFF86468C), Color(0xFFFBAFFE))
+    AccentPalette.BLUE -> AccentColors(Color(0xFF315DA8), Color(0xFFAFCBFF))
+    AccentPalette.GREEN -> AccentColors(Color(0xFF367A55), Color(0xFFAEEAC5))
+    AccentPalette.CORAL -> AccentColors(Color(0xFFA84462), Color(0xFFFFC0CD))
+    AccentPalette.AMBER -> AccentColors(Color(0xFF925700), Color(0xFFFFD18A))
+    AccentPalette.TEAL -> AccentColors(Color(0xFF006A70), Color(0xFF8EE8EB))
+    AccentPalette.MONO -> AccentColors(Color(0xFF514B5E), Color(0xFFD5CFDF))
+}
 
 private val LightColors = lightColorScheme(
     primary = Color(0xFF4A4459), onPrimary = Color(0xFFFFFFFF),
@@ -96,14 +110,32 @@ private fun TextStyle.withFont(weight: FontWeight = fontWeight ?: FontWeight.Nor
     copy(fontFamily = RobotoFlex, fontWeight = weight)
 
 @Composable
-fun TabilineTheme(preference: ThemePreference, content: @Composable () -> Unit) {
+fun TabilineTheme(preference: ThemePreference, accentPalette: AccentPalette, content: @Composable () -> Unit) {
     val dark = when (preference) {
         ThemePreference.SYSTEM -> isSystemInDarkTheme()
         ThemePreference.LIGHT -> false
         ThemePreference.DARK -> true
     }
+    val accent = accentColors(accentPalette)
+    val colors = if (dark) {
+        DarkColors.copy(
+            primary = accent.soft,
+            onPrimary = Color.Black,
+            primaryContainer = accent.strong,
+            onPrimaryContainer = Color.White,
+            inversePrimary = accent.strong,
+        )
+    } else {
+        LightColors.copy(
+            primary = accent.strong,
+            onPrimary = Color.White,
+            primaryContainer = accent.soft,
+            onPrimaryContainer = Color.Black,
+            inversePrimary = accent.soft,
+        )
+    }
     MaterialTheme(
-        colorScheme = if (dark) DarkColors else LightColors,
+        colorScheme = colors,
         typography = TabilineTypography,
         shapes = androidx.compose.material3.Shapes(
             extraSmall = RoundedCornerShape(8.dp), small = RoundedCornerShape(12.dp),
