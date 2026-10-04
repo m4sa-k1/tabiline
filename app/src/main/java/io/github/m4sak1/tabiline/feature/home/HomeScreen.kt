@@ -184,7 +184,7 @@ private fun HeroCard(leg: TransportLeg, remaining: String, onClick: () -> Unit) 
             )
             Text(
                 leg.departureLocal.format(timeFormat),
-                fontSize = 72.sp, lineHeight = 76.sp, fontWeight = FontWeight.Black,
+                fontSize = 72.sp, lineHeight = 76.sp, fontWeight = FontWeight.Bold,
                 modifier = Modifier.offset(24.dp, 52.dp),
             )
             Surface(
@@ -246,7 +246,11 @@ private fun FutureLegRow(leg: TransportLeg, first: Boolean, last: Boolean, onCli
                 Icon(visual.icon, null, tint = visual.color)
             }
             Column(Modifier.padding(start = 12.dp).weight(1f)) {
-                Text("${leg.departureLocal.format(timeFormat)} → ${leg.arrivalLocal.format(timeFormat)}", style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    "${leg.departureLocal.format(timeFormat)} → ${leg.arrivalLocal.format(timeFormat)}",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                )
                 val type = if (leg.mode == TransportMode.TRAIN) leg.trainType?.label ?: leg.mode.label else leg.mode.label
                 val platform = leg.departurePlatform.takeIf(String::isNotBlank)
                 Text(

@@ -8,9 +8,11 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.m4sak1.tabiline.R
@@ -48,21 +50,45 @@ private val DarkColors = darkColorScheme(
     errorContainer = Color(0xFF8C1D18), onErrorContainer = Color(0xFFF9DEDC),
 )
 
+@OptIn(ExperimentalTextApi::class)
 private val RobotoFlex = FontFamily(
-    Font(R.font.roboto_flex, FontWeight.Normal), Font(R.font.roboto_flex, FontWeight.Medium),
-    Font(R.font.roboto_flex, FontWeight.Bold), Font(R.font.roboto_flex, FontWeight.Black),
+    Font(
+        R.font.roboto_flex,
+        FontWeight.Normal,
+        variationSettings = FontVariation.Settings(FontVariation.weight(400)),
+    ),
+    Font(
+        R.font.roboto_flex,
+        FontWeight.Medium,
+        variationSettings = FontVariation.Settings(FontVariation.weight(500)),
+    ),
+    Font(
+        R.font.roboto_flex,
+        FontWeight.SemiBold,
+        variationSettings = FontVariation.Settings(FontVariation.weight(600)),
+    ),
+    Font(
+        R.font.roboto_flex,
+        FontWeight.Bold,
+        variationSettings = FontVariation.Settings(FontVariation.weight(700)),
+    ),
+    Font(
+        R.font.roboto_flex,
+        FontWeight.ExtraBold,
+        variationSettings = FontVariation.Settings(FontVariation.weight(800)),
+    ),
 )
 
 private val TabilineTypography = Typography().run {
     copy(
-        displayLarge = displayLarge.withFont(FontWeight.Black), displayMedium = displayMedium.withFont(FontWeight.Black),
-        displaySmall = displaySmall.withFont(FontWeight.Black), headlineLarge = headlineLarge.withFont(FontWeight.Bold),
+        displayLarge = displayLarge.withFont(FontWeight.Bold), displayMedium = displayMedium.withFont(FontWeight.Bold),
+        displaySmall = displaySmall.withFont(FontWeight.Bold), headlineLarge = headlineLarge.withFont(FontWeight.Bold),
         headlineMedium = headlineMedium.withFont(FontWeight.Bold), headlineSmall = headlineSmall.withFont(FontWeight.Bold),
         titleLarge = titleLarge.withFont(FontWeight.Bold), titleMedium = titleMedium.withFont(FontWeight.Bold),
         titleSmall = titleSmall.withFont(FontWeight.Bold), bodyLarge = bodyLarge.withFont(),
         bodyMedium = bodyMedium.withFont(), bodySmall = bodySmall.withFont(),
-        labelLarge = labelLarge.withFont(FontWeight.Bold), labelMedium = labelMedium.withFont(FontWeight.Bold),
-        labelSmall = labelSmall.withFont(FontWeight.Bold),
+        labelLarge = labelLarge.withFont(FontWeight.Bold), labelMedium = labelMedium.withFont(FontWeight.Medium),
+        labelSmall = labelSmall.withFont(FontWeight.Medium),
     )
 }
 

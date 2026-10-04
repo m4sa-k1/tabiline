@@ -16,13 +16,20 @@ enum class AppDestination { TODAY, TIMELINE, PLANS }
 
 @Composable
 fun AppBottomBar(selected: AppDestination, onSelect: (AppDestination) -> Unit) {
-    val label: @Composable (String) -> Unit = { value -> Text(value, fontSize = 12.sp, lineHeight = 16.sp, fontWeight = FontWeight.Bold) }
+    val label: @Composable (String, Boolean) -> Unit = { value, isSelected ->
+        Text(
+            value,
+            fontSize = 12.sp,
+            lineHeight = 16.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+        )
+    }
     NavigationBar {
         NavigationBarItem(selected == AppDestination.TODAY, { onSelect(AppDestination.TODAY) },
-            { Icon(Icons.Rounded.Today, null) }, label = { label("今日") })
+            { Icon(Icons.Rounded.Today, null) }, label = { label("今日", selected == AppDestination.TODAY) })
         NavigationBarItem(selected == AppDestination.TIMELINE, { onSelect(AppDestination.TIMELINE) },
-            { Icon(Icons.Rounded.Timeline, null) }, label = { label("タイムライン") })
+            { Icon(Icons.Rounded.Timeline, null) }, label = { label("タイムライン", selected == AppDestination.TIMELINE) })
         NavigationBarItem(selected == AppDestination.PLANS, { onSelect(AppDestination.PLANS) },
-            { Icon(Icons.Rounded.Luggage, null) }, label = { label("旅行") })
+            { Icon(Icons.Rounded.Luggage, null) }, label = { label("旅行", selected == AppDestination.PLANS) })
     }
 }

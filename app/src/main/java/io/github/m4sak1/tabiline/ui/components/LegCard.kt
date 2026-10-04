@@ -106,7 +106,7 @@ fun LegCard(
 @Composable
 private fun JourneyPoint(time: String, place: String, platform: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(time, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
+        Text(time, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             Text(place, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)

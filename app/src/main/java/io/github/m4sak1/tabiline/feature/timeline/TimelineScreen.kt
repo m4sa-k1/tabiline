@@ -56,6 +56,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.github.m4sak1.tabiline.core.model.TransportLeg
 import io.github.m4sak1.tabiline.core.model.TransportMode
 import io.github.m4sak1.tabiline.core.model.TripWithLegs
@@ -138,7 +139,7 @@ fun TimelineScreen(
                         Tab(
                             selected = date == selectedDate,
                             onClick = { selectedEpochDay = date.toEpochDay() },
-                            text = { Text(date.format(tabDate), maxLines = 1) },
+                            text = { Text(date.format(tabDate), maxLines = 1, fontSize = 14.sp, fontWeight = FontWeight.Bold) },
                         )
                     }
                 }
@@ -148,7 +149,7 @@ fun TimelineScreen(
                         Tab(
                             selected = date == selectedDate,
                             onClick = { selectedEpochDay = date.toEpochDay() },
-                            text = { Text(date.format(tabDate), maxLines = 1) },
+                            text = { Text(date.format(tabDate), maxLines = 1, fontSize = 14.sp, fontWeight = FontWeight.Bold) },
                         )
                     }
                 }
@@ -193,10 +194,23 @@ private fun TimelineLeg(leg: TransportLeg, onClick: () -> Unit, onMove: (Int) ->
     var drag by remember { mutableFloatStateOf(0f) }
     Row(Modifier.fillMaxWidth().height(104.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.width(62.dp).fillMaxHeight()) {
-            Text(leg.departureLocal.format(timelineTime), style = MaterialTheme.typography.titleLarge, modifier = Modifier.align(Alignment.TopStart))
+            Text(
+                leg.departureLocal.format(timelineTime),
+                fontSize = 20.sp,
+                lineHeight = 24.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.TopStart),
+            )
             val arrival = if (leg.arrivalLocal.toLocalDate() == leg.departureLocal.toLocalDate()) leg.arrivalLocal.format(timelineTime)
                 else leg.arrivalLocal.format(shortDateTime)
-            Text(arrival, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.align(Alignment.BottomStart), maxLines = 1)
+            Text(
+                arrival,
+                fontSize = 16.sp,
+                lineHeight = 20.sp,
+                fontWeight = FontWeight.Normal,
+                modifier = Modifier.align(Alignment.BottomStart),
+                maxLines = 1,
+            )
         }
         Box(Modifier.width(24.dp).fillMaxHeight()) {
             Box(Modifier.align(Alignment.TopCenter).offset(y = 13.dp).width(4.dp).height(80.dp)
@@ -223,10 +237,17 @@ private fun TimelineLeg(leg: TransportLeg, onClick: () -> Unit, onMove: (Int) ->
             Row(Modifier.fillMaxSize().padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     val title = leg.departurePlatform.ifBlank { "${leg.departurePlace} → ${leg.arrivalPlace}" }
-                    Text(title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        title,
+                        fontSize = 16.sp,
+                        lineHeight = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                     val type = if (leg.mode == TransportMode.TRAIN) leg.trainType?.label ?: leg.mode.label else leg.mode.label
                     val detail = if (leg.departurePlatform.isBlank()) type else "${leg.departurePlace} → ${leg.arrivalPlace} ・ $type"
-                    Text(detail, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    Text(detail, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Normal, color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
@@ -252,7 +273,7 @@ private fun TimelineGap(minutes: Long, threshold: Int) {
                     Icon(if (warning) Icons.Rounded.Warning else Icons.Rounded.Schedule, null, Modifier.size(18.dp),
                         tint = MaterialTheme.colorScheme.onSecondaryContainer)
                     val label = if (minutes < 0) "時刻が ${-minutes}分 重複" else if (warning) "待ち ${minutes}分 ・ 乗り継ぎに注意" else "待ち ${minutes}分"
-                    Text(label, Modifier.padding(start = 6.dp), style = MaterialTheme.typography.labelMedium,
+                    Text(label, Modifier.padding(start = 6.dp), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSecondaryContainer)
                 }
             }
