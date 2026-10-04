@@ -1,11 +1,16 @@
 package io.github.m4sak1.tabiline.feature.editor
 
 import android.app.DatePickerDialog
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,7 +29,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,19 +36,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogWindowProvider
 import io.github.m4sak1.tabiline.core.model.Trip
-import io.github.m4sak1.tabiline.ui.components.BubbleReveal
+import io.github.m4sak1.tabiline.ui.components.BubblePopup
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 private val dateFormat = DateTimeFormatter.ofPattern("yyyy/MM/dd")
 
 @Composable
-fun TripEditorDialog(existing: Trip?, onDismiss: () -> Unit, onSave: (Trip) -> Unit) {
+fun TripEditorDialog(
+    existing: Trip?,
+    onDismiss: () -> Unit,
+    onSave: (Trip) -> Unit,
+    onProgress: (Float) -> Unit = {},
+) {
     var name by remember(existing) { mutableStateOf(existing?.name.orEmpty()) }
     var start by remember(existing) { mutableStateOf(existing?.startDate ?: LocalDate.now()) }
     var end by remember(existing) { mutableStateOf(existing?.endDate ?: LocalDate.now().plusDays(1)) }
@@ -61,20 +67,34 @@ fun TripEditorDialog(existing: Trip?, onDismiss: () -> Unit, onSave: (Trip) -> U
         dialogVisible = false
     }
 
-    Dialog(onDismissRequest = { closeAfterMotion() }) {
-        val view = LocalView.current
-        SideEffect { (view.parent as? DialogWindowProvider)?.window?.setWindowAnimations(0) }
-        BubbleReveal(
-            visible = dialogVisible,
-            originXFraction = 0.82f,
-            originYFraction = 0.92f,
-            onHidden = { pendingSave?.let(onSave) ?: onDismiss() },
+    BackHandler(enabled = dialogVisible && !closing) { closeAfterMotion() }
+
+    BubblePopup(
+        visible = dialogVisible,
+        originXFraction = 0.78f,
+        originYFraction = 0.91f,
+        onProgress = onProgress,
+        onHidden = { pendingSave?.let(onSave) ?: onDismiss() },
+    ) { _, motionModifier ->
+        val outsideInteraction = remember { MutableInteractionSource() }
+        Box(
+            Modifier.fillMaxSize().clickable(
+                interactionSource = outsideInteraction,
+                indication = null,
+                enabled = !closing,
+                onClick = { closeAfterMotion() },
+            ),
+            contentAlignment = Alignment.Center,
         ) {
+            val popupInteraction = remember { MutableInteractionSource() }
             Surface(
-                modifier = Modifier.align(Alignment.Center),
+                modifier = motionModifier
+                    .padding(horizontal = 20.dp)
+                    .fillMaxWidth()
+                    .heightIn(max = 620.dp)
+                    .clickable(interactionSource = popupInteraction, indication = null) {},
                 shape = RoundedCornerShape(32.dp),
                 color = MaterialTheme.colorScheme.surfaceContainerLow,
-                tonalElevation = 6.dp,
             ) {
                 Column(
                     Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(22.dp),

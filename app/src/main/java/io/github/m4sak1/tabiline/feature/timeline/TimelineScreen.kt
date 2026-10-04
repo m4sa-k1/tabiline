@@ -26,11 +26,10 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Schedule
-import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -38,7 +37,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -71,10 +69,8 @@ import io.github.m4sak1.tabiline.ui.components.visual
 import java.time.Duration
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 private val timelineTime = DateTimeFormatter.ofPattern("HH:mm")
-private val headingDate = DateTimeFormatter.ofPattern("M月d日 EEEE", Locale.JAPAN)
 private val shortDateTime = DateTimeFormatter.ofPattern("M/d HH:mm")
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -83,10 +79,8 @@ private val shortDateTime = DateTimeFormatter.ofPattern("M/d HH:mm")
 fun TimelineScreen(
     item: TripWithLegs?,
     settings: UserSettings,
-    onBack: () -> Unit,
     onEditTrip: () -> Unit,
     onDeleteTrip: () -> Unit,
-    onAddLeg: () -> Unit,
     onEditLeg: (Long) -> Unit,
     onMoveLeg: (Long, Int) -> Unit,
 ) {
@@ -107,22 +101,28 @@ fun TimelineScreen(
     ) { _ ->
         if (item == null || selectedDate == null) Box(Modifier.fillMaxSize().statusBarsPadding(), contentAlignment = Alignment.Center) { Text("読み込み中…") }
         else Column(Modifier.fillMaxSize().statusBarsPadding()) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(start = 24.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
+            Surface(
+                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 10.dp, end = 16.dp, bottom = 8.dp),
+                shape = RoundedCornerShape(28.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
             ) {
-                Text(item.trip.name, style = MaterialTheme.typography.headlineLarge, modifier = Modifier.weight(1f))
-                Box {
-                    IconButton(onClick = { menuOpen = true }) { Icon(Icons.Rounded.SwapVert, "並べ替えと旅行メニュー") }
-                    DropdownMenu(menuOpen, { menuOpen = false }) {
-                        if (!item.trip.isAutomatic) {
-                            DropdownMenuItem(text = { Text("旅行を編集") }, leadingIcon = { Icon(Icons.Rounded.Edit, null) }, onClick = { menuOpen = false; onEditTrip() })
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(start = 20.dp, top = 14.dp, end = 8.dp, bottom = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(item.trip.name, style = MaterialTheme.typography.headlineLarge, modifier = Modifier.weight(1f))
+                    Box {
+                        IconButton(onClick = { menuOpen = true }) { Icon(Icons.Rounded.MoreVert, "旅行メニュー") }
+                        DropdownMenu(menuOpen, { menuOpen = false }) {
+                            if (!item.trip.isAutomatic) {
+                                DropdownMenuItem(text = { Text("旅行を編集") }, leadingIcon = { Icon(Icons.Rounded.Edit, null) }, onClick = { menuOpen = false; onEditTrip() })
+                            }
+                            DropdownMenuItem(
+                                text = { Text(if (item.trip.isAutomatic) "この日の移動を削除" else "旅行を削除") },
+                                leadingIcon = { Icon(Icons.Rounded.Delete, null) },
+                                onClick = { menuOpen = false; confirmDelete = true },
+                            )
                         }
-                        DropdownMenuItem(
-                            text = { Text(if (item.trip.isAutomatic) "この日の移動を削除" else "旅行を削除") },
-                            leadingIcon = { Icon(Icons.Rounded.Delete, null) },
-                            onClick = { menuOpen = false; confirmDelete = true },
-                        )
                     }
                 }
             }
@@ -130,16 +130,8 @@ fun TimelineScreen(
             if (dayLegs.isEmpty()) EmptyDay()
             else LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 144.dp),
+                contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 144.dp),
             ) {
-                item {
-                    Text(selectedDate.format(headingDate), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 16.dp, start = 8.dp))
-                    Text(
-                        "移動 ${dayLegs.size}件 ・ ${dayLegs.first().departureLocal.format(timelineTime)} – ${dayLegs.last().arrivalLocal.format(timelineTime)}",
-                        style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 8.dp, top = 4.dp, bottom = 16.dp),
-                    )
-                }
                 dayLegs.forEachIndexed { index, leg ->
                     item(key = "leg-${leg.id}") {
                         TimelineLeg(
@@ -211,8 +203,7 @@ private fun RelativeDaySelector(
                         topEnd = endRadius,
                         bottomEnd = endRadius,
                     ),
-                    color = if (selected) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.primaryContainer,
+                    color = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
                     contentColor = if (selected) MaterialTheme.colorScheme.onPrimary
                     else MaterialTheme.colorScheme.onPrimaryContainer,
                 ) {

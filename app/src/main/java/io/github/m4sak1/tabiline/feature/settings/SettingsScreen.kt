@@ -1,6 +1,10 @@
 package io.github.m4sak1.tabiline.feature.settings
 
 import android.annotation.SuppressLint
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -13,20 +17,28 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.rounded.LightMode
+import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Remove
+import androidx.compose.material.icons.rounded.SettingsBrightness
+import androidx.compose.material.icons.rounded.SyncAlt
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -34,17 +46,37 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.m4sak1.tabiline.BuildConfig
 import io.github.m4sak1.tabiline.core.model.AccentPalette
 import io.github.m4sak1.tabiline.core.model.ThemePreference
 import io.github.m4sak1.tabiline.core.model.UserSettings
 import io.github.m4sak1.tabiline.ui.theme.accentColors
+
+enum class SettingsSection(
+    val route: String,
+    val title: String,
+    val subtitle: String,
+    val icon: ImageVector,
+) {
+    ACCENT("accent", "アクセントカラー", "アプリの色を選択", Icons.Rounded.Palette),
+    REGION("region", "デフォルト地域", "新しい移動のタイムゾーン", Icons.Rounded.Language),
+    TRANSFER("transfer", "乗り継ぎ警告", "交通手段ごとの警告時間", Icons.Rounded.SyncAlt),
+    ABOUT("about", "Tabilineについて", "バージョンとアプリ情報", Icons.Rounded.Info),
+    ;
+
+    companion object {
+        fun fromRoute(route: String?): SettingsSection? = entries.firstOrNull { it.route == route }
+    }
+}
 
 private data class ZoneChoice(val label: String, val zoneId: String)
 
@@ -60,41 +92,53 @@ private val defaultZones = listOf(
     ZoneChoice("ホノルル", "Pacific/Honolulu"),
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun SettingsScreen(
     settings: UserSettings,
     onUpdate: (UserSettings) -> Unit,
+    onOpenSection: (SettingsSection) -> Unit,
 ) {
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        containerColor = Color.Transparent,
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-    ) { _ ->
-        Column(
-            Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState())
-                .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 144.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+    SettingsScaffold {
+        Text("設定", style = MaterialTheme.typography.displaySmall, modifier = Modifier.padding(start = 8.dp, bottom = 4.dp))
+        ThemeSelector(settings.theme) { onUpdate(settings.copy(theme = it)) }
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
         ) {
-            Text("設定", style = MaterialTheme.typography.displaySmall, modifier = Modifier.padding(start = 8.dp, bottom = 2.dp))
-            SettingsCard(title = "テーマ", subtitle = "アプリの見た目を選択") {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ThemePreference.entries.forEach { value ->
-                        val label = when (value) {
-                            ThemePreference.SYSTEM -> "端末設定"
-                            ThemePreference.LIGHT -> "ライト"
-                            ThemePreference.DARK -> "ダーク"
-                        }
-                        FilterChip(
-                            selected = settings.theme == value,
-                            onClick = { onUpdate(settings.copy(theme = value)) },
-                            label = { Text(label) },
-                        )
-                    }
+            Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+                SettingsSection.entries.forEach { section ->
+                    SettingsRow(section = section, onClick = { onOpenSection(section) })
                 }
             }
-            SettingsCard(title = "アクセントカラー", subtitle = "選択状態や追加ボタンの色") {
+        }
+    }
+}
+
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@Composable
+fun SettingsDetailScreen(
+    section: SettingsSection,
+    settings: UserSettings,
+    onUpdate: (UserSettings) -> Unit,
+    onBack: () -> Unit,
+) {
+    SettingsScaffold {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Rounded.ArrowBack, "設定一覧へ戻る")
+            }
+            Column(Modifier.padding(start = 4.dp)) {
+                Text(section.title, style = MaterialTheme.typography.headlineLarge)
+                Text(section.subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+
+        when (section) {
+            SettingsSection.ACCENT -> SettingsCard {
                 AccentPalette.entries.forEach { palette ->
                     AccentChoice(
                         palette = palette,
@@ -103,7 +147,8 @@ fun SettingsScreen(
                     )
                 }
             }
-            SettingsCard(title = "デフォルト地域", subtitle = "新しい移動のタイムゾーンに使用") {
+
+            SettingsSection.REGION -> SettingsCard {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     defaultZones.forEach { zone ->
                         FilterChip(
@@ -119,24 +164,137 @@ fun SettingsScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            SettingsCard(title = "乗り継ぎ警告", subtitle = "この時間を下回る乗り継ぎを警告します") {
+
+            SettingsSection.TRANSFER -> SettingsCard {
                 ThresholdStepper("電車", settings.trainMinutes) { onUpdate(settings.copy(trainMinutes = it)) }
                 ThresholdStepper("バス", settings.busMinutes) { onUpdate(settings.copy(busMinutes = it)) }
                 ThresholdStepper("飛行機", settings.flightMinutes) { onUpdate(settings.copy(flightMinutes = it)) }
                 ThresholdStepper("船", settings.ferryMinutes) { onUpdate(settings.copy(ferryMinutes = it)) }
                 ThresholdStepper("その他", settings.otherMinutes) { onUpdate(settings.copy(otherMinutes = it)) }
             }
-            Surface(
+
+            SettingsSection.ABOUT -> Surface(
                 shape = RoundedCornerShape(28.dp),
                 color = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
             ) {
-                Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("Tabiline", style = MaterialTheme.typography.titleLarge)
+                Column(Modifier.fillMaxWidth().padding(24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Rounded.Info, null, Modifier.size(40.dp))
+                    Text("Tabiline", style = MaterialTheme.typography.headlineLarge)
                     Text("Version ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.labelLarge)
                     Text("旅の移動を、ひとつのタイムラインに。", color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f))
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ThemeSelector(selected: ThemePreference, onSelect: (ThemePreference) -> Unit) {
+    val options = listOf(
+        Triple(ThemePreference.SYSTEM, "端末設定", Icons.Rounded.SettingsBrightness),
+        Triple(ThemePreference.LIGHT, "ライト", Icons.Rounded.LightMode),
+        Triple(ThemePreference.DARK, "ダーク", Icons.Rounded.DarkMode),
+    )
+    val motion = tween<androidx.compose.ui.unit.Dp>(260, easing = CubicBezierEasing(0.2f, 0f, 0f, 1f))
+    Surface(shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
+        Column(
+            Modifier.fillMaxWidth().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Rounded.DarkMode, null, tint = MaterialTheme.colorScheme.primary)
+                Text("テーマ", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(start = 10.dp))
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                options.forEachIndexed { index, (value, label, icon) ->
+                    val active = selected == value
+                    val startRadius by animateDpAsState(
+                        if (active || index == 0) 24.dp else 6.dp,
+                        motion,
+                        label = "theme-start-shape",
+                    )
+                    val endRadius by animateDpAsState(
+                        if (active || index == options.lastIndex) 24.dp else 6.dp,
+                        motion,
+                        label = "theme-end-shape",
+                    )
+                    val container by animateColorAsState(
+                        if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer,
+                        tween(260),
+                        label = "theme-container",
+                    )
+                    val content by animateColorAsState(
+                        if (active) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer,
+                        tween(260),
+                        label = "theme-content",
+                    )
+                    Surface(
+                        onClick = { onSelect(value) },
+                        modifier = Modifier.weight(1f).height(52.dp),
+                        shape = RoundedCornerShape(
+                            topStart = startRadius,
+                            bottomStart = startRadius,
+                            topEnd = endRadius,
+                            bottomEnd = endRadius,
+                        ),
+                        color = container,
+                        contentColor = content,
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(icon, null, Modifier.size(20.dp))
+                            Text(label, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 6.dp))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsScaffold(content: @Composable ColumnScope.() -> Unit) {
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+    ) { _ ->
+        Column(
+            Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState())
+                .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 144.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            content = content,
+        )
+    }
+}
+
+@Composable
+private fun SettingsRow(section: SettingsSection, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        color = Color.Transparent,
+        shape = RoundedCornerShape(22.dp),
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Surface(
+                modifier = Modifier.size(48.dp),
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            ) {
+                Box(contentAlignment = Alignment.Center) { Icon(section.icon, null, Modifier.size(24.dp)) }
+            }
+            Column(Modifier.weight(1f).padding(horizontal = 14.dp)) {
+                Text(section.title, style = MaterialTheme.typography.titleMedium)
+                Text(section.subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -186,16 +344,13 @@ private fun AccentChoice(palette: AccentPalette, selected: Boolean, onClick: () 
 }
 
 @Composable
-private fun SettingsCard(title: String, subtitle: String, content: @Composable ColumnScope.() -> Unit) {
+private fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
     Surface(shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
         Column(
             Modifier.fillMaxWidth().padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text(title, style = MaterialTheme.typography.titleLarge)
-            Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            content()
-        }
+            content = content,
+        )
     }
 }
 
