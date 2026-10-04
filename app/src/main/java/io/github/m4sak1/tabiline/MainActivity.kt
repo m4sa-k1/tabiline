@@ -139,6 +139,7 @@ private fun TabilineRoot(viewModel: MainViewModel) {
         var settingsDialogSection by remember { mutableStateOf<SettingsSection?>(null) }
         var addingTripId by rememberSaveable { mutableStateOf<Long?>(null) }
         var addScreenVisible by remember { mutableStateOf(false) }
+        var addScreenProgress by remember { mutableFloatStateOf(0f) }
         var popupBlurProgress by remember { mutableFloatStateOf(0f) }
         LaunchedEffect(trips) {
             if (trips.none { it.trip.id == selectedTripId }) {
@@ -320,8 +321,9 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                 BubbleReveal(
                     visible = addScreenVisible,
                     modifier = Modifier.zIndex(1f),
-                    originXFraction = 0.06f,
-                    originYFraction = 0.96f,
+                    originXFraction = 0.78f,
+                    originYFraction = 0.91f,
+                    onProgress = { addScreenProgress = it },
                     onHidden = {
                         addingTripId = null
                         destinationAfterClose?.let { destinationTripId ->
@@ -364,7 +366,7 @@ private fun TabilineRoot(viewModel: MainViewModel) {
             }
         }
 
-        if (destination != null && addingTripId == null) {
+        if (destination != null && (addingTripId == null || addScreenProgress < 0.999f)) {
             val barDestination = destination
             val today = java.time.LocalDate.now()
             val homeTripId = trips.firstOrNull {

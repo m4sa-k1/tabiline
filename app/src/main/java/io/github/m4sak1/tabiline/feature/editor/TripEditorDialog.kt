@@ -38,7 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import io.github.m4sak1.tabiline.core.model.Trip
-import io.github.m4sak1.tabiline.ui.components.BubblePopup
+import io.github.m4sak1.tabiline.ui.components.CenterPopup
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -69,10 +69,8 @@ fun TripEditorDialog(
 
     BackHandler(enabled = dialogVisible && !closing) { closeAfterMotion() }
 
-    BubblePopup(
+    CenterPopup(
         visible = dialogVisible,
-        originXFraction = 0.78f,
-        originYFraction = 1.06f,
         onProgress = onProgress,
         onHidden = { pendingSave?.let(onSave) ?: onDismiss() },
     ) { _, motionModifier ->
