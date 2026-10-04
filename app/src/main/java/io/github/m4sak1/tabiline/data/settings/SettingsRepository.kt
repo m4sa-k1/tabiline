@@ -2,6 +2,8 @@ package io.github.m4sak1.tabiline.data.settings
 
 import android.content.Context
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import io.github.m4sak1.tabiline.core.model.TransportMode
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -21,6 +23,10 @@ interface SettingsRepository {
 class DataStoreSettingsRepository(private val context: Context) : SettingsRepository {
     override val settings = context.settingsDataStore.data.map { prefs ->
         UserSettings(
+            notificationsEnabled = prefs[booleanPreferencesKey("notifications_enabled")] ?: false,
+            notificationMinutes = TransportMode.entries.associateWith {
+                (prefs[intPreferencesKey("notify_${it.name}_minutes")] ?: if (it == TransportMode.FLIGHT) 60 else 10).coerceIn(0, 999)
+            },
             theme = prefs[Keys.theme]?.let { runCatching { ThemePreference.valueOf(it) }.getOrNull() }
                 ?: ThemePreference.SYSTEM,
             accentPalette = prefs[Keys.accent]?.let { runCatching { AccentPalette.valueOf(it) }.getOrNull() }
@@ -36,6 +42,8 @@ class DataStoreSettingsRepository(private val context: Context) : SettingsReposi
 
     override suspend fun update(settings: UserSettings) {
         context.settingsDataStore.edit {
+            it[booleanPreferencesKey("notifications_enabled")] = settings.notificationsEnabled
+            settings.notificationMinutes.forEach { (mode, minutes) -> it[intPreferencesKey("notify_${mode.name}_minutes")] = minutes.coerceIn(0, 999) }
             it[Keys.theme] = settings.theme.name
             it[Keys.accent] = settings.accentPalette.name
             it[Keys.defaultZone] = settings.defaultZoneId

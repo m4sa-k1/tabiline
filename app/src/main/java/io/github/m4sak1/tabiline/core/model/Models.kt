@@ -57,6 +57,8 @@ enum class GapType(val label: String) {
 }
 
 data class UserSettings(
+    val notificationsEnabled: Boolean = false,
+    val notificationMinutes: Map<TransportMode, Int> = TransportMode.entries.associateWith { if (it == TransportMode.FLIGHT) 60 else 10 },
     val theme: ThemePreference = ThemePreference.SYSTEM,
     val accentPalette: AccentPalette = AccentPalette.PURPLE,
     val defaultZoneId: String = "Asia/Tokyo",

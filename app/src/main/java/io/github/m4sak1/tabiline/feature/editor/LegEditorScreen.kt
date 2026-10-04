@@ -1,7 +1,9 @@
 package io.github.m4sak1.tabiline.feature.editor
 
-import android.app.DatePickerDialog
-import android.app.TimePickerDialog
+import io.github.m4sak1.tabiline.ui.components.AppDatePopup
+import io.github.m4sak1.tabiline.ui.components.AppTimePopup
+import androidx.activity.compose.BackHandler
+import io.github.m4sak1.tabiline.ui.components.DiscardChangesDialog
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -127,6 +129,21 @@ fun LegEditorScreen(
     }
 
     val isFreeTime = mode == TransportMode.FREE_TIME
+    val draft = listOf(departureDate, departureTime, arrivalDate, arrivalTime, departurePlace, arrivalPlace,
+        departurePlatform, arrivalPlatform, departureTerminal, arrivalTerminal, boardingGroup, flightNumber,
+        departureZone, arrivalZone, mode, trainType, trainLine, memo, selectedTripId)
+    val initialDraft = remember(existing?.id) { draft }
+    var confirmDiscard by remember { mutableStateOf(false) }
+    fun requestClose() {
+        if (!isSaving) {
+            if (draft != initialDraft) confirmDiscard = true else onBack()
+        }
+    }
+    BackHandler { requestClose() }
+    if (confirmDiscard) DiscardChangesDialog(
+        onKeepEditing = { confirmDiscard = false },
+        onDiscard = { confirmDiscard = false; onBack() },
+    )
     val departureZoneId = runCatching { ZoneId.of(departureZone) }.getOrNull()
     val arrivalZoneId = runCatching { ZoneId.of(arrivalZone) }.getOrNull()
     val departureInstant = departureZoneId?.let { LocalDateTime.of(departureDate, departureTime).atZone(it).toInstant() }
@@ -153,7 +170,7 @@ fun LegEditorScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                IconButton(onClick = onBack) { Icon(Icons.Rounded.Close, "閉じる") }
+                IconButton(onClick = ::requestClose, enabled = !isSaving) { Icon(Icons.Rounded.Close, "閉じる") }
                 Column(Modifier.weight(1f).padding(start = 8.dp)) {
                     Text(
                         when {
@@ -391,10 +408,13 @@ private fun DateTimeRow(
     onDate: (LocalDate) -> Unit,
     onTime: (LocalTime) -> Unit,
 ) {
-    val context = LocalContext.current
+    var pickingDate by remember { mutableStateOf(false) }
+    var pickingTime by remember { mutableStateOf(false) }
+    if (pickingDate) AppDatePopup(date, { pickingDate = false }, onDate)
+    if (pickingTime) AppTimePopup(time, { pickingTime = false }, onTime)
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Surface(
-            onClick = { DatePickerDialog(context, { _, y, m, d -> onDate(LocalDate.of(y, m + 1, d)) }, date.year, date.monthValue - 1, date.dayOfMonth).show() },
+            onClick = { pickingDate = true },
             modifier = Modifier.weight(1f),
             shape = RoundedCornerShape(20.dp),
             color = MaterialTheme.colorScheme.surfaceContainerHighest,
@@ -406,7 +426,7 @@ private fun DateTimeRow(
             }
         }
         Surface(
-            onClick = { TimePickerDialog(context, { _, h, m -> onTime(LocalTime.of(h, m)) }, time.hour, time.minute, true).show() },
+            onClick = { pickingTime = true },
             modifier = Modifier.weight(1f),
             shape = RoundedCornerShape(20.dp),
             color = MaterialTheme.colorScheme.surfaceContainerHighest,
