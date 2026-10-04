@@ -72,7 +72,7 @@ fun TripEditorDialog(
     BubblePopup(
         visible = dialogVisible,
         originXFraction = 0.78f,
-        originYFraction = 0.91f,
+        originYFraction = 1.06f,
         onProgress = onProgress,
         onHidden = { pendingSave?.let(onSave) ?: onDismiss() },
     ) { _, motionModifier ->

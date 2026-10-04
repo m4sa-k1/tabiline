@@ -1,6 +1,7 @@
 package io.github.m4sak1.tabiline.feature.settings
 
 import android.annotation.SuppressLint
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.CubicBezierEasing
@@ -8,6 +9,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +21,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -26,10 +30,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Language
@@ -47,6 +51,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,6 +66,7 @@ import io.github.m4sak1.tabiline.BuildConfig
 import io.github.m4sak1.tabiline.core.model.AccentPalette
 import io.github.m4sak1.tabiline.core.model.ThemePreference
 import io.github.m4sak1.tabiline.core.model.UserSettings
+import io.github.m4sak1.tabiline.ui.components.BubblePopup
 import io.github.m4sak1.tabiline.ui.theme.accentColors
 
 enum class SettingsSection(
@@ -115,74 +123,133 @@ fun SettingsScreen(
     }
 }
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun SettingsDetailScreen(
+fun SettingsDetailPopup(
     section: SettingsSection,
     settings: UserSettings,
     onUpdate: (UserSettings) -> Unit,
-    onBack: () -> Unit,
+    onDismiss: () -> Unit,
+    onProgress: (Float) -> Unit = {},
 ) {
-    SettingsScaffold {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
+    var popupVisible by remember(section) { mutableStateOf(true) }
+    var closing by remember(section) { mutableStateOf(false) }
+
+    fun closeAfterMotion() {
+        if (closing) return
+        closing = true
+        popupVisible = false
+    }
+
+    BackHandler(enabled = popupVisible && !closing) { closeAfterMotion() }
+
+    BubblePopup(
+        visible = popupVisible,
+        originXFraction = 0.78f,
+        originYFraction = 0.91f,
+        onProgress = onProgress,
+        onHidden = onDismiss,
+    ) { _, motionModifier ->
+        val outsideInteraction = remember { MutableInteractionSource() }
+        Box(
+            Modifier.fillMaxSize().clickable(
+                interactionSource = outsideInteraction,
+                indication = null,
+                enabled = !closing,
+                onClick = ::closeAfterMotion,
+            ),
+            contentAlignment = Alignment.Center,
         ) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Rounded.ArrowBack, "設定一覧へ戻る")
-            }
-            Column(Modifier.padding(start = 4.dp)) {
-                Text(section.title, style = MaterialTheme.typography.headlineLarge)
-                Text(section.subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-
-        when (section) {
-            SettingsSection.ACCENT -> SettingsCard {
-                AccentPalette.entries.forEach { palette ->
-                    AccentChoice(
-                        palette = palette,
-                        selected = settings.accentPalette == palette,
-                        onClick = { onUpdate(settings.copy(accentPalette = palette)) },
-                    )
-                }
-            }
-
-            SettingsSection.REGION -> SettingsCard {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    defaultZones.forEach { zone ->
-                        FilterChip(
-                            selected = settings.defaultZoneId == zone.zoneId,
-                            onClick = { onUpdate(settings.copy(defaultZoneId = zone.zoneId)) },
-                            label = { Text(zone.label) },
-                        )
-                    }
-                }
-                Text(
-                    defaultZones.firstOrNull { it.zoneId == settings.defaultZoneId }?.zoneId ?: settings.defaultZoneId,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-
-            SettingsSection.TRANSFER -> SettingsCard {
-                ThresholdStepper("電車", settings.trainMinutes) { onUpdate(settings.copy(trainMinutes = it)) }
-                ThresholdStepper("バス", settings.busMinutes) { onUpdate(settings.copy(busMinutes = it)) }
-                ThresholdStepper("飛行機", settings.flightMinutes) { onUpdate(settings.copy(flightMinutes = it)) }
-                ThresholdStepper("船", settings.ferryMinutes) { onUpdate(settings.copy(ferryMinutes = it)) }
-                ThresholdStepper("その他", settings.otherMinutes) { onUpdate(settings.copy(otherMinutes = it)) }
-            }
-
-            SettingsSection.ABOUT -> Surface(
-                shape = RoundedCornerShape(28.dp),
-                color = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            val popupInteraction = remember { MutableInteractionSource() }
+            Surface(
+                modifier = motionModifier
+                    .padding(horizontal = 20.dp)
+                    .fillMaxWidth()
+                    .heightIn(max = 660.dp)
+                    .clickable(interactionSource = popupInteraction, indication = null) {},
+                shape = RoundedCornerShape(32.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
             ) {
-                Column(Modifier.fillMaxWidth().padding(24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(Icons.Rounded.Info, null, Modifier.size(40.dp))
-                    Text("Tabiline", style = MaterialTheme.typography.headlineLarge)
-                    Text("Version ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.labelLarge)
-                    Text("旅の移動を、ひとつのタイムラインに。", color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f))
+                Column(
+                    Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(22.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Surface(
+                            modifier = Modifier.size(52.dp),
+                            shape = RoundedCornerShape(18.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        ) {
+                            Box(contentAlignment = Alignment.Center) { Icon(section.icon, null, Modifier.size(26.dp)) }
+                        }
+                        Column(Modifier.weight(1f).padding(start = 14.dp)) {
+                            Text(section.title, style = MaterialTheme.typography.headlineSmall)
+                            Text(section.subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        IconButton(onClick = ::closeAfterMotion, enabled = !closing) {
+                            Icon(Icons.Rounded.Close, "閉じる")
+                        }
+                    }
+
+                    when (section) {
+                        SettingsSection.ACCENT -> SettingsCard {
+                            AccentPalette.entries.forEach { palette ->
+                                AccentChoice(
+                                    palette = palette,
+                                    selected = settings.accentPalette == palette,
+                                    onClick = { onUpdate(settings.copy(accentPalette = palette)) },
+                                )
+                            }
+                        }
+
+                        SettingsSection.REGION -> SettingsCard {
+                            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                defaultZones.forEach { zone ->
+                                    FilterChip(
+                                        selected = settings.defaultZoneId == zone.zoneId,
+                                        onClick = { onUpdate(settings.copy(defaultZoneId = zone.zoneId)) },
+                                        label = { Text(zone.label) },
+                                    )
+                                }
+                            }
+                            Text(
+                                defaultZones.firstOrNull { it.zoneId == settings.defaultZoneId }?.zoneId
+                                    ?: settings.defaultZoneId,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+
+                        SettingsSection.TRANSFER -> SettingsCard {
+                            ThresholdStepper("電車", settings.trainMinutes) { onUpdate(settings.copy(trainMinutes = it)) }
+                            ThresholdStepper("バス", settings.busMinutes) { onUpdate(settings.copy(busMinutes = it)) }
+                            ThresholdStepper("飛行機", settings.flightMinutes) { onUpdate(settings.copy(flightMinutes = it)) }
+                            ThresholdStepper("船", settings.ferryMinutes) { onUpdate(settings.copy(ferryMinutes = it)) }
+                            ThresholdStepper("その他", settings.otherMinutes) { onUpdate(settings.copy(otherMinutes = it)) }
+                        }
+
+                        SettingsSection.ABOUT -> Surface(
+                            shape = RoundedCornerShape(28.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        ) {
+                            Column(
+                                Modifier.fillMaxWidth().padding(24.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                Icon(Icons.Rounded.Info, null, Modifier.size(40.dp))
+                                Text("Tabiline", style = MaterialTheme.typography.headlineLarge)
+                                Text("Version ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.labelLarge)
+                                Text(
+                                    "旅の移動を、ひとつのタイムラインに。",
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f),
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

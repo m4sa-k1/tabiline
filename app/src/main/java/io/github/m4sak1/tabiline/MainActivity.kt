@@ -46,7 +46,7 @@ import io.github.m4sak1.tabiline.feature.editor.TripEditorDialog
 import io.github.m4sak1.tabiline.feature.home.HomeScreen
 import io.github.m4sak1.tabiline.feature.home.PlansScreen
 import io.github.m4sak1.tabiline.feature.settings.SettingsScreen
-import io.github.m4sak1.tabiline.feature.settings.SettingsDetailScreen
+import io.github.m4sak1.tabiline.feature.settings.SettingsDetailPopup
 import io.github.m4sak1.tabiline.feature.settings.SettingsSection
 import io.github.m4sak1.tabiline.feature.timeline.TimelineScreen
 import io.github.m4sak1.tabiline.ui.components.AppDestination
@@ -68,7 +68,6 @@ private fun routePosition(route: String?): Int = when (route) {
     "trip/{tripId}" -> 1
     "plans" -> 2
     "settings" -> 3
-    "settings/{section}" -> 3
     "leg/{tripId}/{legId}" -> 4
     else -> 0
 }
@@ -137,6 +136,7 @@ private fun TabilineRoot(viewModel: MainViewModel) {
         var showNewTrip by remember { mutableStateOf(false) }
         var footerFace by rememberSaveable { mutableStateOf(footerFaces.random()) }
         var selectedTripId by rememberSaveable { mutableStateOf<Long?>(null) }
+        var settingsDialogSection by remember { mutableStateOf<SettingsSection?>(null) }
         var addingTripId by rememberSaveable { mutableStateOf<Long?>(null) }
         var addScreenVisible by remember { mutableStateOf(false) }
         var popupBlurProgress by remember { mutableFloatStateOf(0f) }
@@ -154,7 +154,6 @@ private fun TabilineRoot(viewModel: MainViewModel) {
             "home" -> AppDestination.TODAY
             "plans" -> AppDestination.PLANS
             "settings" -> AppDestination.SETTINGS
-            "settings/{section}" -> AppDestination.SETTINGS
             "trip/{tripId}" -> AppDestination.TIMELINE
             else -> null
         }
@@ -208,14 +207,8 @@ private fun TabilineRoot(viewModel: MainViewModel) {
             composable("home") {
                 HomeScreen(
                     trips = trips,
-                    onCreateTrip = { showNewTrip = true },
                     onOpenTrip = { selectedTripId = it; nav.navigate("trip/$it") },
                     onEditLeg = { tripId, legId -> selectedTripId = tripId; nav.navigate("leg/$tripId/$legId") },
-                    onAddLeg = { tripId ->
-                        selectedTripId = tripId
-                        addingTripId = tripId
-                        addScreenVisible = true
-                    },
                 )
             }
             composable("plans") {
@@ -307,22 +300,7 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                 SettingsScreen(
                     settings = settings,
                     onUpdate = viewModel::updateSettings,
-                    onOpenSection = { section ->
-                        nav.navigate("settings/${section.route}") { launchSingleTop = true }
-                    },
-                )
-            }
-            composable(
-                route = "settings/{section}",
-                arguments = listOf(navArgument("section") { type = NavType.StringType }),
-            ) { entry ->
-                val section = SettingsSection.fromRoute(entry.arguments?.getString("section"))
-                    ?: return@composable
-                SettingsDetailScreen(
-                    section = section,
-                    settings = settings,
-                    onUpdate = viewModel::updateSettings,
-                    onBack = { nav.popBackStack() },
+                    onOpenSection = { settingsDialogSection = it },
                 )
             }
         }
@@ -342,6 +320,8 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                 BubbleReveal(
                     visible = addScreenVisible,
                     modifier = Modifier.zIndex(1f),
+                    originXFraction = 0.06f,
+                    originYFraction = 0.96f,
                     onHidden = {
                         addingTripId = null
                         destinationAfterClose?.let { destinationTripId ->
@@ -384,7 +364,7 @@ private fun TabilineRoot(viewModel: MainViewModel) {
             }
         }
 
-        if (destination != null) {
+        if (destination != null && addingTripId == null) {
             val barDestination = destination
             val today = java.time.LocalDate.now()
             val homeTripId = trips.firstOrNull {
@@ -430,6 +410,15 @@ private fun TabilineRoot(viewModel: MainViewModel) {
         }
         }
 
+        settingsDialogSection?.let { section ->
+            SettingsDetailPopup(
+                section = section,
+                settings = settings,
+                onUpdate = viewModel::updateSettings,
+                onDismiss = { settingsDialogSection = null },
+                onProgress = { popupBlurProgress = it },
+            )
+        }
         if (showNewTrip) TripEditorDialog(
             existing = null,
             onDismiss = { showNewTrip = false },

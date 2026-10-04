@@ -127,7 +127,7 @@ fun TimelineScreen(
                 }
             }
             if (dates.size > 1) RelativeDaySelector(dates, selectedDate) { selectedEpochDay = it.toEpochDay() }
-            if (dayLegs.isEmpty()) EmptyDay()
+            if (dayLegs.isEmpty()) EmptyDay(Modifier.weight(1f))
             else LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 144.dp),
@@ -364,8 +364,8 @@ private fun TimelineGap(minutes: Long, threshold: Int) {
 }
 
 @Composable
-private fun EmptyDay() {
-    Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+private fun EmptyDay(modifier: Modifier = Modifier) {
+    Box(modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("(;-;)", style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.primary)
             Text("この日の移動はありません", style = MaterialTheme.typography.headlineSmall)
