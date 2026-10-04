@@ -1,6 +1,7 @@
 package io.github.m4sak1.tabiline.feature.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,17 +18,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Luggage
-import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,8 +59,17 @@ fun PlansScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Tabiline") },
-                actions = { IconButton(onClick = onSettings) { Icon(Icons.Rounded.Settings, "設定") } },
+                title = {
+                    Text(
+                        "Tabiline",
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                        modifier = Modifier.padding(start = 48.dp).combinedClickable(
+                            onClick = {},
+                            onLongClick = onSettings,
+                        ),
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
             )
         },
         bottomBar = {
@@ -76,6 +85,8 @@ fun PlansScreen(
             ExtendedFloatingActionButton(
                 onClick = onCreateTrip,
                 icon = { Icon(Icons.Rounded.Add, null) }, text = { Text("新しい旅行") },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
             )
         },
     ) { padding ->
@@ -92,7 +103,7 @@ fun PlansScreen(
             Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 104.dp),
         ) {
-            item { Text("旅行", style = MaterialTheme.typography.headlineLarge, modifier = Modifier.padding(vertical = 16.dp, horizontal = 8.dp)) }
+            item { Text("旅行", style = MaterialTheme.typography.headlineLarge, modifier = Modifier.padding(top = 16.dp, start = 8.dp, bottom = 10.dp)) }
             planSection("進行中", ongoing, onOpenTrip)
             planSection("これから", upcoming, onOpenTrip)
             planSection("終了した旅行", completed, onOpenTrip)
@@ -107,32 +118,36 @@ private fun androidx.compose.foundation.lazy.LazyListScope.planSection(
 ) {
     if (plans.isEmpty()) return
     item(key = "section-$title") {
-        Text(title, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 8.dp, top = 12.dp, bottom = 8.dp))
-    }
-    itemsIndexed(plans, key = { _, item -> item.trip.id }) { index, item ->
-        val first = index == 0
-        val last = index == plans.lastIndex
-        Card(
-            onClick = { onOpenTrip(item.trip.id) },
-            modifier = Modifier.fillMaxWidth().height(72.dp).padding(bottom = if (last) 12.dp else 3.dp),
-            shape = RoundedCornerShape(
-                topStart = if (first) 28.dp else 8.dp, topEnd = if (first) 28.dp else 8.dp,
-                bottomStart = if (last) 28.dp else 8.dp, bottomEnd = if (last) 28.dp else 8.dp,
-            ),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        ) {
-            Row(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(40.dp).background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(20.dp)), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Rounded.Luggage, null, tint = MaterialTheme.colorScheme.primary)
+        Column {
+            Text(title, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 8.dp, bottom = 8.dp))
+            plans.forEachIndexed { index, item ->
+                val first = index == 0
+                val last = index == plans.lastIndex
+                Card(
+                    onClick = { onOpenTrip(item.trip.id) },
+                    modifier = Modifier.fillMaxWidth().height(72.dp),
+                    shape = RoundedCornerShape(
+                        topStart = if (first) 28.dp else 8.dp, topEnd = if (first) 28.dp else 8.dp,
+                        bottomStart = if (last) 28.dp else 8.dp, bottomEnd = if (last) 28.dp else 8.dp,
+                    ),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                ) {
+                    Row(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(40.dp).background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(20.dp)), contentAlignment = Alignment.Center) {
+                            Icon(Icons.Rounded.Luggage, null, tint = MaterialTheme.colorScheme.primary)
+                        }
+                        Column(Modifier.weight(1f).padding(start = 12.dp)) {
+                            Text(item.trip.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(
+                                "${item.trip.startDate.format(planDateFormat)} – ${item.trip.endDate.format(planDateFormat)} ・ 移動 ${item.legs.size}件",
+                                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
                 }
-                Column(Modifier.weight(1f).padding(start = 12.dp)) {
-                    Text(item.trip.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(
-                        "${item.trip.startDate.format(planDateFormat)} – ${item.trip.endDate.format(planDateFormat)} ・ 移動 ${item.legs.size}件",
-                        style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+                if (!last) androidx.compose.foundation.layout.Spacer(Modifier.height(3.dp))
             }
+            androidx.compose.foundation.layout.Spacer(Modifier.height(24.dp))
         }
     }
 }

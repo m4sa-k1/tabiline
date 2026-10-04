@@ -2,7 +2,6 @@ package io.github.m4sak1.tabiline.feature.timeline
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,15 +13,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.material.icons.rounded.Warning
@@ -37,12 +35,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -62,7 +62,6 @@ import io.github.m4sak1.tabiline.core.model.TripWithLegs
 import io.github.m4sak1.tabiline.core.model.UserSettings
 import io.github.m4sak1.tabiline.ui.components.AppBottomBar
 import io.github.m4sak1.tabiline.ui.components.AppDestination
-import io.github.m4sak1.tabiline.ui.components.visual
 import java.time.Duration
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -100,17 +99,17 @@ fun TimelineScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(trip?.name ?: "タイムライン") },
+                title = { Text(trip?.name ?: "タイムライン", fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 48.dp)) },
                 actions = {
-                    IconButton(onClick = {}) { Icon(Icons.Rounded.SwapVert, "長押しして並べ替え") }
                     Box {
-                        IconButton(onClick = { menuOpen = true }) { Icon(Icons.Rounded.MoreVert, "その他") }
+                        IconButton(onClick = { menuOpen = true }) { Icon(Icons.Rounded.SwapVert, "並べ替えと旅行メニュー") }
                         DropdownMenu(menuOpen, { menuOpen = false }) {
                             DropdownMenuItem(text = { Text("旅行を編集") }, leadingIcon = { Icon(Icons.Rounded.Edit, null) }, onClick = { menuOpen = false; onEditTrip() })
                             DropdownMenuItem(text = { Text("旅行を削除") }, leadingIcon = { Icon(Icons.Rounded.Delete, null) }, onClick = { menuOpen = false; confirmDelete = true })
                         }
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
             )
         },
         bottomBar = {
@@ -123,13 +122,28 @@ fun TimelineScreen(
             }
         },
         floatingActionButton = {
-            if (dayLegs.isNotEmpty()) FloatingActionButton(onClick = onAddLeg) { Icon(Icons.Rounded.Add, "移動を追加") }
+            if (dayLegs.isNotEmpty()) FloatingActionButton(
+                onClick = onAddLeg,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+            ) { Icon(Icons.Rounded.Add, "移動を追加") }
         },
     ) { padding ->
         if (item == null || selectedDate == null) Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) { Text("読み込み中…") }
         else Column(Modifier.fillMaxSize().padding(padding)) {
-            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
-                PrimaryTabRow(selectedTabIndex = dates.indexOf(selectedDate).coerceAtLeast(0), modifier = Modifier.width((dates.size * 112).coerceAtLeast(360).dp)) {
+            val selectedTabIndex = dates.indexOf(selectedDate).coerceAtLeast(0)
+            if (dates.size < 6) {
+                PrimaryTabRow(selectedTabIndex = selectedTabIndex, modifier = Modifier.fillMaxWidth()) {
+                    dates.forEach { date ->
+                        Tab(
+                            selected = date == selectedDate,
+                            onClick = { selectedEpochDay = date.toEpochDay() },
+                            text = { Text(date.format(tabDate), maxLines = 1) },
+                        )
+                    }
+                }
+            } else {
+                PrimaryScrollableTabRow(selectedTabIndex = selectedTabIndex, modifier = Modifier.fillMaxWidth()) {
                     dates.forEach { date ->
                         Tab(
                             selected = date == selectedDate,
@@ -145,7 +159,7 @@ fun TimelineScreen(
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 104.dp),
             ) {
                 item {
-                    Text(selectedDate.format(headingDate), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 20.dp, start = 8.dp))
+                    Text(selectedDate.format(headingDate), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(top = 16.dp, start = 8.dp))
                     Text(
                         "移動 ${dayLegs.size}件 ・ ${dayLegs.first().departureLocal.format(timelineTime)} – ${dayLegs.last().arrivalLocal.format(timelineTime)}",
                         style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -176,7 +190,6 @@ fun TimelineScreen(
 
 @Composable
 private fun TimelineLeg(leg: TransportLeg, onClick: () -> Unit, onMove: (Int) -> Unit) {
-    val visual = leg.mode.visual()
     var drag by remember { mutableFloatStateOf(0f) }
     Row(Modifier.fillMaxWidth().height(104.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.width(62.dp).fillMaxHeight()) {
@@ -185,14 +198,17 @@ private fun TimelineLeg(leg: TransportLeg, onClick: () -> Unit, onMove: (Int) ->
                 else leg.arrivalLocal.format(shortDateTime)
             Text(arrival, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.align(Alignment.BottomStart), maxLines = 1)
         }
-        Box(Modifier.width(24.dp).fillMaxHeight(), contentAlignment = Alignment.Center) {
-            Box(Modifier.width(4.dp).fillMaxHeight().padding(vertical = 7.dp).background(MaterialTheme.colorScheme.primary, RoundedCornerShape(2.dp)))
-            Box(Modifier.align(Alignment.TopCenter).size(14.dp).background(MaterialTheme.colorScheme.primary, RoundedCornerShape(7.dp)))
-            Box(Modifier.align(Alignment.BottomCenter).size(14.dp).background(MaterialTheme.colorScheme.primary, RoundedCornerShape(7.dp)))
+        Box(Modifier.width(24.dp).fillMaxHeight()) {
+            Box(Modifier.align(Alignment.TopCenter).offset(y = 13.dp).width(4.dp).height(80.dp)
+                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(2.dp)))
+            Box(Modifier.align(Alignment.TopCenter).offset(y = 6.dp).size(14.dp)
+                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(7.dp)))
+            Box(Modifier.align(Alignment.TopCenter).offset(y = 86.dp).size(14.dp)
+                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(7.dp)))
         }
         Card(
             onClick = onClick,
-            modifier = Modifier.weight(1f).fillMaxHeight().padding(start = 8.dp)
+            modifier = Modifier.weight(1f).fillMaxHeight().padding(start = 12.dp)
                 .pointerInput(leg.id) {
                     detectDragGesturesAfterLongPress(
                         onDragStart = { drag = .1f },
@@ -204,11 +220,8 @@ private fun TimelineLeg(leg: TransportLeg, onClick: () -> Unit, onMove: (Int) ->
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
         ) {
-            Row(Modifier.fillMaxSize().padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(40.dp).background(visual.container, RoundedCornerShape(20.dp)), contentAlignment = Alignment.Center) {
-                    Icon(visual.icon, null, tint = visual.color)
-                }
-                Column(Modifier.padding(start = 12.dp).weight(1f)) {
+            Row(Modifier.fillMaxSize().padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
                     val title = leg.departurePlatform.ifBlank { "${leg.departurePlace} → ${leg.arrivalPlace}" }
                     Text(title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     val type = if (leg.mode == TransportMode.TRAIN) leg.trainType?.label ?: leg.mode.label else leg.mode.label
@@ -227,19 +240,20 @@ private fun TimelineGap(minutes: Long, threshold: Int) {
     Row(Modifier.fillMaxWidth().height(80.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.width(62.dp))
         Box(Modifier.width(24.dp).fillMaxHeight(), contentAlignment = Alignment.Center) {
-            Box(Modifier.width(4.dp).fillMaxHeight().background(MaterialTheme.colorScheme.surfaceContainerHighest, RoundedCornerShape(2.dp)))
+            Box(Modifier.offset(y = (-12).dp).width(4.dp).height(104.dp)
+                .background(MaterialTheme.colorScheme.surfaceContainerHighest, RoundedCornerShape(2.dp)))
         }
-        Box(Modifier.weight(1f).padding(start = 8.dp), contentAlignment = Alignment.CenterStart) {
+        Box(Modifier.weight(1f).padding(start = 12.dp), contentAlignment = Alignment.CenterStart) {
             Surface(
-                color = if (warning) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.secondaryContainer,
-                shape = RoundedCornerShape(8.dp),
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                shape = RoundedCornerShape(16.dp),
             ) {
                 Row(Modifier.padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                     Icon(if (warning) Icons.Rounded.Warning else Icons.Rounded.Schedule, null, Modifier.size(18.dp),
-                        tint = if (warning) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSecondaryContainer)
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer)
                     val label = if (minutes < 0) "時刻が ${-minutes}分 重複" else if (warning) "待ち ${minutes}分 ・ 乗り継ぎに注意" else "待ち ${minutes}分"
                     Text(label, Modifier.padding(start = 6.dp), style = MaterialTheme.typography.labelMedium,
-                        color = if (warning) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSecondaryContainer)
+                        color = MaterialTheme.colorScheme.onSecondaryContainer)
                 }
             }
         }
