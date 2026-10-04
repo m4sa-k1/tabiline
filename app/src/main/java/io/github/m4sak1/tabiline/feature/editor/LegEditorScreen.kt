@@ -56,6 +56,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import io.github.m4sak1.tabiline.core.model.TrainType
+import io.github.m4sak1.tabiline.core.model.GapType
 import io.github.m4sak1.tabiline.core.model.TransportLeg
 import io.github.m4sak1.tabiline.core.model.TransportMode
 import io.github.m4sak1.tabiline.core.model.Trip
@@ -245,6 +246,7 @@ fun LegEditorScreen(
                         arrivalPlatform = arrivalPlatform.trim(),
                         memo = memo.trim(),
                         sortOrder = existing?.sortOrder ?: 0,
+                        precedingGapType = existing?.precedingGapType ?: GapType.WAIT,
                     ), selectedTripId == null)
                 },
                 modifier = Modifier.fillMaxWidth().height(64.dp),

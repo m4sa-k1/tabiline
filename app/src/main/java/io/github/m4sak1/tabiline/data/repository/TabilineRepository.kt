@@ -1,6 +1,7 @@
 package io.github.m4sak1.tabiline.data.repository
 
 import io.github.m4sak1.tabiline.core.model.TransportLeg
+import io.github.m4sak1.tabiline.core.model.GapType
 import io.github.m4sak1.tabiline.core.model.Trip
 import io.github.m4sak1.tabiline.core.model.TripWithLegs
 import kotlinx.coroutines.flow.Flow
@@ -15,4 +16,5 @@ interface TabilineRepository {
     suspend fun saveStandaloneLeg(leg: TransportLeg): Long
     suspend fun deleteLeg(id: Long)
     suspend fun reorderLegs(tripId: Long, orderedIds: List<Long>)
+    suspend fun updateGapType(legId: Long, gapType: GapType)
 }

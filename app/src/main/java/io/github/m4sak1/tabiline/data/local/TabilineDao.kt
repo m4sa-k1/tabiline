@@ -48,6 +48,9 @@ interface TabilineDao {
     @Query("UPDATE transport_legs SET sortOrder = :sortOrder WHERE id = :id")
     suspend fun updateLegOrder(id: Long, sortOrder: Int)
 
+    @Query("UPDATE transport_legs SET precedingGapType = :gapType WHERE id = :id")
+    suspend fun updatePrecedingGapType(id: Long, gapType: String)
+
     @Query("SELECT COALESCE(MAX(sortOrder), -1) + 1 FROM transport_legs WHERE tripId = :tripId")
     suspend fun nextSortOrder(tripId: Long): Int
 

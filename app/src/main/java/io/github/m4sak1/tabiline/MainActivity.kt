@@ -242,6 +242,7 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                             viewModel.reorder(id, legs.map { it.id })
                         }
                     },
+                    onUpdateGapType = viewModel::updateGapType,
                 )
             }
             composable(

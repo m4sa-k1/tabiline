@@ -28,8 +28,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.FreeBreakfast
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Schedule
+import androidx.compose.material.icons.rounded.SyncAlt
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -62,6 +64,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import io.github.m4sak1.tabiline.core.model.TransportLeg
 import io.github.m4sak1.tabiline.core.model.TransportMode
+import io.github.m4sak1.tabiline.core.model.GapType
 import io.github.m4sak1.tabiline.core.model.TripWithLegs
 import io.github.m4sak1.tabiline.core.model.UserSettings
 import io.github.m4sak1.tabiline.ui.components.detailLabel
@@ -83,6 +86,7 @@ fun TimelineScreen(
     onDeleteTrip: () -> Unit,
     onEditLeg: (Long) -> Unit,
     onMoveLeg: (Long, Int) -> Unit,
+    onUpdateGapType: (Long, GapType) -> Unit,
 ) {
     var confirmDelete by remember { mutableStateOf(false) }
     var menuOpen by remember { mutableStateOf(false) }
@@ -92,7 +96,6 @@ fun TimelineScreen(
     var selectedEpochDay by rememberSaveable(trip?.id) { mutableStateOf(initialDay?.toEpochDay()) }
     val selectedDate = selectedEpochDay?.let(LocalDate::ofEpochDay) ?: initialDay
     val dayLegs = item?.legs.orEmpty().filter { it.departureLocal.toLocalDate() == selectedDate }.sortedBy { it.sortOrder }
-    val warningThreshold = settings.otherMinutes
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -145,8 +148,14 @@ fun TimelineScreen(
                             }
                             if (index < dayLegs.lastIndex) {
                                 item(key = "wait-${leg.id}") {
-                                    val minutes = Duration.between(leg.arrival, dayLegs[index + 1].departure).toMinutes()
-                                    TimelineGap(minutes, warningThreshold)
+                                    val next = dayLegs[index + 1]
+                                    val minutes = Duration.between(leg.arrival, next.departure).toMinutes()
+                                    TimelineGap(
+                                        minutes = minutes,
+                                        threshold = settings.thresholdFor(next.mode),
+                                        type = next.precedingGapType,
+                                        onTypeChange = { onUpdateGapType(next.id, it) },
+                                    )
                                 }
                             }
                         }
@@ -342,29 +351,119 @@ private fun TimelineLeg(
 }
 
 @Composable
-private fun TimelineGap(minutes: Long, threshold: Int) {
-    val warning = minutes < 0 || minutes < threshold
+private fun TimelineGap(
+    minutes: Long,
+    threshold: Int,
+    type: GapType,
+    onTypeChange: (GapType) -> Unit,
+) {
+    var pickerOpen by remember { mutableStateOf(false) }
+    val warning = type != GapType.FREE_TIME && (minutes < 0 || minutes < threshold)
+    val title = when {
+        minutes < 0 -> "時刻が ${-minutes}分 重複"
+        warning -> "${type.label} ${minutes}分 ・ 乗り継ぎに注意"
+        else -> "${type.label} ${minutes}分"
+    }
+    val subtitle = when (type) {
+        GapType.WAIT -> "同じ乗り場で待機"
+        GapType.TRANSFER -> "異なる乗り場へ移動"
+        GapType.FREE_TIME -> "自由に使える時間"
+    }
     Row(Modifier.fillMaxWidth().height(80.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.width(62.dp))
         Box(Modifier.width(24.dp).fillMaxHeight(), contentAlignment = Alignment.Center) {
             Box(Modifier.width(4.dp).fillMaxHeight()
                 .background(MaterialTheme.colorScheme.surfaceContainerHighest, RoundedCornerShape(2.dp)))
         }
-        Box(Modifier.weight(1f).padding(start = 12.dp), contentAlignment = Alignment.CenterStart) {
-            Surface(
-                color = MaterialTheme.colorScheme.secondaryContainer,
-                shape = RoundedCornerShape(16.dp),
+        Surface(
+            onClick = { pickerOpen = true },
+            modifier = Modifier.weight(1f).height(64.dp).padding(start = 12.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            shape = RoundedCornerShape(22.dp),
+        ) {
+            Row(
+                Modifier.fillMaxSize().padding(horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(Modifier.padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(if (warning) Icons.Rounded.Warning else Icons.Rounded.Schedule, null, Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer)
-                    val label = if (minutes < 0) "時刻が ${-minutes}分 重複" else if (warning) "待ち ${minutes}分 ・ 乗り継ぎに注意" else "待ち ${minutes}分"
-                    Text(label, Modifier.padding(start = 6.dp), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer)
+                Surface(
+                    modifier = Modifier.size(42.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    color = if (warning) MaterialTheme.colorScheme.errorContainer
+                    else MaterialTheme.colorScheme.surfaceContainerLowest,
+                    contentColor = if (warning) MaterialTheme.colorScheme.onErrorContainer
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(if (warning) Icons.Rounded.Warning else type.icon(), null, Modifier.size(24.dp))
+                    }
+                }
+                Column(Modifier.padding(start = 12.dp)) {
+                    Text(
+                        title,
+                        style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp, lineHeight = 20.sp),
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        subtitle,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
         }
     }
+
+    if (pickerOpen) AlertDialog(
+        onDismissRequest = { pickerOpen = false },
+        title = { Text("間の過ごし方") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                GapType.entries.forEach { choice ->
+                    Surface(
+                        onClick = {
+                            onTypeChange(choice)
+                            pickerOpen = false
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        color = if (choice == type) MaterialTheme.colorScheme.primaryContainer
+                        else MaterialTheme.colorScheme.surfaceContainerHighest,
+                    ) {
+                        Row(
+                            Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(choice.icon(), null, Modifier.size(24.dp))
+                            Column(Modifier.padding(start = 12.dp)) {
+                                Text(choice.label, style = MaterialTheme.typography.titleMedium)
+                                Text(
+                                    when (choice) {
+                                        GapType.WAIT -> "同じ乗り場で待つ"
+                                        GapType.TRANSFER -> "別の乗り場へ移動する"
+                                        GapType.FREE_TIME -> "自由に使える時間にする"
+                                    },
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = { pickerOpen = false }) { Text("キャンセル") }
+        },
+    )
+}
+
+private fun GapType.icon() = when (this) {
+    GapType.WAIT -> Icons.Rounded.Schedule
+    GapType.TRANSFER -> Icons.Rounded.SyncAlt
+    GapType.FREE_TIME -> Icons.Rounded.FreeBreakfast
 }
 
 @Composable

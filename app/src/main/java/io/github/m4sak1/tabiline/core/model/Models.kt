@@ -31,6 +31,7 @@ data class TransportLeg(
     val arrivalPlatform: String = "",
     val memo: String = "",
     val sortOrder: Int = 0,
+    val precedingGapType: GapType = GapType.WAIT,
 ) {
     val departureLocal: ZonedDateTime get() = departure.atZone(ZoneId.of(departureZoneId))
     val arrivalLocal: ZonedDateTime get() = arrival.atZone(ZoneId.of(arrivalZoneId))
@@ -44,6 +45,12 @@ data class TripWithLegs(
 enum class ThemePreference { SYSTEM, LIGHT, DARK }
 
 enum class AccentPalette { PURPLE, ORCHID, BLUE, GREEN, CORAL, AMBER, TEAL, MONO }
+
+enum class GapType(val label: String) {
+    WAIT("待ち"),
+    TRANSFER("移動"),
+    FREE_TIME("空き時間"),
+}
 
 data class UserSettings(
     val theme: ThemePreference = ThemePreference.SYSTEM,
@@ -60,6 +67,7 @@ data class UserSettings(
         TransportMode.BUS -> busMinutes
         TransportMode.FLIGHT -> flightMinutes
         TransportMode.FERRY -> ferryMinutes
+        TransportMode.WALK -> otherMinutes
         TransportMode.OTHER -> otherMinutes
     }
 }

@@ -44,6 +44,7 @@ data class TransportLegEntity(
     val arrivalPlatform: String,
     val memo: String,
     val sortOrder: Int,
+    val precedingGapType: String = "WAIT",
 )
 
 data class TripWithLegsEntity(
