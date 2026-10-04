@@ -47,7 +47,7 @@ Tabilineは、旅行中の移動を一本のタイムラインで見渡せるAnd
 
 ### 権利とライセンス
 
-Tabiline本体のソースコード、デザイン、画像、文書などの権利は、第三者素材を除きm4sa-k1が留保します。公式APKは個人的かつ非商用の目的で利用できます。ソースコードやAPKの複製、改変、再配布、販売などには、権利者の事前の書面による許可が必要です。詳しくは[LICENSE](LICENSE)をご覧ください。
+Tabiline本体のソースコード、デザイン、画像、文書などの権利は、第三者素材を除き@m4sak1が留保します。公式APKは個人的かつ非商用の目的で利用できます。ソースコードやAPKの複製、改変、再配布、販売などには、権利者の事前の書面による許可が必要です。詳しくは[LICENSE](LICENSE)をご覧ください。
 
 Roboto FlexおよびNoto Sans JPは、アプリ本体とは別にSIL Open Font License 1.1の条件で使用しています。フォントのライセンス全文は[第三者ライセンス](app/src/main/assets/third_party_licenses)にあります。フォントのOFLはTabiline本体には適用されません。
 
@@ -100,6 +100,6 @@ Please use [GitHub Issues](https://github.com/m4sa-k1/tabiline/issues) for bug r
 
 ### Rights and licenses
 
-Except for third-party materials, all rights in the Tabiline source code, design, artwork, and documentation are reserved by m4sa-k1. The official APK may be used for personal, non-commercial purposes. Copying, modifying, redistributing, or selling the source code or APK requires prior written permission from the rights holder. See [LICENSE](LICENSE) for details.
+Except for third-party materials, all rights in the Tabiline source code, design, artwork, and documentation are reserved by @m4sak1. The official APK may be used for personal, non-commercial purposes. Copying, modifying, redistributing, or selling the source code or APK requires prior written permission from the rights holder. See [LICENSE](LICENSE) for details.
 
 Roboto Flex and Noto Sans JP are used separately under the SIL Open Font License 1.1. Their full license texts are available under [Third-party licenses](app/src/main/assets/third_party_licenses). The fonts' OFL terms do not apply to Tabiline itself.
