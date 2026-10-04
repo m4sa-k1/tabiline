@@ -115,8 +115,14 @@ fun TimelineScreen(
                 Box {
                     IconButton(onClick = { menuOpen = true }) { Icon(Icons.Rounded.SwapVert, "並べ替えと旅行メニュー") }
                     DropdownMenu(menuOpen, { menuOpen = false }) {
-                        DropdownMenuItem(text = { Text("旅行を編集") }, leadingIcon = { Icon(Icons.Rounded.Edit, null) }, onClick = { menuOpen = false; onEditTrip() })
-                        DropdownMenuItem(text = { Text("旅行を削除") }, leadingIcon = { Icon(Icons.Rounded.Delete, null) }, onClick = { menuOpen = false; confirmDelete = true })
+                        if (!item.trip.isAutomatic) {
+                            DropdownMenuItem(text = { Text("旅行を編集") }, leadingIcon = { Icon(Icons.Rounded.Edit, null) }, onClick = { menuOpen = false; onEditTrip() })
+                        }
+                        DropdownMenuItem(
+                            text = { Text(if (item.trip.isAutomatic) "この日の移動を削除" else "旅行を削除") },
+                            leadingIcon = { Icon(Icons.Rounded.Delete, null) },
+                            onClick = { menuOpen = false; confirmDelete = true },
+                        )
                     }
                 }
             }
@@ -154,9 +160,10 @@ fun TimelineScreen(
             }
         }
     }
-    if (confirmDelete) AlertDialog(
-        onDismissRequest = { confirmDelete = false }, title = { Text("旅行を削除しますか？") },
-        text = { Text("この旅行に含まれる移動もすべて削除されます。") },
+    if (confirmDelete && item != null) AlertDialog(
+        onDismissRequest = { confirmDelete = false },
+        title = { Text(if (item.trip.isAutomatic) "この日の移動を削除しますか？" else "旅行を削除しますか？") },
+        text = { Text(if (item.trip.isAutomatic) "この日付にまとめられた移動がすべて削除されます。" else "この旅行に含まれる移動もすべて削除されます。") },
         confirmButton = { TextButton(onClick = onDeleteTrip) { Text("削除") } },
         dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("キャンセル") } },
     )

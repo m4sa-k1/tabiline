@@ -71,8 +71,9 @@ fun HomeScreen(
     LaunchedEffect(Unit) { while (true) { delay(60_000); clock = System.currentTimeMillis() } }
     val now = Instant.ofEpochMilli(clock)
     val today = LocalDate.now()
-    val focus = trips.firstOrNull { today in it.trip.startDate..it.trip.endDate }
-        ?: trips.filter { it.trip.startDate > today }.minByOrNull { it.trip.startDate }
+    val focus = trips.firstOrNull { !it.trip.isAutomatic && today in it.trip.startDate..it.trip.endDate }
+        ?: trips.firstOrNull { it.trip.isAutomatic && today in it.trip.startDate..it.trip.endDate }
+        ?: trips.filter { !it.trip.isAutomatic && it.trip.startDate > today }.minByOrNull { it.trip.startDate }
     val isToday = focus?.let { today in it.trip.startDate..it.trip.endDate } == true
     val ordered = focus?.legs.orEmpty().sortedBy { it.departure }
     val eligible = if (isToday) ordered.filter {

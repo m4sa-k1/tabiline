@@ -193,7 +193,10 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                     onCreateTrip = { showNewTrip = true },
                     onOpenTrip = { selectedTripId = it; nav.navigate("trip/$it") },
                     onEditLeg = { tripId, legId -> selectedTripId = tripId; nav.navigate("leg/$tripId/$legId") },
-                    onAddLeg = { tripId -> selectedTripId = tripId; nav.navigate("leg/$tripId/0") },
+                    onAddLeg = { tripId ->
+                        selectedTripId = tripId
+                        nav.navigate("leg/$tripId/0") { launchSingleTop = true }
+                    },
                 )
             }
             composable("plans") {
@@ -217,7 +220,7 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                     onBack = { nav.popBackStack() },
                     onEditTrip = { tripDialog = item?.trip },
                     onDeleteTrip = { viewModel.deleteTrip(id) { nav.navigate("plans") { popUpTo("home") } } },
-                    onAddLeg = { nav.navigate("leg/$id/0") },
+                    onAddLeg = { nav.navigate("leg/$id/0") { launchSingleTop = true } },
                     onEditLeg = { nav.navigate("leg/$id/$it") },
                     onMoveLeg = { legId, direction ->
                         val legs = item?.legs.orEmpty().toMutableList()
@@ -241,19 +244,45 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                 val legId = entry.arguments?.getLong("legId") ?: 0
                 var existing by remember(legId) { mutableStateOf<TransportLeg?>(null) }
                 var loaded by remember(legId) { mutableStateOf(legId == 0L) }
+                var isSaving by remember(legId) { mutableStateOf(false) }
+                var saveError by remember(legId) { mutableStateOf<String?>(null) }
                 LaunchedEffect(legId) {
                     if (legId != 0L) existing = viewModel.getLeg(legId)
                     loaded = true
                 }
                 val trip = trips.firstOrNull { it.trip.id == tripId }
+                val initialTripId = trip?.trip?.takeUnless { it.isAutomatic }?.id
                 LegEditorScreen(
-                    tripId = tripId,
+                    initialTripId = existing?.let { leg ->
+                        trips.firstOrNull { it.trip.id == leg.tripId }?.trip?.takeUnless { it.isAutomatic }?.id
+                    } ?: initialTripId,
+                    availableTrips = trips.map { it.trip },
                     existing = existing,
                     previous = trip?.legs?.lastOrNull(),
                     defaultZoneId = settings.defaultZoneId,
                     isLoading = !loaded,
+                    isSaving = isSaving,
+                    saveError = saveError,
                     onBack = { nav.popBackStack() },
-                    onSave = { viewModel.saveLeg(it) { nav.popBackStack() } },
+                    onSave = { leg, standalone ->
+                        if (!isSaving) {
+                            isSaving = true
+                            saveError = null
+                            viewModel.saveLeg(
+                                leg = leg,
+                                standalone = standalone,
+                                onSaved = { destinationTripId ->
+                                    selectedTripId = destinationTripId
+                                    nav.popBackStack()
+                                    nav.navigate("trip/$destinationTripId") { launchSingleTop = true }
+                                },
+                                onError = {
+                                    isSaving = false
+                                    saveError = "保存できませんでした。入力内容を確認して、もう一度お試しください。"
+                                },
+                            )
+                        }
+                    },
                     onDelete = if (legId == 0L) null else ({ viewModel.deleteLeg(it) { nav.popBackStack() } }),
                 )
             }
@@ -268,17 +297,19 @@ private fun TabilineRoot(viewModel: MainViewModel) {
         if (destination != null || isAddRoute) {
             val barDestination = destination ?: retainedDestination
             val today = java.time.LocalDate.now()
-            val homeTripId = trips.firstOrNull { today in it.trip.startDate..it.trip.endDate }?.trip?.id
-                ?: trips.firstOrNull { it.trip.startDate > today }?.trip?.id
+            val homeTripId = trips.firstOrNull {
+                !it.trip.isAutomatic && today in it.trip.startDate..it.trip.endDate
+            }?.trip?.id
             val routeTripId = currentEntry?.arguments?.getLong("tripId")
             AppBottomBar(
                 selected = barDestination,
                 modifier = Modifier.align(Alignment.BottomCenter).zIndex(1f),
                 onAdd = when (barDestination) {
-                    AppDestination.TODAY -> if (homeTripId == null) ({ showNewTrip = true })
-                        else ({ nav.navigate("leg/$homeTripId/0") })
+                    AppDestination.TODAY -> ({
+                        nav.navigate("leg/${homeTripId ?: 0L}/0") { launchSingleTop = true }
+                    })
                     AppDestination.TIMELINE -> routeTripId?.let { tripId ->
-                        { nav.navigate("leg/$tripId/0") }
+                        { nav.navigate("leg/$tripId/0") { launchSingleTop = true } }
                     }
                     AppDestination.PLANS -> ({ showNewTrip = true })
                     AppDestination.SETTINGS -> ({
@@ -286,7 +317,7 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                     })
                 },
                 addContentDescription = when (barDestination) {
-                    AppDestination.TODAY -> if (homeTripId == null) "新しい旅行" else "移動を追加"
+                    AppDestination.TODAY -> "移動を追加"
                     AppDestination.TIMELINE -> "移動を追加"
                     AppDestination.PLANS -> "新しい旅行"
                     AppDestination.SETTINGS -> "表情を変える"

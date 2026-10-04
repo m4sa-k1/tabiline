@@ -8,11 +8,9 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.m4sak1.tabiline.R
@@ -64,33 +62,12 @@ private val DarkColors = darkColorScheme(
     errorContainer = Color(0xFF8C1D18), onErrorContainer = Color(0xFFF9DEDC),
 )
 
-@OptIn(ExperimentalTextApi::class)
 private val RobotoFlex = FontFamily(
-    Font(
-        R.font.roboto_flex,
-        FontWeight.Normal,
-        variationSettings = FontVariation.Settings(FontVariation.weight(400)),
-    ),
-    Font(
-        R.font.roboto_flex,
-        FontWeight.Medium,
-        variationSettings = FontVariation.Settings(FontVariation.weight(500)),
-    ),
-    Font(
-        R.font.roboto_flex,
-        FontWeight.SemiBold,
-        variationSettings = FontVariation.Settings(FontVariation.weight(600)),
-    ),
-    Font(
-        R.font.roboto_flex,
-        FontWeight.Bold,
-        variationSettings = FontVariation.Settings(FontVariation.weight(700)),
-    ),
-    Font(
-        R.font.roboto_flex,
-        FontWeight.ExtraBold,
-        variationSettings = FontVariation.Settings(FontVariation.weight(800)),
-    ),
+    Font(R.font.roboto_flex_regular, FontWeight.Normal),
+    Font(R.font.roboto_flex_medium, FontWeight.Medium),
+    Font(R.font.roboto_flex_semibold, FontWeight.SemiBold),
+    Font(R.font.roboto_flex_bold, FontWeight.Bold),
+    Font(R.font.roboto_flex_extrabold, FontWeight.ExtraBold),
 )
 
 private val TabilineTypography = Typography().run {

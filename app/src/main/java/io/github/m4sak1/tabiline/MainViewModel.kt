@@ -12,6 +12,7 @@ import io.github.m4sak1.tabiline.data.settings.SettingsRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 class MainViewModel(
@@ -34,8 +35,25 @@ class MainViewModel(
         repository.deleteTrip(id); onDone()
     }
 
-    fun saveLeg(leg: TransportLeg, onSaved: () -> Unit = {}) = viewModelScope.launch {
-        repository.saveLeg(leg); onSaved()
+    fun saveLeg(
+        leg: TransportLeg,
+        standalone: Boolean = false,
+        onSaved: (Long) -> Unit = {},
+        onError: (Throwable) -> Unit = {},
+    ) = viewModelScope.launch {
+        try {
+            val destinationTripId = if (standalone) {
+                repository.saveStandaloneLeg(leg)
+            } else {
+                repository.saveLeg(leg)
+                leg.tripId
+            }
+            onSaved(destinationTripId)
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Throwable) {
+            onError(error)
+        }
     }
 
     fun deleteLeg(id: Long, onDone: () -> Unit = {}) = viewModelScope.launch {

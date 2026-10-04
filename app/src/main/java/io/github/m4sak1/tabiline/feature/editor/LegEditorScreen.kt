@@ -29,8 +29,10 @@ import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Signpost
 import androidx.compose.material.icons.rounded.TripOrigin
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -56,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import io.github.m4sak1.tabiline.core.model.TrainType
 import io.github.m4sak1.tabiline.core.model.TransportLeg
 import io.github.m4sak1.tabiline.core.model.TransportMode
+import io.github.m4sak1.tabiline.core.model.Trip
 import io.github.m4sak1.tabiline.ui.components.visual
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -69,13 +72,16 @@ private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LegEditorScreen(
-    tripId: Long,
+    initialTripId: Long?,
+    availableTrips: List<Trip>,
     existing: TransportLeg?,
     previous: TransportLeg?,
     defaultZoneId: String,
     isLoading: Boolean,
+    isSaving: Boolean,
+    saveError: String?,
     onBack: () -> Unit,
-    onSave: (TransportLeg) -> Unit,
+    onSave: (TransportLeg, Boolean) -> Unit,
     onDelete: ((Long) -> Unit)?,
 ) {
     if (isLoading) return
@@ -99,6 +105,11 @@ fun LegEditorScreen(
     var trainTypeMenu by remember { mutableStateOf(false) }
     var memo by remember(existing?.id) { mutableStateOf(existing?.memo.orEmpty()) }
     var confirmDelete by remember { mutableStateOf(false) }
+    val selectableTrips = remember(availableTrips) { availableTrips.filterNot { it.isAutomatic } }
+    val existingTripIsAutomatic = availableTrips.firstOrNull { it.id == existing?.tripId }?.isAutomatic == true
+    var selectedTripId by remember(existing?.id, initialTripId) {
+        mutableStateOf(if (existingTripIsAutomatic) null else initialTripId)
+    }
 
     val departureZoneId = runCatching { ZoneId.of(departureZone) }.getOrNull()
     val arrivalZoneId = runCatching { ZoneId.of(arrivalZone) }.getOrNull()
@@ -106,6 +117,9 @@ fun LegEditorScreen(
     val arrivalInstant = arrivalZoneId?.let { LocalDateTime.of(arrivalDate, arrivalTime).atZone(it).toInstant() }
     val valid = departurePlace.isNotBlank() && arrivalPlace.isNotBlank() && departureInstant != null &&
         arrivalInstant != null && arrivalInstant > departureInstant
+    val overlapsRegularTrip = selectedTripId == null && selectableTrips.any {
+        !arrivalDate.isBefore(it.startDate) && !departureDate.isAfter(it.endDate)
+    }
 
     Scaffold(
         modifier = Modifier.statusBarsPadding(),
@@ -123,6 +137,38 @@ fun LegEditorScreen(
                 }
                 if (existing != null && onDelete != null) IconButton(onClick = { confirmDelete = true }) {
                     Icon(Icons.Rounded.Delete, "削除", tint = MaterialTheme.colorScheme.error)
+                }
+            }
+            EditorSection("旅行") {
+                Text("この移動をまとめる旅行を選択できます", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(
+                        selected = selectedTripId == null,
+                        onClick = { selectedTripId = null },
+                        label = { Text("紐づけない") },
+                    )
+                    selectableTrips.forEach { trip ->
+                        FilterChip(
+                            selected = selectedTripId == trip.id,
+                            onClick = { selectedTripId = trip.id },
+                            label = { Text(trip.name) },
+                        )
+                    }
+                }
+                if (overlapsRegularTrip) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                        shape = RoundedCornerShape(18.dp),
+                    ) {
+                        Row(Modifier.fillMaxWidth().padding(14.dp)) {
+                            Icon(Icons.Rounded.Warning, null, Modifier.size(20.dp))
+                            Text(
+                                "この日には旅行が設定されています。紐づけずに保存すると、旅行一覧に日付名で別表示されます。",
+                                Modifier.padding(start = 10.dp),
+                            )
+                        }
+                    }
                 }
             }
             EditorSection("交通手段") {
@@ -178,12 +224,15 @@ fun LegEditorScreen(
                 "出発地・到着地と有効なタイムゾーンを入力し、到着を出発より後にしてください。",
                 color = MaterialTheme.colorScheme.error,
             )
+            saveError?.let {
+                Text(it, color = MaterialTheme.colorScheme.error)
+            }
             Button(
-                enabled = valid,
+                enabled = valid && !isSaving,
                 onClick = {
                     onSave(TransportLeg(
                         id = existing?.id ?: 0,
-                        tripId = tripId,
+                        tripId = selectedTripId ?: existing?.tripId ?: 0,
                         departure = departureInstant!!,
                         arrival = arrivalInstant!!,
                         departureZoneId = departureZone,
@@ -196,11 +245,22 @@ fun LegEditorScreen(
                         arrivalPlatform = arrivalPlatform.trim(),
                         memo = memo.trim(),
                         sortOrder = existing?.sortOrder ?: 0,
-                    ))
+                    ), selectedTripId == null)
                 },
                 modifier = Modifier.fillMaxWidth().height(64.dp),
                 shape = RoundedCornerShape(22.dp),
-            ) { Icon(Icons.Rounded.Check, null); Text("保存", Modifier.padding(start = 8.dp)) }
+            ) {
+                if (isSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(22.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                    )
+                } else {
+                    Icon(Icons.Rounded.Check, null)
+                }
+                Text(if (isSaving) "保存中…" else "保存", Modifier.padding(start = 8.dp))
+            }
         }
     }
     if (confirmDelete && existing != null && onDelete != null) AlertDialog(

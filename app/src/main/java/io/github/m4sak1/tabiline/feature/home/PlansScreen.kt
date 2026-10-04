@@ -50,9 +50,11 @@ fun PlansScreen(
     onOpenTrip: (Long) -> Unit,
 ) {
     val today = LocalDate.now()
-    val ongoing = trips.filter { today in it.trip.startDate..it.trip.endDate }
-    val upcoming = trips.filter { it.trip.startDate > today }
-    val completed = trips.filter { it.trip.endDate < today }.sortedByDescending { it.trip.endDate }
+    val automatic = trips.filter { it.trip.isAutomatic }.sortedByDescending { it.trip.startDate }
+    val regularTrips = trips.filterNot { it.trip.isAutomatic }
+    val ongoing = regularTrips.filter { today in it.trip.startDate..it.trip.endDate }
+    val upcoming = regularTrips.filter { it.trip.startDate > today }
+    val completed = regularTrips.filter { it.trip.endDate < today }.sortedByDescending { it.trip.endDate }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = Color.Transparent,
@@ -74,6 +76,7 @@ fun PlansScreen(
             item { Text("旅行", style = MaterialTheme.typography.headlineLarge, modifier = Modifier.padding(top = 16.dp, start = 8.dp, bottom = 10.dp)) }
             planSection("進行中", ongoing, onOpenTrip)
             planSection("これから", upcoming, onOpenTrip)
+            planSection("日付別の移動", automatic, onOpenTrip)
             planSection("終了した旅行", completed, onOpenTrip)
         }
     }

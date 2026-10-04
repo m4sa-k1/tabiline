@@ -12,6 +12,7 @@ interface TabilineRepository {
     suspend fun saveTrip(trip: Trip): Long
     suspend fun deleteTrip(id: Long)
     suspend fun saveLeg(leg: TransportLeg): Long
+    suspend fun saveStandaloneLeg(leg: TransportLeg): Long
     suspend fun deleteLeg(id: Long)
     suspend fun reorderLegs(tripId: Long, orderedIds: List<Long>)
 }

@@ -16,6 +16,7 @@ data class TripEntity(
     val note: String,
     val createdAtMillis: Long,
     val updatedAtMillis: Long,
+    val isAutomatic: Boolean = false,
 )
 
 @Entity(

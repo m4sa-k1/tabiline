@@ -25,6 +25,12 @@ interface TabilineDao {
     @Query("SELECT * FROM trips WHERE id = :tripId")
     suspend fun getTrip(tripId: Long): TripEntity?
 
+    @Query("SELECT * FROM trips WHERE isAutomatic = 1 AND startEpochDay = :departureEpochDay LIMIT 1")
+    suspend fun getAutomaticTrip(departureEpochDay: Long): TripEntity?
+
+    @Query("SELECT * FROM transport_legs WHERE tripId = :tripId ORDER BY sortOrder")
+    suspend fun getLegsForTrip(tripId: Long): List<TransportLegEntity>
+
     @Query("SELECT * FROM transport_legs WHERE id = :legId")
     suspend fun getLeg(legId: Long): TransportLegEntity?
 
