@@ -1,107 +1,105 @@
 # Tabiline
 
-旅の移動を、ひとつのタイムラインに。Tabilineは、電車・飛行機・船・バスなどの確定した移動予定をオフラインで管理するAndroidアプリです。
+## 日本語
 
-## 主な機能
+Tabilineは、旅行中の移動を一本のタイムラインで見渡せるAndroidアプリです。電車、飛行機、船、バスなどの予定をまとめ、次に乗る交通機関の時刻・乗り場・行き先をすぐに確認できます。
 
-- 旅行ごとの移動タイムライン
-- 日付・タイムゾーンをまたぐ移動
-- 次の移動と出発までの残り時間
-- 交通手段別の色・アイコン表示
-- 乗り継ぎ時間の自動計算と警告
-- 長押しドラッグによる並べ替え
-- ライト／ダーク／端末テーマ
-- 乗り継ぎ警告時間のカスタマイズ
-- 端末内へのオフライン保存
+### 主な機能
 
-## 開発環境
+- 旅行ごとに移動予定をまとめて管理
+- 旅行に紐づけない単独の移動予定にも対応
+- 出発・到着時刻、場所、交通手段、乗り場、メモを登録
+- 日付ごとに整理されたタイムライン表示
+- 次の移動と出発までの残り時間を大きく表示
+- 乗り継ぎ時間の自動計算と短時間乗り継ぎの警告
+- ライト・ダークテーマと複数のアクセントカラー
+- 端末内保存によるオフライン利用
 
-- Android Studio（JDK 17）
-- Android SDK 36
-- Kotlin / Jetpack Compose / Material 3
-- Room / DataStore
-- minSdk 26
+### 対応環境
 
-リポジトリを開き、Gradle Sync後に`app`構成を実行してください。コマンドラインでは次を使用できます。
+- Android 8.0（Android API 26）以降
+- インターネット接続は不要です
 
-```powershell
-.\gradlew.bat testDebugUnitTest assembleDebug
-```
+### インストール
 
-デバッグAPKは`app/build/outputs/apk/debug/app-debug.apk`に生成されます。
+1. [Releases](https://github.com/m4sa-k1/tabiline/releases/latest)から最新の`Tabiline` APKをダウンロードします。
+2. Androidの設定で、ダウンロードに使用したブラウザまたはファイル管理アプリに「不明なアプリのインストール」を許可します。
+3. ダウンロードしたAPKを開いてインストールします。
 
-## ブランチ運用
+既存のTabilineへ同じ署名の新しいバージョンをインストールすると、登録済みデータを維持したまま更新できます。念のため、重要な予約番号などは別の安全な場所にも保管してください。
 
-- `dev`: 通常の開発先
-- `main`: リリース対象
+### 基本的な使い方
 
-開発は`dev`で行い、リリース可能になった変更だけを`main`へマージします。`main`へのpushで署名済みAPKのビルドとGitHub Release作成が実行されます。
+1. 「旅行」から新しい旅行を作成します。
+2. 大きな追加ボタンから移動予定を登録します。
+3. 「今日」で直近の移動を確認し、「タイムライン」で旅行全体を確認します。
+4. 表示テーマ、アクセントカラー、標準タイムゾーンなどは「設定」から変更できます。
 
-## 自動バージョン
+旅行が決まっていない移動は、旅行へ紐づけずに登録することもできます。この場合、日付を名前にした予定として旅行一覧に表示されます。
 
-ワークフローは既存のGitHub Releaseから`v0.0.N`形式の最大値を調べます。
+### データとプライバシー
 
-- Releaseがない場合: `0.0.0` / versionCode `1`
-- 次回: `0.0.1` / versionCode `2`
-- APK名: `tabiline-0.0.N.apk`
-- Release名: `Tabiline v0.0.N`
+旅行・移動・設定データは端末内に保存されます。Tabilineは、これらの情報を外部サーバーへ送信しません。アプリを削除すると端末内のデータも失われる場合があります。
 
-バージョンはビルド引数として注入するため、バージョン更新コミットや再実行ループは発生しません。
+### 不具合・要望
 
-## 署名鍵の初期設定
+不具合や機能要望は[GitHub Issues](https://github.com/m4sa-k1/tabiline/issues)へお寄せください。不具合報告には、端末名、Androidバージョン、Tabilineのバージョン、再現手順を含めてください。予約番号などの個人情報は投稿しないでください。
 
-同じアプリとしてアップデートするには、すべてのリリースで同じ鍵が必要です。鍵とパスワードは安全な場所へバックアップしてください。紛失した場合、既存インストールへの更新はできません。
+### 権利とライセンス
 
-### 1. 鍵を生成
+Tabiline本体のソースコード、デザイン、画像、文書などの権利は、第三者素材を除きm4sa-k1が留保します。公式APKは個人的かつ非商用の目的で利用できます。ソースコードやAPKの複製、改変、再配布、販売などには、権利者の事前の書面による許可が必要です。詳しくは[LICENSE](LICENSE)をご覧ください。
 
-```powershell
-keytool -genkeypair -v -keystore tabiline-release.jks -alias tabiline -keyalg RSA -keysize 2048 -validity 10000
-```
+Roboto FlexおよびNoto Sans JPは、アプリ本体とは別にSIL Open Font License 1.1の条件で使用しています。フォントのライセンス全文は[第三者ライセンス](app/src/main/assets/third_party_licenses)にあります。フォントのOFLはTabiline本体には適用されません。
 
-生成した`.jks`はリポジトリへ追加しないでください。
+---
 
-### 2. 鍵をBase64化
+## English
 
-PowerShell:
+Tabiline is an Android app that presents the transport parts of a trip on one clear timeline. It keeps train, flight, ferry, bus, and other travel details together so you can quickly check when to leave, where to board, and where you are going.
 
-```powershell
-[Convert]::ToBase64String([IO.File]::ReadAllBytes("tabiline-release.jks")) | Set-Clipboard
-```
+### Features
 
-### 3. GitHub Secretsを登録
+- Organize transport plans by trip
+- Add standalone transport plans without assigning them to a trip
+- Save departure and arrival times, places, transport modes, boarding locations, and notes
+- Browse itineraries grouped by date
+- See the next journey and time remaining until departure at a glance
+- Automatically calculate transfer times and warn about short connections
+- Choose light or dark mode and several accent colors
+- Use the app offline with on-device storage
 
-GitHubの`Settings > Secrets and variables > Actions > New repository secret`で以下を登録します。
+### Requirements
 
-| Secret | 内容 |
-|---|---|
-| `ANDROID_KEYSTORE_BASE64` | Base64化した鍵ファイル全文 |
-| `ANDROID_KEYSTORE_PASSWORD` | KeyStoreのパスワード |
-| `ANDROID_KEY_ALIAS` | 鍵のalias（上の例では`tabiline`） |
-| `ANDROID_KEY_PASSWORD` | aliasの鍵パスワード |
+- Android 8.0 (Android API 26) or later
+- No internet connection is required
 
-リポジトリのActions設定で、ワークフローの`GITHUB_TOKEN`にcontentsへの書き込みを許可してください。ワークフロー自身にも`contents: write`を最小権限として指定しています。
+### Installation
 
-### 4. 初回リリース
+1. Download the latest `Tabiline` APK from [Releases](https://github.com/m4sa-k1/tabiline/releases/latest).
+2. In Android settings, allow your browser or file manager to install unknown apps.
+3. Open the downloaded APK and install it.
 
-`dev`を`main`へマージしてpushします。Actions完了後、Releasesに`Tabiline v0.0.0`と署名済みAPKが追加されます。
+Installing a newer version signed with the same official key updates Tabiline while keeping existing data. Keep important booking references in another secure place as a precaution.
 
-## APKのインストール
+### Getting started
 
-ReleasesからAPKを端末へダウンロードし、Androidの「不明なアプリのインストール」を許可して開きます。更新版も同じ署名鍵で署名されるため、データを維持したまま上書きできます。
+1. Create a trip from the Trips tab.
+2. Use the large add button to enter a transport plan.
+3. Check the nearest journey on Today and browse the full itinerary on Timeline.
+4. Change the theme, accent color, default time zone, and other preferences in Settings.
 
-## 拡張しやすい構成
+You can also save transport without assigning it to a trip. Tabiline then shows it in the trip list under an automatically generated date-based name.
 
-- `core/model`: UIや保存方式に依存しないモデル
-- `core/domain`: 次の移動・乗り継ぎなどの純粋なルール
-- `data/local`: Roomの永続化実装
-- `data/repository`: UIと保存先の境界
-- `data/settings`: DataStore設定
-- `feature/*`: 画面機能
-- `ui/*`: テーマと共通部品
-- `di`: 依存関係の組み立て
+### Data and privacy
 
-将来クラウド同期や運行情報APIを追加する場合も、`TabilineRepository`の実装を追加することで画面とドメインルールを保ったまま拡張できます。交通手段固有の警告ルールは`TransferPolicy`へ集約しています。
+Trip, transport, and preference data is stored locally on your device. Tabiline does not send this information to an external server. Uninstalling the app may remove its local data.
 
-## プライバシー
+### Issues and feedback
 
-初期版はアカウント、位置情報、ネットワーク権限を使用しません。旅行情報は端末内に保存されます。
+Please use [GitHub Issues](https://github.com/m4sa-k1/tabiline/issues) for bug reports and feature requests. Include your device model, Android version, Tabiline version, and reproduction steps. Do not post personal information such as booking references.
+
+### Rights and licenses
+
+Except for third-party materials, all rights in the Tabiline source code, design, artwork, and documentation are reserved by m4sa-k1. The official APK may be used for personal, non-commercial purposes. Copying, modifying, redistributing, or selling the source code or APK requires prior written permission from the rights holder. See [LICENSE](LICENSE) for details.
+
+Roboto Flex and Noto Sans JP are used separately under the SIL Open Font License 1.1. Their full license texts are available under [Third-party licenses](app/src/main/assets/third_party_licenses). The fonts' OFL terms do not apply to Tabiline itself.
