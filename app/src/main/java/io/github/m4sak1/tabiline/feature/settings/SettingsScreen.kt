@@ -349,7 +349,7 @@ private fun SettingsScaffold(content: @Composable ColumnScope.() -> Unit) {
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
     ) { _ ->
         Column(
-            Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState())
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding()
                 .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 144.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             content = content,

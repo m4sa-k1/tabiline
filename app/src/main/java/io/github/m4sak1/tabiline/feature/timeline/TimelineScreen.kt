@@ -63,6 +63,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -80,10 +82,6 @@ import io.github.m4sak1.tabiline.ui.components.CenterPopup
 import io.github.m4sak1.tabiline.ui.components.visual
 import java.time.Duration
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-
-private val timelineTime = DateTimeFormatter.ofPattern("HH:mm")
-private val shortDate = DateTimeFormatter.ofPattern("M/d")
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -133,11 +131,22 @@ fun TimelineScreen(
     var confirmDelete by remember { mutableStateOf(false) }
     var menuOpen by remember { mutableStateOf(false) }
     val trip = item?.trip
-    val dates = trip?.let { start -> generateSequence(start.startDate) { day -> day.plusDays(1).takeIf { !it.isAfter(start.endDate) } }.toList() }.orEmpty()
+    val dates = trip?.let { start ->
+        val endpoints = item?.legs.orEmpty().flatMap { listOf(it.departureLocal.toLocalDate(), it.arrivalLocal.toLocalDate()) }
+        val first = minOf(start.startDate, endpoints.minOrNull() ?: start.startDate)
+        val last = maxOf(start.endDate, endpoints.maxOrNull() ?: start.endDate)
+        generateSequence(first) { day -> day.plusDays(1).takeIf { !it.isAfter(last) } }.toList()
+    }.orEmpty()
     val initialDay = trip?.let { if (LocalDate.now() in it.startDate..it.endDate) LocalDate.now() else it.startDate }
     var selectedEpochDay by rememberSaveable(trip?.id) { mutableStateOf(initialDay?.toEpochDay()) }
+    var showAll by rememberSaveable(trip?.id) { mutableStateOf(false) }
     val selectedDate = selectedEpochDay?.let(LocalDate::ofEpochDay) ?: initialDay
-    val dayLegs = item?.legs.orEmpty().filter { it.departureLocal.toLocalDate() == selectedDate }.sortedBy { it.sortOrder }
+    val dayLegs = item?.legs.orEmpty().filter { showAll || (selectedDate != null && it.isVisibleOn(selectedDate)) }.sortedBy { it.sortOrder }
+    val referenceDate = if (showAll) dates.firstOrNull() else selectedDate
+    val wideTimes = dayLegs.any { it.departureLocal.toLocalDate() != referenceDate || it.arrivalLocal.toLocalDate() != referenceDate }
+    val timeColumnWidth = if (wideTimes) 88.dp else 62.dp
+    val density = LocalDensity.current
+    var headerHeight by remember { mutableStateOf(0.dp) }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -145,8 +154,12 @@ fun TimelineScreen(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
     ) { _ ->
         if (item == null || selectedDate == null) Box(Modifier.fillMaxSize().statusBarsPadding(), contentAlignment = Alignment.Center) { Text("読み込み中…") }
-        else Box(Modifier.fillMaxSize().statusBarsPadding()) {
-            Column(Modifier.fillMaxSize()) {
+        else Box(Modifier.fillMaxSize()) {
+            // The header floats above the full-window scrolling viewport.
+            // Its height is initial content padding, never a clipping boundary.
+            Column(Modifier.fillMaxWidth().zIndex(1f)
+                .onSizeChanged { headerHeight = with(density) { it.height.toDp() } }
+                .statusBarsPadding()) {
                 Row(
                     modifier = Modifier.fillMaxWidth()
                         .padding(start = 36.dp, top = 24.dp, end = 24.dp, bottom = 22.dp),
@@ -170,16 +183,23 @@ fun TimelineScreen(
                         }
                     }
                 }
-                if (dates.size > 1) RelativeDaySelector(dates, selectedDate) { selectedEpochDay = it.toEpochDay() }
+                if (dates.size > 1) RelativeDaySelector(dates, if (showAll) null else selectedDate) {
+                    showAll = it == null
+                    if (it != null) selectedEpochDay = it.toEpochDay()
+                }
+                if (showAll) Text("時刻は1日目を基準に表示", modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 6.dp), style = MaterialTheme.typography.labelSmall)
+            }
                 if (dayLegs.isNotEmpty()) {
                     LazyColumn(
-                        modifier = Modifier.weight(1f),
-                        contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 144.dp),
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(start = 16.dp, top = headerHeight + 12.dp, end = 16.dp, bottom = 144.dp),
                     ) {
                         dayLegs.forEachIndexed { index, leg ->
                             item(key = "leg-${leg.id}") {
                                 TimelineLeg(
                                     leg = leg,
+                                    referenceDate = referenceDate ?: selectedDate,
+                                    timeColumnWidth = timeColumnWidth,
                                     hasPrevious = index > 0,
                                     hasNext = index < dayLegs.lastIndex,
                                     onClick = { onEditLeg(leg.id) },
@@ -191,6 +211,7 @@ fun TimelineScreen(
                                     val next = dayLegs[index + 1]
                                     val minutes = Duration.between(leg.arrival, next.departure).toMinutes()
                                     TimelineGap(
+                                        timeColumnWidth = timeColumnWidth,
                                         minutes = minutes,
                                         threshold = settings.thresholdFor(next.mode),
                                         type = next.precedingGapType,
@@ -200,8 +221,7 @@ fun TimelineScreen(
                             }
                         }
                     }
-                } else EmptyDay(Modifier.weight(1f))
-            }
+                } else EmptyDay(Modifier.fillMaxSize().padding(top = headerHeight))
         }
     }
     if (confirmDelete && item != null) AlertDialog(
@@ -216,10 +236,11 @@ fun TimelineScreen(
 @Composable
 private fun RelativeDaySelector(
     dates: List<LocalDate>,
-    selectedDate: LocalDate,
-    onSelect: (LocalDate) -> Unit,
+    selectedDate: LocalDate?,
+    onSelect: (LocalDate?) -> Unit,
 ) {
-    val selectorWidth = (dates.size * 72 + (dates.size - 1) * 4).coerceAtMost(360).dp
+    val choices: List<LocalDate?> = dates + listOf(null)
+    val selectorWidth = (choices.size * 72 + (choices.size - 1) * 4).coerceAtMost(360).dp
     Box(
         modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
         contentAlignment = Alignment.Center,
@@ -228,7 +249,7 @@ private fun RelativeDaySelector(
             modifier = Modifier.width(selectorWidth),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            itemsIndexed(dates, key = { _, date -> date.toEpochDay() }) { index, date ->
+            itemsIndexed(choices, key = { _, date -> date?.toEpochDay() ?: Long.MIN_VALUE }) { index, date ->
                 val selected = date == selectedDate
                 val startRadius by animateDpAsState(
                     targetValue = if (selected || index == 0) 22.dp else 5.dp,
@@ -239,7 +260,7 @@ private fun RelativeDaySelector(
                     label = "day-start-shape",
                 )
                 val endRadius by animateDpAsState(
-                    targetValue = if (selected || index == dates.lastIndex) 22.dp else 5.dp,
+                    targetValue = if (selected || index == choices.lastIndex) 22.dp else 5.dp,
                     animationSpec = spring(
                         dampingRatio = Spring.DampingRatioNoBouncy,
                         stiffness = Spring.StiffnessMedium,
@@ -261,7 +282,7 @@ private fun RelativeDaySelector(
                     else MaterialTheme.colorScheme.onPrimaryContainer,
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text("${index + 1}", fontWeight = FontWeight.Bold)
+                        Text(if (date == null) "すべて" else "${index + 1}", fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -272,6 +293,8 @@ private fun RelativeDaySelector(
 @Composable
 private fun TimelineLeg(
     leg: TransportLeg,
+    referenceDate: LocalDate,
+    timeColumnWidth: androidx.compose.ui.unit.Dp,
     hasPrevious: Boolean,
     hasNext: Boolean,
     onClick: () -> Unit,
@@ -284,26 +307,25 @@ private fun TimelineLeg(
         Modifier.fillMaxWidth().height(104.dp).zIndex(1f),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.width(62.dp).fillMaxHeight()) {
+        Box(Modifier.width(timeColumnWidth).fillMaxHeight()) {
             Text(
-                leg.departureLocal.format(timelineTime),
-                fontSize = 20.sp,
+                relativeTimelineTime(leg.departureLocal.toLocalDateTime(), referenceDate),
+                fontSize = if (leg.departureLocal.toLocalDate() == referenceDate) 20.sp else 14.sp,
+                maxLines = 1,
+                softWrap = false,
                 lineHeight = 24.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.align(Alignment.TopStart),
             )
-            val crossesDate = leg.arrivalLocal.toLocalDate() != leg.departureLocal.toLocalDate()
+            val crossesDate = leg.arrivalLocal.toLocalDate() != referenceDate
             Text(
-                if (crossesDate) {
-                    "${leg.arrivalLocal.format(shortDate)}\n${leg.arrivalLocal.format(timelineTime)}"
-                } else {
-                    leg.arrivalLocal.format(timelineTime)
-                },
+                relativeTimelineTime(leg.arrivalLocal.toLocalDateTime(), referenceDate),
                 fontSize = if (crossesDate) 14.sp else 16.sp,
                 lineHeight = 17.sp,
                 fontWeight = FontWeight.Normal,
                 modifier = Modifier.align(Alignment.BottomStart),
-                maxLines = if (crossesDate) 2 else 1,
+                maxLines = 1,
+                softWrap = false,
             )
         }
         Box(Modifier.width(24.dp).fillMaxHeight()) {
@@ -413,6 +435,7 @@ private fun TimelineLeg(
 
 @Composable
 private fun TimelineGap(
+    timeColumnWidth: androidx.compose.ui.unit.Dp,
     minutes: Long,
     threshold: Int,
     type: GapType,
@@ -425,7 +448,7 @@ private fun TimelineGap(
         else -> "${type.label} ${minutes}分"
     }
     Row(Modifier.fillMaxWidth().height(80.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.width(62.dp))
+        Box(Modifier.width(timeColumnWidth))
         Box(Modifier.width(24.dp).fillMaxHeight(), contentAlignment = Alignment.Center) {
             val lineColor = MaterialTheme.colorScheme.outlineVariant
             Canvas(Modifier.width(4.dp).fillMaxHeight()) {
