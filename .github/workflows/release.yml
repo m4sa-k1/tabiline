@@ -1,0 +1,84 @@
+name: Build signed APK and release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tabiline-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/release-keystore.jks
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v3
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Determine next version
+        id: version
+        shell: bash
+        run: |
+          latest_patch="$(gh release list --limit 100 --json tagName --jq '[.[].tagName | select(test("^v0\\.0\\.[0-9]+$")) | capture("v0\\.0\\.(?<n>[0-9]+)").n | tonumber] | max // empty')"
+          if [[ -z "$latest_patch" ]]; then
+            patch=0
+          else
+            patch=$((latest_patch + 1))
+          fi
+          echo "name=0.0.${patch}" >> "$GITHUB_OUTPUT"
+          echo "code=$((patch + 1))" >> "$GITHUB_OUTPUT"
+
+      - name: Validate signing secrets
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$ANDROID_KEYSTORE_BASE64"
+          test -n "$ANDROID_KEYSTORE_PASSWORD"
+          test -n "$ANDROID_KEY_ALIAS"
+          test -n "$ANDROID_KEY_PASSWORD"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$ANDROID_KEYSTORE_PATH"
+
+      - name: Test and build signed APK
+        run: ./gradlew testReleaseUnitTest assembleRelease -PversionName=${{ steps.version.outputs.name }} -PversionCode=${{ steps.version.outputs.code }}
+
+      - name: Verify and name APK
+        shell: bash
+        run: |
+          apk="app/build/outputs/apk/release/app-release.apk"
+          apksigner="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)"
+          "$apksigner" verify --verbose "$apk"
+          cp "$apk" "tabiline-${{ steps.version.outputs.name }}.apk"
+
+      - name: Create GitHub Release
+        shell: bash
+        run: |
+          version="${{ steps.version.outputs.name }}"
+          gh release create "v${version}" "tabiline-${version}.apk" \
+            --target "$GITHUB_SHA" \
+            --title "Tabiline v${version}" \
+            --generate-notes
+
+      - name: Remove temporary signing key
+        if: always()
+        shell: bash
+        run: rm -f "$ANDROID_KEYSTORE_PATH"
