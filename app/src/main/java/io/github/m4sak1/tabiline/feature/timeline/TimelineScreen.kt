@@ -171,7 +171,13 @@ fun TimelineScreen(
                 }
                 dayLegs.forEachIndexed { index, leg ->
                     item(key = "leg-${leg.id}") {
-                        TimelineLeg(leg, { onEditLeg(leg.id) }, { onMoveLeg(leg.id, it) })
+                        TimelineLeg(
+                            leg = leg,
+                            hasPrevious = index > 0,
+                            hasNext = index < dayLegs.lastIndex,
+                            onClick = { onEditLeg(leg.id) },
+                            onMove = { onMoveLeg(leg.id, it) },
+                        )
                     }
                     if (index < dayLegs.lastIndex) {
                         item(key = "wait-${leg.id}") {
@@ -192,7 +198,13 @@ fun TimelineScreen(
 }
 
 @Composable
-private fun TimelineLeg(leg: TransportLeg, onClick: () -> Unit, onMove: (Int) -> Unit) {
+private fun TimelineLeg(
+    leg: TransportLeg,
+    hasPrevious: Boolean,
+    hasNext: Boolean,
+    onClick: () -> Unit,
+    onMove: (Int) -> Unit,
+) {
     var drag by remember { mutableFloatStateOf(0f) }
     Row(
         Modifier.fillMaxWidth().height(104.dp).zIndex(1f),
@@ -218,8 +230,20 @@ private fun TimelineLeg(leg: TransportLeg, onClick: () -> Unit, onMove: (Int) ->
             )
         }
         Box(Modifier.width(24.dp).fillMaxHeight()) {
+            if (hasPrevious) {
+                Box(
+                    Modifier.align(Alignment.TopCenter).width(4.dp).height(13.dp)
+                        .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+                )
+            }
             Box(Modifier.align(Alignment.TopCenter).offset(y = 13.dp).width(4.dp).height(80.dp)
                 .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(2.dp)))
+            if (hasNext) {
+                Box(
+                    Modifier.align(Alignment.TopCenter).offset(y = 93.dp).width(4.dp).height(11.dp)
+                        .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+                )
+            }
             Box(Modifier.align(Alignment.TopCenter).offset(y = 6.dp).size(14.dp)
                 .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(7.dp)))
             Box(Modifier.align(Alignment.TopCenter).offset(y = 86.dp).size(14.dp)
@@ -266,7 +290,7 @@ private fun TimelineGap(minutes: Long, threshold: Int) {
     Row(Modifier.fillMaxWidth().height(80.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.width(62.dp))
         Box(Modifier.width(24.dp).fillMaxHeight(), contentAlignment = Alignment.Center) {
-            Box(Modifier.offset(y = (-12).dp).width(4.dp).height(104.dp)
+            Box(Modifier.width(4.dp).fillMaxHeight()
                 .background(MaterialTheme.colorScheme.surfaceContainerHighest, RoundedCornerShape(2.dp)))
         }
         Box(Modifier.weight(1f).padding(start = 12.dp), contentAlignment = Alignment.CenterStart) {
