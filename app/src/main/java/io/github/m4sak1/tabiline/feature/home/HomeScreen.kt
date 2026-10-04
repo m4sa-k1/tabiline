@@ -133,6 +133,7 @@ fun HomeScreen(
 @Composable
 private fun HeroCard(leg: TransportLeg, remaining: String, onClick: () -> Unit) {
     val visual = leg.mode.visual()
+    val isFreeTime = leg.mode == TransportMode.FREE_TIME
     Surface(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth().height(264.dp),
@@ -141,7 +142,7 @@ private fun HeroCard(leg: TransportLeg, remaining: String, onClick: () -> Unit) 
     ) {
         Box {
             Text(
-                "次の移動",
+                if (isFreeTime) "次の予定" else "次の移動",
                 fontSize = 14.sp,
                 lineHeight = 20.sp,
                 fontWeight = FontWeight.Bold,
@@ -173,19 +174,20 @@ private fun HeroCard(leg: TransportLeg, remaining: String, onClick: () -> Unit) 
                 ) { Icon(visual.icon, leg.mode.label, Modifier.size(48.dp), tint = MaterialTheme.colorScheme.onPrimary) }
             }
             Text(
-                leg.departurePlatform.ifBlank { "乗り場未設定" },
+                if (isFreeTime) leg.departurePlace.ifBlank { "空き時間" }
+                else leg.departurePlatform.ifBlank { "乗り場未設定" },
                 fontSize = 30.sp,
                 lineHeight = 38.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.offset(24.dp, 140.dp),
             )
-            Text(
-                "${leg.departurePlace} → ${leg.arrivalPlace}",
-                fontSize = 18.sp,
-                lineHeight = 24.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.offset(24.dp, 186.dp),
-            )
+            if (!isFreeTime) Text(
+                    "${leg.departurePlace} → ${leg.arrivalPlace}",
+                    fontSize = 18.sp,
+                    lineHeight = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.offset(24.dp, 186.dp),
+                )
             val detail = buildList {
                 add(if (leg.mode == TransportMode.TRAIN) leg.trainType?.label ?: leg.mode.detailLabel else leg.mode.detailLabel)
                 if (leg.memo.isNotBlank()) add(leg.memo)
@@ -197,7 +199,7 @@ private fun HeroCard(leg: TransportLeg, remaining: String, onClick: () -> Unit) 
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.offset(24.dp, 216.dp).padding(end = 24.dp),
+                modifier = Modifier.offset(24.dp, if (isFreeTime) 190.dp else 216.dp).padding(end = 24.dp),
             )
         }
     }
@@ -206,6 +208,7 @@ private fun HeroCard(leg: TransportLeg, remaining: String, onClick: () -> Unit) 
 @Composable
 private fun FutureLegRow(leg: TransportLeg, first: Boolean, last: Boolean, onClick: () -> Unit) {
     val visual = leg.mode.visual()
+    val isFreeTime = leg.mode == TransportMode.FREE_TIME
     val shape = RoundedCornerShape(
         topStart = if (first) 28.dp else 8.dp, topEnd = if (first) 28.dp else 8.dp,
         bottomStart = if (last) 28.dp else 8.dp, bottomEnd = if (last) 28.dp else 8.dp,
@@ -222,14 +225,16 @@ private fun FutureLegRow(leg: TransportLeg, first: Boolean, last: Boolean, onCli
             }
             Column(Modifier.padding(start = 12.dp).weight(1f)) {
                 Text(
-                    "${leg.departureLocal.format(timeFormat)} → ${leg.arrivalLocal.format(timeFormat)}",
+                    if (isFreeTime) leg.departureLocal.format(timeFormat)
+                    else "${leg.departureLocal.format(timeFormat)} → ${leg.arrivalLocal.format(timeFormat)}",
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium,
                 )
                 val type = if (leg.mode == TransportMode.TRAIN) leg.trainType?.label ?: leg.mode.detailLabel else leg.mode.detailLabel
                 val platform = leg.departurePlatform.takeIf(String::isNotBlank)
                 Text(
-                    listOfNotNull("${leg.departurePlace} → ${leg.arrivalPlace}", type, platform).joinToString(" ・ "),
+                    if (isFreeTime) listOf(leg.departurePlace.ifBlank { "空き時間" }, type).joinToString(" ・ ")
+                    else listOfNotNull("${leg.departurePlace} → ${leg.arrivalPlace}", type, platform).joinToString(" ・ "),
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1, overflow = TextOverflow.Ellipsis,
                 )

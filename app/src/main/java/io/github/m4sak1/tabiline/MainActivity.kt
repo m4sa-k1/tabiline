@@ -2,6 +2,8 @@ package io.github.m4sak1.tabiline
 
 import android.os.Bundle
 import android.os.Build
+import android.graphics.drawable.ColorDrawable
+import android.view.Window
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
@@ -20,6 +22,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.foundation.background
@@ -30,9 +33,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.core.view.WindowCompat
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -97,7 +103,7 @@ class MainActivity : ComponentActivity() {
             window.isNavigationBarContrastEnforced = false
         }
         requestHighRefreshRate()
-        setContent { TabilineRoot(viewModel) }
+        setContent { TabilineRoot(viewModel, window) }
     }
 
     override fun onResume() {
@@ -128,9 +134,19 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun TabilineRoot(viewModel: MainViewModel) {
+private fun TabilineRoot(viewModel: MainViewModel, window: Window) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     TabilineTheme(settings.theme, settings.accentPalette) {
+        val surfaceColor = MaterialTheme.colorScheme.surface
+        SideEffect {
+            // Keep the decor behind transparent system bars in sync with the app theme.
+            window.setBackgroundDrawable(ColorDrawable(surfaceColor.toArgb()))
+            WindowCompat.getInsetsController(window, window.decorView).apply {
+                val useDarkIcons = surfaceColor.luminance() > 0.5f
+                isAppearanceLightStatusBars = useDarkIcons
+                isAppearanceLightNavigationBars = useDarkIcons
+            }
+        }
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
         val nav = rememberNavController()
         val currentEntry by nav.currentBackStackEntryAsState()

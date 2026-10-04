@@ -32,7 +32,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.FreeBreakfast
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.SyncAlt
@@ -271,6 +270,7 @@ private fun TimelineLeg(
     onMove: (Int) -> Unit,
 ) {
     val visual = leg.mode.visual()
+    val isFreeTime = leg.mode == TransportMode.FREE_TIME
     var drag by remember { mutableFloatStateOf(0f) }
     Row(
         Modifier.fillMaxWidth().height(104.dp).zIndex(1f),
@@ -282,38 +282,53 @@ private fun TimelineLeg(
                 fontSize = 20.sp,
                 lineHeight = 24.sp,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.align(Alignment.TopStart),
+                modifier = Modifier.align(if (isFreeTime) Alignment.CenterStart else Alignment.TopStart),
             )
-            val arrival = if (leg.arrivalLocal.toLocalDate() == leg.departureLocal.toLocalDate()) leg.arrivalLocal.format(timelineTime)
-                else leg.arrivalLocal.format(shortDateTime)
-            Text(
-                arrival,
-                fontSize = 16.sp,
-                lineHeight = 20.sp,
-                fontWeight = FontWeight.Normal,
-                modifier = Modifier.align(Alignment.BottomStart),
-                maxLines = 1,
-            )
+            if (!isFreeTime) {
+                val arrival = if (leg.arrivalLocal.toLocalDate() == leg.departureLocal.toLocalDate()) leg.arrivalLocal.format(timelineTime)
+                    else leg.arrivalLocal.format(shortDateTime)
+                Text(
+                    arrival,
+                    fontSize = 16.sp,
+                    lineHeight = 20.sp,
+                    fontWeight = FontWeight.Normal,
+                    modifier = Modifier.align(Alignment.BottomStart),
+                    maxLines = 1,
+                )
+            }
         }
         Box(Modifier.width(24.dp).fillMaxHeight()) {
-            if (hasPrevious) {
-                Box(
-                    Modifier.align(Alignment.TopCenter).width(4.dp).height(13.dp)
+            if (isFreeTime) {
+                if (hasPrevious) Box(
+                    Modifier.align(Alignment.TopCenter).width(4.dp).height(52.dp)
                         .background(MaterialTheme.colorScheme.surfaceContainerHighest),
                 )
-            }
-            Box(Modifier.align(Alignment.TopCenter).offset(y = 13.dp).width(4.dp).height(80.dp)
-                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(2.dp)))
-            if (hasNext) {
-                Box(
-                    Modifier.align(Alignment.TopCenter).offset(y = 93.dp).width(4.dp).height(11.dp)
+                if (hasNext) Box(
+                    Modifier.align(Alignment.TopCenter).offset(y = 52.dp).width(4.dp).height(52.dp)
                         .background(MaterialTheme.colorScheme.surfaceContainerHighest),
                 )
+                Box(Modifier.align(Alignment.Center).size(14.dp)
+                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(7.dp)))
+            } else {
+                if (hasPrevious) {
+                    Box(
+                        Modifier.align(Alignment.TopCenter).width(4.dp).height(13.dp)
+                            .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+                    )
+                }
+                Box(Modifier.align(Alignment.TopCenter).offset(y = 13.dp).width(4.dp).height(80.dp)
+                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(2.dp)))
+                if (hasNext) {
+                    Box(
+                        Modifier.align(Alignment.TopCenter).offset(y = 93.dp).width(4.dp).height(11.dp)
+                            .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+                    )
+                }
+                Box(Modifier.align(Alignment.TopCenter).offset(y = 6.dp).size(14.dp)
+                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(7.dp)))
+                Box(Modifier.align(Alignment.TopCenter).offset(y = 86.dp).size(14.dp)
+                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(7.dp)))
             }
-            Box(Modifier.align(Alignment.TopCenter).offset(y = 6.dp).size(14.dp)
-                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(7.dp)))
-            Box(Modifier.align(Alignment.TopCenter).offset(y = 86.dp).size(14.dp)
-                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(7.dp)))
         }
         Card(
             onClick = onClick,
@@ -334,38 +349,55 @@ private fun TimelineLeg(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(Modifier.weight(1f)) {
-                    val route = "${leg.departurePlace} → ${leg.arrivalPlace}"
-                    val hasPlatform = leg.departurePlatform.isNotBlank()
-                    val title = leg.departurePlatform.ifBlank { route }
-                    Text(
-                        title,
-                        fontSize = if (hasPlatform) 18.sp else 16.sp,
-                        lineHeight = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    val type = if (leg.mode == TransportMode.TRAIN) leg.trainType?.label ?: leg.mode.detailLabel else leg.mode.detailLabel
-                    if (hasPlatform) {
+                    if (isFreeTime) {
                         Text(
-                            route,
+                            leg.departurePlace.ifBlank { "空き時間" },
+                            fontSize = 18.sp,
+                            lineHeight = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            "空き時間",
                             fontSize = 14.sp,
                             lineHeight = 18.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    } else {
+                        val route = "${leg.departurePlace} → ${leg.arrivalPlace}"
+                        val hasPlatform = leg.departurePlatform.isNotBlank()
+                        val title = leg.departurePlatform.ifBlank { route }
+                        Text(
+                            title,
+                            fontSize = if (hasPlatform) 18.sp else 16.sp,
+                            lineHeight = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        val type = if (leg.mode == TransportMode.TRAIN) leg.trainType?.label ?: leg.mode.detailLabel else leg.mode.detailLabel
+                        if (hasPlatform) {
+                            Text(
+                                route,
+                                fontSize = 14.sp,
+                                lineHeight = 18.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        Text(
+                            listOfNotNull(type, leg.memo.takeIf(String::isNotBlank)).joinToString(" ・ "),
+                            fontSize = 12.sp,
+                            lineHeight = 16.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
                     }
-                    Text(
-                        listOfNotNull(type, leg.memo.takeIf(String::isNotBlank)).joinToString(" ・ "),
-                        fontSize = 12.sp,
-                        lineHeight = 16.sp,
-                        fontWeight = FontWeight.Normal,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
                 }
                 Surface(
                     modifier = Modifier.padding(start = 12.dp).size(44.dp),
@@ -390,7 +422,7 @@ private fun TimelineGap(
     type: GapType,
     onClick: () -> Unit,
 ) {
-    val warning = type != GapType.FREE_TIME && (minutes < 0 || minutes < threshold)
+    val warning = minutes < 0 || minutes < threshold
     val label = when {
         minutes < 0 -> "時刻が ${-minutes}分 重複"
         warning -> "${type.label} ${minutes}分 ・ 乗り継ぎに注意"
@@ -519,7 +551,6 @@ fun GapTypePopup(
                                             when (choice) {
                                                 GapType.WAIT -> "同じ乗り場で待つ"
                                                 GapType.TRANSFER -> "別の乗り場へ移動する"
-                                                GapType.FREE_TIME -> "自由に使える時間にする"
                                             },
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -538,7 +569,6 @@ fun GapTypePopup(
 private fun GapType.icon() = when (this) {
     GapType.WAIT -> Icons.Rounded.Schedule
     GapType.TRANSFER -> Icons.Rounded.SyncAlt
-    GapType.FREE_TIME -> Icons.Rounded.FreeBreakfast
 }
 
 @Composable

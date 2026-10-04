@@ -6,6 +6,7 @@ enum class TransportMode(val label: String) {
     FERRY("船"),
     BUS("バス"),
     WALK("徒歩"),
+    FREE_TIME("空き時間"),
     OTHER("その他"),
 }
 

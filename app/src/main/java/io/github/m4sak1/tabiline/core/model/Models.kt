@@ -49,7 +49,6 @@ enum class AccentPalette { PURPLE, ORCHID, BLUE, GREEN, CORAL, AMBER, TEAL, MONO
 enum class GapType(val label: String) {
     WAIT("待ち"),
     TRANSFER("移動"),
-    FREE_TIME("空き時間"),
 }
 
 data class UserSettings(
@@ -68,6 +67,7 @@ data class UserSettings(
         TransportMode.FLIGHT -> flightMinutes
         TransportMode.FERRY -> ferryMinutes
         TransportMode.WALK -> otherMinutes
+        TransportMode.FREE_TIME -> otherMinutes
         TransportMode.OTHER -> otherMinutes
     }
 }

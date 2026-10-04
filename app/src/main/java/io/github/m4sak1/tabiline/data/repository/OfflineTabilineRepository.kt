@@ -147,7 +147,8 @@ private fun TransportLegEntity.toModel() = TransportLeg(
     id, tripId, Instant.ofEpochMilli(departureMillis), Instant.ofEpochMilli(arrivalMillis),
     departureZoneId, arrivalZoneId, departurePlace, arrivalPlace,
     TransportMode.valueOf(mode), trainType?.let(TrainType::valueOf), departurePlatform,
-    arrivalPlatform, memo, sortOrder, GapType.valueOf(precedingGapType),
+    arrivalPlatform, memo, sortOrder,
+    runCatching { GapType.valueOf(precedingGapType) }.getOrDefault(GapType.WAIT),
 )
 
 private fun TransportLeg.toEntity() = TransportLegEntity(
