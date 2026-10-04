@@ -81,6 +81,35 @@ import java.time.format.DateTimeFormatter
 private val timelineTime = DateTimeFormatter.ofPattern("HH:mm")
 private val shortDateTime = DateTimeFormatter.ofPattern("M/d HH:mm")
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@Composable
+fun EmptyTimelineScreen() {
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+    ) { _ ->
+        Box(
+            Modifier.fillMaxSize().statusBarsPadding().padding(horizontal = 24.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("( ˘ω˘ )", style = MaterialTheme.typography.headlineMedium)
+                Text(
+                    "この日の移動はありません",
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.padding(top = 14.dp),
+                )
+                Text(
+                    "移動を追加すると、ここに表示されます",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -515,19 +544,16 @@ private fun GapType.icon() = when (this) {
 
 @Composable
 private fun EmptyDay(modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxSize().padding(horizontal = 24.dp), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("( ｡•ᴗ•｡ )", style = MaterialTheme.typography.headlineMedium)
+    Box(modifier.fillMaxSize().padding(24.dp)) {
         Text(
-                "この日の移動はありません",
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(top = 14.dp),
+            "この日の移動はありません",
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.align(Alignment.Center),
         )
-            Text(
-                "別の日を選ぶか、移動を追加してください",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 6.dp),
-            )
-        }
+        Text(
+            "追加するとタイムラインに表示されます",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.align(Alignment.Center).offset(y = 38.dp),
+        )
     }
 }

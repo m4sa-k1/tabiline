@@ -50,6 +50,7 @@ import io.github.m4sak1.tabiline.feature.settings.SettingsScreen
 import io.github.m4sak1.tabiline.feature.settings.SettingsDetailPopup
 import io.github.m4sak1.tabiline.feature.settings.SettingsSection
 import io.github.m4sak1.tabiline.feature.timeline.GapTypePopup
+import io.github.m4sak1.tabiline.feature.timeline.EmptyTimelineScreen
 import io.github.m4sak1.tabiline.feature.timeline.TimelineScreen
 import io.github.m4sak1.tabiline.ui.components.AppDestination
 import io.github.m4sak1.tabiline.ui.components.AppBottomBar
@@ -67,7 +68,7 @@ private val emphasizedEasing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
 
 private fun routePosition(route: String?): Int = when (route) {
     "home" -> 0
-    "trip/{tripId}" -> 1
+    "trip/{tripId}", "timeline-empty" -> 1
     "plans" -> 2
     "settings" -> 3
     "leg/{tripId}/{legId}" -> 4
@@ -158,7 +159,7 @@ private fun TabilineRoot(viewModel: MainViewModel) {
             "home" -> AppDestination.TODAY
             "plans" -> AppDestination.PLANS
             "settings" -> AppDestination.SETTINGS
-            "trip/{tripId}" -> AppDestination.TIMELINE
+            "trip/{tripId}", "timeline-empty" -> AppDestination.TIMELINE
             else -> null
         }
         Box(
@@ -222,6 +223,7 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                     onOpenTrip = { selectedTripId = it; nav.navigate("trip/$it") },
                 )
             }
+            composable("timeline-empty") { EmptyTimelineScreen() }
             composable(
                 route = "trip/{tripId}",
                 arguments = listOf(navArgument("tripId") { type = NavType.LongType }),
@@ -375,6 +377,11 @@ private fun TabilineRoot(viewModel: MainViewModel) {
             val homeTripId = trips.firstOrNull {
                 !it.trip.isAutomatic && today in it.trip.startDate..it.trip.endDate
             }?.trip?.id
+            val todayTimelineTripId = trips.firstOrNull {
+                !it.trip.isAutomatic && today in it.trip.startDate..it.trip.endDate
+            }?.trip?.id ?: trips.firstOrNull {
+                it.trip.isAutomatic && today in it.trip.startDate..it.trip.endDate
+            }?.trip?.id
             val routeTripId = currentEntry?.arguments?.getLong("tripId")
             AppBottomBar(
                 selected = barDestination,
@@ -384,12 +391,11 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                         addingTripId = homeTripId ?: 0L
                         addScreenVisible = true
                     })
-                    AppDestination.TIMELINE -> routeTripId?.let { tripId ->
-                        {
-                            addingTripId = tripId
-                            addScreenVisible = true
-                        }
-                    }
+                    AppDestination.TIMELINE -> ({
+                        val tripId = routeTripId ?: 0L
+                        addingTripId = tripId
+                        addScreenVisible = true
+                    })
                     AppDestination.PLANS -> ({ showNewTrip = true })
                     AppDestination.SETTINGS -> ({
                         footerFace = footerFaces.filterNot { it == footerFace }.random()
@@ -406,9 +412,9 @@ private fun TabilineRoot(viewModel: MainViewModel) {
                 if (target != barDestination) {
                     when (target) {
                         AppDestination.TODAY -> nav.popBackStack("home", false)
-                        AppDestination.TIMELINE -> selectedTripId?.let {
+                        AppDestination.TIMELINE -> todayTimelineTripId?.let {
                             nav.navigate("trip/$it") { launchSingleTop = true }
-                        }
+                        } ?: nav.navigate("timeline-empty") { launchSingleTop = true }
                         AppDestination.PLANS -> nav.navigate("plans") { launchSingleTop = true }
                         AppDestination.SETTINGS -> nav.navigate("settings") { launchSingleTop = true }
                     }
