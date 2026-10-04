@@ -45,6 +45,11 @@ import androidx.compose.material.icons.rounded.SettingsBrightness
 import androidx.compose.material.icons.rounded.SyncAlt
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material3.Icon
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -57,6 +62,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -261,6 +267,7 @@ fun SettingsDetailPopup(
 
 @Composable
 private fun AboutCard() {
+    val uriHandler = LocalUriHandler.current
     Surface(
         shape = RoundedCornerShape(28.dp),
         color = MaterialTheme.colorScheme.primaryContainer,
@@ -276,6 +283,20 @@ private fun AboutCard() {
                 "旅の移動を、ひとつのタイムラインに。",
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f),
             )
+            TextButton(onClick = { uriHandler.openUri("https://github.com/m4sa-k1/tabiline") }) {
+                Column(Modifier.fillMaxWidth()) {
+                    Text("GitHub", color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    Text("github.com/m4sa-k1/tabiline", style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer)
+                }
+            }
+            TextButton(onClick = { uriHandler.openUri("https://m4sak1.me") }) {
+                Column(Modifier.fillMaxWidth()) {
+                    Text("開発者 · @m4sa-k1", color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    Text("https://m4sak1.me", style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer)
+                }
+            }
         }
     }
 }
@@ -453,10 +474,11 @@ private fun ZoneChoiceCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
+    val corner by animateDpAsState(if (selected) 24.dp else 14.dp, tween(220), label = "zoneCorner")
     Surface(
         onClick = onClick,
         modifier = modifier.height(72.dp),
-        shape = RoundedCornerShape(if (selected) 24.dp else 14.dp),
+        shape = RoundedCornerShape(corner),
         color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHighest,
         contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
     ) {
@@ -490,6 +512,24 @@ private fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
 
 @Composable
 internal fun ThresholdStepper(label: String, value: Int, onValue: (Int) -> Unit) {
+    var editing by remember { mutableStateOf(false) }
+    var input by remember { mutableStateOf("") }
+    if (editing) {
+        val minutes = input.toIntOrNull()?.takeIf { it in 0..999 }
+        AlertDialog(onDismissRequest = { editing = false },
+            title = { Text("${label}の時間") },
+            text = {
+                OutlinedTextField(value = input, onValueChange = { text ->
+                    if (text.length <= 3 && text.all { it in '0'..'9' }) input = text
+                }, label = { Text("分（0〜999・1分単位）") }, singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    isError = minutes == null)
+            },
+            confirmButton = { TextButton(enabled = minutes != null, onClick = {
+                minutes?.let(onValue); editing = false
+            }) { Text("決定") } },
+            dismissButton = { TextButton(onClick = { editing = false }) { Text("キャンセル") } })
+    }
     Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceContainerLowest) {
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp),
@@ -499,7 +539,7 @@ internal fun ThresholdStepper(label: String, value: Int, onValue: (Int) -> Unit)
             IconButton(onClick = { onValue((value - 5).coerceAtLeast(0)) }, modifier = Modifier.size(42.dp)) {
                 Icon(Icons.Rounded.Remove, "5分減らす")
             }
-            Box(Modifier.size(width = 64.dp, height = 42.dp), contentAlignment = Alignment.Center) {
+            Box(Modifier.size(width = 64.dp, height = 42.dp).clickable { input = value.toString(); editing = true }, contentAlignment = Alignment.Center) {
                 Text("${value}分", fontWeight = FontWeight.Bold)
             }
             IconButton(onClick = { onValue((value + 5).coerceAtMost(999)) }, modifier = Modifier.size(42.dp)) {

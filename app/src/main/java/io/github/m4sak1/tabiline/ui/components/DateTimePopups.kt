@@ -1,6 +1,12 @@
 package io.github.m4sak1.tabiline.ui.components
 
 import androidx.compose.foundation.layout.*
+import android.os.Build
+import android.graphics.RenderEffect
+import android.graphics.Shader
+import android.view.WindowManager
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.rememberScrollState
@@ -12,6 +18,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.window.DialogWindowProvider
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -37,8 +46,16 @@ fun AppDatePopup(date: LocalDate, onDismiss: () -> Unit, onDate: (LocalDate) -> 
 @Composable
 fun AppTimePopup(time: LocalTime, onDismiss: () -> Unit, onTime: (LocalTime) -> Unit) {
     val state = rememberTimePickerState(initialHour = time.hour, initialMinute = time.minute, is24Hour = true)
+    val dialScale = remember { Animatable(1f) }
+    LaunchedEffect(state.selection) {
+        dialScale.snapTo(0.97f)
+        dialScale.animateTo(1f, tween(180))
+    }
     PickerPopup("時刻を選択", onDismiss, true, { onTime(LocalTime.of(state.hour, state.minute)) }) {
-        TimePicker(state = state, modifier = Modifier.align(Alignment.CenterHorizontally),
+        TimePicker(state = state, modifier = Modifier.align(Alignment.CenterHorizontally).graphicsLayer {
+            scaleX = dialScale.value
+            scaleY = dialScale.value
+        },
             layoutType = TimePickerLayoutType.Vertical)
     }
 }
@@ -54,11 +71,25 @@ private fun PickerPopup(
     var visible by remember { mutableStateOf(true) }
     var confirmed by remember { mutableStateOf(false) }
     val latestConfirm by rememberUpdatedState(onConfirm)
+    val behind = LocalView.current.rootView
+    DisposableEffect(behind) {
+        onDispose { if (Build.VERSION.SDK_INT >= 31) behind.setRenderEffect(null) }
+    }
     Dialog(onDismissRequest = { visible = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        val popupWindow = (LocalView.current.parent as? DialogWindowProvider)?.window
+        SideEffect {
+            if (Build.VERSION.SDK_INT >= 31) popupWindow?.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+        }
         CenterPopup(visible = visible, onHidden = {
             if (confirmed) latestConfirm()
             onDismiss()
-        }) { _, motion ->
+        }) { progress, motion ->
+            SideEffect {
+                if (Build.VERSION.SDK_INT >= 31) {
+                    val radius = 20f * behind.resources.displayMetrics.density * progress
+                    behind.setRenderEffect(if (radius > 0f) RenderEffect.createBlurEffect(radius, radius, Shader.TileMode.CLAMP) else null)
+                }
+            }
             Box(Modifier.fillMaxSize().clickable(
                 interactionSource = remember { MutableInteractionSource() }, indication = null,
                 onClick = { visible = false },
