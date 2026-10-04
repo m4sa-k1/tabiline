@@ -65,6 +65,7 @@ import io.github.m4sak1.tabiline.core.model.UserSettings
 import io.github.m4sak1.tabiline.ui.components.AppBottomBar
 import io.github.m4sak1.tabiline.ui.components.AppDestination
 import io.github.m4sak1.tabiline.ui.components.detailLabel
+import io.github.m4sak1.tabiline.ui.components.visual
 import java.time.Duration
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -205,6 +206,7 @@ private fun TimelineLeg(
     onClick: () -> Unit,
     onMove: (Int) -> Unit,
 ) {
+    val visual = leg.mode.visual()
     var drag by remember { mutableFloatStateOf(0f) }
     Row(
         Modifier.fillMaxWidth().height(104.dp).zIndex(1f),
@@ -263,21 +265,54 @@ private fun TimelineLeg(
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
         ) {
-            Row(Modifier.fillMaxSize().padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Column(Modifier.weight(1f)) {
-                    val title = leg.departurePlatform.ifBlank { "${leg.departurePlace} → ${leg.arrivalPlace}" }
+                    val route = "${leg.departurePlace} → ${leg.arrivalPlace}"
+                    val hasPlatform = leg.departurePlatform.isNotBlank()
+                    val title = leg.departurePlatform.ifBlank { route }
                     Text(
                         title,
-                        fontSize = 16.sp,
-                        lineHeight = 24.sp,
+                        fontSize = if (hasPlatform) 18.sp else 16.sp,
+                        lineHeight = 22.sp,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                     val type = if (leg.mode == TransportMode.TRAIN) leg.trainType?.label ?: leg.mode.detailLabel else leg.mode.detailLabel
-                    val detail = if (leg.departurePlatform.isBlank()) type else "${leg.departurePlace} → ${leg.arrivalPlace} ・ $type"
-                    Text(detail, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Normal, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    if (hasPlatform) {
+                        Text(
+                            route,
+                            fontSize = 14.sp,
+                            lineHeight = 18.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    Text(
+                        listOfNotNull(type, leg.memo.takeIf(String::isNotBlank)).joinToString(" ・ "),
+                        fontSize = 12.sp,
+                        lineHeight = 16.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                Surface(
+                    modifier = Modifier.padding(start = 12.dp).size(44.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    shadowElevation = 2.dp,
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(visual.icon, leg.mode.detailLabel, Modifier.size(26.dp))
+                    }
                 }
             }
         }
