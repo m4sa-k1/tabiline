@@ -59,8 +59,10 @@ fun AppBottomBar(
                     onClick = onAdd,
                     modifier = Modifier.size(104.dp),
                     shape = RoundedCornerShape(34.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    color = if (addText == null) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.surfaceContainerHighest,
+                    contentColor = if (addText == null) MaterialTheme.colorScheme.onPrimary
+                    else MaterialTheme.colorScheme.primary,
                     shadowElevation = 0.dp,
                     tonalElevation = 0.dp,
                 ) {

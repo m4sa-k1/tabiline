@@ -60,7 +60,11 @@ fun PlansScreen(
         if (trips.isEmpty()) {
             Box(Modifier.fillMaxSize().statusBarsPadding(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("( ˶ᵔ ᵕ ᵔ˶ )", style = MaterialTheme.typography.headlineMedium)
+                    Text(
+                        "( ˶ᵔ ᵕ ᵔ˶ )",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
                     Text(
                         "旅行はまだありません",
                         style = MaterialTheme.typography.headlineSmall,

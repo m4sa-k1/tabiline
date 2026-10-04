@@ -94,7 +94,11 @@ fun EmptyTimelineScreen() {
             contentAlignment = Alignment.Center,
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("( ˘ω˘ )", style = MaterialTheme.typography.headlineMedium)
+                Text(
+                    "( ˘ω˘ )",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
                 Text(
                     "この日の移動はありません",
                     style = MaterialTheme.typography.headlineSmall,
@@ -575,7 +579,11 @@ private fun GapType.icon() = when (this) {
 private fun EmptyDay(modifier: Modifier = Modifier) {
     Box(modifier.fillMaxSize().padding(horizontal = 24.dp), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("( ｡•ᴗ•｡ )", style = MaterialTheme.typography.headlineMedium)
+            Text(
+                "( ｡•ᴗ•｡ )",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
             Text(
                 "この日の移動はありません",
                 style = MaterialTheme.typography.headlineSmall,

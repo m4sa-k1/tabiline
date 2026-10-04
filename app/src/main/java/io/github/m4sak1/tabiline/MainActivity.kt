@@ -61,6 +61,7 @@ import io.github.m4sak1.tabiline.feature.timeline.TimelineScreen
 import io.github.m4sak1.tabiline.ui.components.AppDestination
 import io.github.m4sak1.tabiline.ui.components.AppBottomBar
 import io.github.m4sak1.tabiline.ui.components.BubbleReveal
+import io.github.m4sak1.tabiline.ui.components.TabilineLaunchAnimation
 import io.github.m4sak1.tabiline.ui.theme.TabilineTheme
 
 private val footerFaces = listOf(
@@ -82,12 +83,20 @@ private fun routePosition(route: String?): Int = when (route) {
 }
 
 class MainActivity : ComponentActivity() {
+    private var systemSplashExited by mutableStateOf(Build.VERSION.SDK_INT < Build.VERSION_CODES.S)
+
     private val viewModel: MainViewModel by viewModels {
         MainViewModel.Factory((application as TabilineApplication).container)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            splashScreen.setOnExitAnimationListener { splashScreenView ->
+                splashScreenView.remove()
+                systemSplashExited = true
+            }
+        }
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.auto(
                 android.graphics.Color.TRANSPARENT,
@@ -103,7 +112,7 @@ class MainActivity : ComponentActivity() {
             window.isNavigationBarContrastEnforced = false
         }
         requestHighRefreshRate()
-        setContent { TabilineRoot(viewModel, window) }
+        setContent { TabilineRoot(viewModel, window, systemSplashExited) }
     }
 
     override fun onResume() {
@@ -134,7 +143,11 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun TabilineRoot(viewModel: MainViewModel, window: Window) {
+private fun TabilineRoot(
+    viewModel: MainViewModel,
+    window: Window,
+    systemSplashExited: Boolean,
+) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     TabilineTheme(settings.theme, settings.accentPalette) {
         val surfaceColor = MaterialTheme.colorScheme.surface
@@ -161,6 +174,7 @@ private fun TabilineRoot(viewModel: MainViewModel, window: Window) {
         var addScreenVisible by remember { mutableStateOf(false) }
         var addScreenProgress by remember { mutableFloatStateOf(0f) }
         var popupBlurProgress by remember { mutableFloatStateOf(0f) }
+        var launchAnimationVisible by remember { mutableStateOf(true) }
         LaunchedEffect(trips) {
             if (trips.none { it.trip.id == selectedTripId }) {
                 val today = java.time.LocalDate.now()
@@ -475,6 +489,13 @@ private fun TabilineRoot(viewModel: MainViewModel, window: Window) {
                 onDismiss = { tripDialog = null },
                 onSave = { updated -> viewModel.saveTrip(updated) { tripDialog = null } },
                 onProgress = { popupBlurProgress = it },
+            )
+        }
+        if (launchAnimationVisible) {
+            TabilineLaunchAnimation(
+                started = systemSplashExited,
+                onFinished = { launchAnimationVisible = false },
+                modifier = Modifier.zIndex(100f),
             )
         }
         }

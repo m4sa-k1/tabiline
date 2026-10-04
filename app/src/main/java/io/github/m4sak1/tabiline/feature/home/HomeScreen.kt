@@ -258,7 +258,11 @@ private fun TightTransferChip(minutes: Long, modifier: Modifier = Modifier) {
 private fun EmptyToday(modifier: Modifier) {
     Box(modifier.fillMaxSize().padding(horizontal = 24.dp), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("( ˘͈ ᵕ ˘͈ )", style = MaterialTheme.typography.headlineMedium)
+            Text(
+                "( ˘͈ ᵕ ˘͈ )",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
             Text(
                 "今日の移動はありません",
                 style = MaterialTheme.typography.headlineSmall,

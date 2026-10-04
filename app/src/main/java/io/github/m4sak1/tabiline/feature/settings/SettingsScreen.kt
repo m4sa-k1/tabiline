@@ -265,7 +265,6 @@ private fun AboutCard() {
             Modifier.fillMaxWidth().padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Icon(Icons.Rounded.Info, null, Modifier.size(40.dp))
             Text("Tabiline", style = MaterialTheme.typography.headlineLarge)
             Text("Version ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.labelLarge)
             Text(
