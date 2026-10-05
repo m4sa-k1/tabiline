@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 class MainViewModel(
     private val repository: TabilineRepository,
     private val settingsRepository: SettingsRepository,
+    val backupManager: io.github.m4sak1.tabiline.data.backup.BackupManager,
 ) : ViewModel() {
     val trips: StateFlow<List<TripWithLegs>> = repository.observeTrips()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -74,6 +75,6 @@ class MainViewModel(
     class Factory(private val container: io.github.m4sak1.tabiline.di.AppContainer) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            MainViewModel(container.trips, container.settings) as T
+            MainViewModel(container.trips, container.settings, container.backup) as T
     }
 }

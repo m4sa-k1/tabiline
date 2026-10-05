@@ -102,6 +102,7 @@ class DepartureReminderReceiver : BroadcastReceiver() {
             try {
                 withTimeout(8_000) {
                     val container = (context.applicationContext as TabilineApplication).container
+                    container.backup.exclusive {
                     val settings = container.settings.settings.first()
                     if (intent.action == DepartureReminders.ACTION_REMIND) {
                         val leg = container.trips.getLeg(intent.getLongExtra("legId", -1))
@@ -109,6 +110,7 @@ class DepartureReminderReceiver : BroadcastReceiver() {
                         if (leg != null && shouldDeliver(leg, settings, intent.getLongExtra("scheduledAt", -1), now)) container.reminders.show(leg)
                     } else {
                         container.reminders.sync(container.trips.observeTrips().first(), settings)
+                    }
                     }
                 }
             } catch (error: Exception) {

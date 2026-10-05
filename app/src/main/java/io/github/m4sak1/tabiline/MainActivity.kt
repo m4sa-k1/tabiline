@@ -488,6 +488,14 @@ private fun TabilineRoot(
         // while only the background layers receive the animated blur.
         Box(Modifier.fillMaxSize().zIndex(4f)) {
         settingsDialogSection?.let { section ->
+            if (section == SettingsSection.BACKUP) {
+                io.github.m4sak1.tabiline.feature.settings.BackupPopup(
+                    manager = viewModel.backupManager,
+                    onDismiss = { settingsDialogSection = null },
+                    onProgress = { popupBlurProgress = it },
+                    onRestored = { selectedTripId = null },
+                )
+            } else
             SettingsDetailPopup(
                 section = section,
                 settings = settings,
