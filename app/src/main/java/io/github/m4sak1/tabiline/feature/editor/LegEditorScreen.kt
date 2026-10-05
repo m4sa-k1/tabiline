@@ -33,7 +33,7 @@ import androidx.compose.material.icons.rounded.Signpost
 import androidx.compose.material.icons.rounded.Train
 import androidx.compose.material.icons.rounded.TripOrigin
 import androidx.compose.material.icons.rounded.Warning
-import androidx.compose.material3.AlertDialog
+import io.github.m4sak1.tabiline.ui.components.AppAlertDialog as AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
@@ -122,6 +122,10 @@ fun LegEditorScreen(
     var trainTypeMenu by remember { mutableStateOf(false) }
     var memo by remember(existing?.id) { mutableStateOf(existing?.memo.orEmpty()) }
     var confirmDelete by remember { mutableStateOf(false) }
+    var precedingGapType by remember(existing?.id) { mutableStateOf(existing?.precedingGapType ?: GapType.WAIT) }
+    var showJsonImport by remember { mutableStateOf(false) }
+    var jsonPasteMode by remember { mutableStateOf(false) }
+    var showAiPrompts by remember { mutableStateOf(false) }
     val selectableTrips = remember(availableTrips) { availableTrips.filterNot { it.isAutomatic } }
     val existingTripIsAutomatic = availableTrips.firstOrNull { it.id == existing?.tripId }?.isAutomatic == true
     var selectedTripId by remember(existing?.id, initialTripId) {
@@ -131,7 +135,7 @@ fun LegEditorScreen(
     val isFreeTime = mode == TransportMode.FREE_TIME
     val draft = listOf(departureDate, departureTime, arrivalDate, arrivalTime, departurePlace, arrivalPlace,
         departurePlatform, arrivalPlatform, departureTerminal, arrivalTerminal, boardingGroup, flightNumber,
-        departureZone, arrivalZone, mode, trainType, trainLine, memo, selectedTripId)
+        departureZone, arrivalZone, mode, trainType, trainLine, memo, selectedTripId, precedingGapType)
     val initialDraft = remember(existing?.id) { draft }
     var confirmDiscard by remember { mutableStateOf(false) }
     fun requestClose() {
@@ -139,7 +143,20 @@ fun LegEditorScreen(
             if (draft != initialDraft) confirmDiscard = true else onBack()
         }
     }
-    BackHandler { requestClose() }
+    BackHandler(!showJsonImport && !showAiPrompts) { requestClose() }
+    if (showAiPrompts) AiPromptPopup { showAiPrompts = false }
+    if (showJsonImport) LegJsonImportPopup(selectableTrips, selectedTripId, { showJsonImport = false }, pasteMode = jsonPasteMode) { leg ->
+        departureDate = leg.departureLocal.toLocalDate(); departureTime = leg.departureLocal.toLocalTime()
+        arrivalDate = leg.arrivalLocal.toLocalDate(); arrivalTime = leg.arrivalLocal.toLocalTime()
+        departurePlace = leg.departurePlace; arrivalPlace = leg.arrivalPlace
+        departurePlatform = leg.departurePlatform; arrivalPlatform = leg.arrivalPlatform
+        departureTerminal = leg.departureTerminal; arrivalTerminal = leg.arrivalTerminal
+        boardingGroup = leg.boardingGroup; flightNumber = leg.flightNumber
+        departureZone = leg.departureZoneId; arrivalZone = leg.arrivalZoneId
+        mode = leg.mode; trainType = leg.trainType ?: TrainType.LOCAL; trainLine = leg.trainLine
+        memo = leg.memo; precedingGapType = leg.precedingGapType
+        selectedTripId = leg.tripId.takeIf { it > 0 }
+    }
     if (confirmDiscard) DiscardChangesDialog(
         onKeepEditing = { confirmDiscard = false },
         onDiscard = { confirmDiscard = false; onBack() },
@@ -164,9 +181,16 @@ fun LegEditorScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.surface,
+        floatingActionButton = {
+            if (existing == null) EditorImportMenu(enabled = !isSaving && !showJsonImport && !showAiPrompts,
+                onAi = { showAiPrompts = true },
+                onJson = { jsonPasteMode = false; showJsonImport = true },
+                onPaste = { jsonPasteMode = true; showJsonImport = true })
+        },
     ) { padding ->
         Column(
-            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(padding).padding(PaddingValues(16.dp)),
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(padding).padding(PaddingValues(16.dp))
+                .padding(bottom = if (existing == null) 88.dp else 0.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
@@ -309,6 +333,16 @@ fun LegEditorScreen(
                     )
                 }
             }
+            if (isFreeTime) EditorSection("メモ") {
+                EditorField(memo, { memo = it }, "メモ", { Icon(Icons.AutoMirrored.Rounded.Notes, null) })
+            }
+            EditorSection("前の予定との間") {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    GapType.entries.forEach { value ->
+                        FilterChip(selected = precedingGapType == value, onClick = { precedingGapType = value }, label = { Text(value.label) })
+                    }
+                }
+            }
             if (!valid) Text(
                 if (isFreeTime) "有効なタイムゾーンを入力し、終了を開始より後にしてください。"
                 else "出発地・到着地と有効なタイムゾーンを入力し、到着を出発より後にしてください。",
@@ -338,9 +372,9 @@ fun LegEditorScreen(
                         flightNumber = flightNumber.trim().takeIf { mode == TransportMode.FLIGHT }.orEmpty(),
                         departurePlatform = if (isFreeTime) "" else departurePlatform.trim(),
                         arrivalPlatform = if (isFreeTime) "" else arrivalPlatform.trim(),
-                        memo = if (isFreeTime) "" else memo.trim(),
+                        memo = memo.trim(),
                         sortOrder = existing?.sortOrder ?: 0,
-                        precedingGapType = existing?.precedingGapType ?: GapType.WAIT,
+                        precedingGapType = precedingGapType,
                     ), selectedTripId == null)
                 },
                 modifier = Modifier.fillMaxWidth().height(64.dp),
@@ -362,8 +396,8 @@ fun LegEditorScreen(
     if (confirmDelete && existing != null && onDelete != null) AlertDialog(
         onDismissRequest = { confirmDelete = false },
         title = { Text("この移動を削除しますか？") },
-        confirmButton = { TextButton(onClick = { onDelete(existing.id) }) { Text("削除") } },
-        dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("キャンセル") } },
+        confirmButton = { close -> TextButton(onClick = { close { onDelete(existing.id) } }) { Text("削除") } },
+        dismissButton = { close -> TextButton(onClick = { close { confirmDelete = false } }) { Text("キャンセル") } },
     )
 }
 

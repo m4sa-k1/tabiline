@@ -38,7 +38,7 @@ import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.SyncAlt
 import androidx.compose.material.icons.rounded.Warning
-import androidx.compose.material3.AlertDialog
+import io.github.m4sak1.tabiline.ui.components.AppAlertDialog as AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -263,8 +263,8 @@ fun TimelineScreen(
         onDismissRequest = { confirmDelete = false },
         title = { Text(if (item.trip.isAutomatic) "この日の移動を削除しますか？" else "旅行を削除しますか？") },
         text = { Text(if (item.trip.isAutomatic) "この日付にまとめられた移動がすべて削除されます。" else "この旅行に含まれる移動もすべて削除されます。") },
-        confirmButton = { TextButton(onClick = onDeleteTrip) { Text("削除") } },
-        dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("キャンセル") } },
+        confirmButton = { close -> TextButton(onClick = { close(onDeleteTrip) }) { Text("削除") } },
+        dismissButton = { close -> TextButton(onClick = { close { confirmDelete = false } }) { Text("キャンセル") } },
     )
 }
 

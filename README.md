@@ -13,7 +13,7 @@
 
 <p align="center">
   <a href="docs/images/tabiline-promo.png">
-    <img src="docs/images/tabiline-promo.png" alt="京都旅行のタイムラインと移動の詳細。乗り換え時間・ホーム移動・注意表示を確認できるTabilineの実画面 / Actual Tabiline screenshots showing a Kyoto itinerary, transfers, and journey details." width="100%">
+    <img src="docs/images/tabiline-promo.png" alt="左は今日の次の移動とその後の予定、右は京都旅行のタイムライン。乗り換え時間・ホーム移動・注意表示を確認できるTabilineの実画面 / Actual Tabiline screens: Today on the left and the Kyoto trip timeline on the right, including transfers and boarding information." width="100%">
   </a>
 </p>
 
@@ -110,6 +110,14 @@ Androidの通知許可が必要です。「正確なアラーム」が未許可�
 Tabilineはアカウントを要求せず、旅行・移動・設定データを端末内に保存します。これらの情報をTabilineが外部サーバーへ送信することはありません。
 
 ただし、Androidのバックアップ機能は有効です。端末の設定により、旅行・移動データなどがOSによってGoogle Driveなどへバックアップされたり、新しい端末へ転送されたりする場合があります。これはTabiline独自のクラウド同期ではありません。バックアップの管理は端末の設定で行ってください。
+
+### ⚡ JSONから移動を追加
+
+「移動を追加」画面の右下の **＋ → JSONを読み込む** から、AIが作成したJSONをファイルまたは貼り付けで読み込めます。現在は1件ずつの読み込みに対応します。すべての交通手段と空き時間、路線・乗り場・フライト情報・メモ・旅行への紐づけに対応します。
+
+読み込みは現在の入力欄を置き換えるだけで、まだ登録されません。内容を確認して **保存** を押してください。不正なJSONでは元の入力内容を変更しません。右下の **JSONを読み込む** はファイル選択、**JSONをコピペで読み込む** は貼り付け専用です。1行のJSONやUnicode・文字列のエスケープにも対応します。
+
+**AIに考えてもらう** では、「行き先が決まっている」「県・地域が決まっている」「日数から行き先を考える」「完全おまかせ」の4種類のプロンプトをコピーできます。`【要入力：…】` を自分の情報に置き換えてから、お使いのAIへ送ってください。現在地の自動取得・AIへの自動送信はありません。プロンプトにJSONの全仕様を含むため、利用者によるJSONの手作業での作成は想定していません。AIの提案する運行時刻や乗り場は、必ず公式情報でも確認してください。
 
 ### 💾 手動バックアップ・復元
 
@@ -235,6 +243,14 @@ No trip yet? Save the journey without assigning it. Tabiline creates a standalon
 Tabiline requires no account. Trip, journey, and preference data is stored locally on your device, and Tabiline does not send it to an external server.
 
 Android backup is enabled. Depending on device settings, the operating system may back up trip and journey data to a service such as Google Drive or transfer it to another device. This is separate from app-operated cloud synchronization. Manage backups in your device settings.
+
+### ⚡ Add a journey from JSON
+
+In the add-journey screen, tap **+ → Import JSON** to load an AI-generated JSON file or paste its contents. Import currently handles one entry at a time, including all transport modes, free time, route and boarding details, flight information, notes and trip association.
+
+Import replaces the current form, not saved data. Review the populated fields and press **Save** to register the entry. Invalid JSON leaves the current draft unchanged. File import and paste import are separate menu items, and minified single-line JSON, Unicode and escaped strings are supported.
+
+The AI planning popup offers four copyable prompts: a specific destination, a general region, destinations reachable within a trip duration, or a surprise trip. Replace the clearly marked required/optional placeholders before sending the prompt to your chosen AI. The complete JSON contract is embedded in each prompt; users are not expected to write JSON manually. Location is not collected automatically and nothing is sent to an AI automatically. Verify the AI's timetable and boarding information against official sources.
 
 ### 💾 Manual backup and restore
 

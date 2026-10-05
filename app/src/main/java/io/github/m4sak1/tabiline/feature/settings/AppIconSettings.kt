@@ -47,13 +47,14 @@ internal fun AppIconSettings() {
     }
     if (error) Text("変更できませんでした。もう一度お試しください。", color = MaterialTheme.colorScheme.error)
     pending?.let { choice ->
-        AlertDialog(onDismissRequest = { pending = null }, title = { Text("アイコンを変更しますか？") },
+        AppAlertDialog(onDismissRequest = { pending = null }, title = { Text("アイコンを変更しますか？") },
             text = { Text("${choice.title}に変更して、アプリを自動で開き直します。") },
-            confirmButton = { TextButton(onClick = {
+            confirmButton = { close -> TextButton(onClick = { close {
                 pending = null
                 val activity = context.activity()
                 error = activity == null || runCatching { changeAppIcon(activity, choice) }.isFailure
+            }
             }) { Text("変更して再起動") } },
-            dismissButton = { TextButton(onClick = { pending = null }) { Text("キャンセル") } })
+            dismissButton = { close -> TextButton(onClick = { close { pending = null } }) { Text("キャンセル") } })
     }
 }

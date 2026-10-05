@@ -49,7 +49,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import io.github.m4sak1.tabiline.R
 import androidx.compose.material3.Icon
-import androidx.compose.material3.AlertDialog
+import io.github.m4sak1.tabiline.ui.components.AppAlertDialog as AlertDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextButton
 import androidx.compose.foundation.text.KeyboardOptions
@@ -557,10 +557,11 @@ internal fun ThresholdStepper(label: String, value: Int, onValue: (Int) -> Unit)
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     isError = minutes == null)
             },
-            confirmButton = { TextButton(enabled = minutes != null, onClick = {
+            confirmButton = { close -> TextButton(enabled = minutes != null, onClick = { close {
                 minutes?.let(onValue); editing = false
+            }
             }) { Text("決定") } },
-            dismissButton = { TextButton(onClick = { editing = false }) { Text("キャンセル") } })
+            dismissButton = { close -> TextButton(onClick = { close { editing = false } }) { Text("キャンセル") } })
     }
     Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceContainerLowest) {
         Row(
