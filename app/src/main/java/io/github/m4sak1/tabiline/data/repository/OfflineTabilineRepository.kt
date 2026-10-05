@@ -55,6 +55,15 @@ class OfflineTabilineRepository(
         dao.getTrip(id)?.let { dao.deleteTrip(it) }
     }
 
+    override suspend fun createTripWithLegs(plan: TripWithLegs): Long = database.withTransaction {
+        require(plan.trip.id == 0L && !plan.trip.isAutomatic && plan.legs.all { it.id == 0L })
+        val id = saveTrip(plan.trip)
+        plan.legs.sortedBy { it.departure }.forEachIndexed { index, leg ->
+            dao.upsertLeg(leg.copy(tripId = id, sortOrder = index).toEntity())
+        }
+        id
+    }
+
     override suspend fun saveLeg(leg: TransportLeg): Long {
         return database.withTransaction {
             val oldTripId = leg.id.takeIf { it != 0L }?.let { dao.getLeg(it)?.tripId }

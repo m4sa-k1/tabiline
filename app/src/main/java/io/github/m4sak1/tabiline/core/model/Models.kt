@@ -67,6 +67,7 @@ data class UserSettings(
     val flightMinutes: Int = 60,
     val ferryMinutes: Int = 30,
     val otherMinutes: Int = 15,
+    val footerBlurEnabled: Boolean = true,
 ) {
     fun thresholdFor(mode: TransportMode): Int = when (mode) {
         TransportMode.TRAIN -> trainMinutes

@@ -91,7 +91,7 @@ object LegJsonCodec {
         }
     private fun JSONObject.optional(key: String) = if (has(key)) text(key) else ""
 
-    private fun validateJson(reader: JsonReader, depth: Int) {
+    internal fun validateJson(reader: JsonReader, depth: Int) {
         require(depth <= 8) { "JSONの入れ子が深すぎます。" }
         when (reader.peek()) {
             JsonToken.BEGIN_OBJECT -> {

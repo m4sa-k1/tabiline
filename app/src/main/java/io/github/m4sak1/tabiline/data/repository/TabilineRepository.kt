@@ -13,6 +13,7 @@ interface TabilineRepository {
     fun observeTrip(id: Long): Flow<TripWithLegs?>
     suspend fun getLeg(id: Long): TransportLeg?
     suspend fun saveTrip(trip: Trip): Long
+    suspend fun createTripWithLegs(plan: TripWithLegs): Long
     suspend fun deleteTrip(id: Long)
     suspend fun saveLeg(leg: TransportLeg): Long
     suspend fun saveStandaloneLeg(leg: TransportLeg): Long

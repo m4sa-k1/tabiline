@@ -33,6 +33,15 @@ class BackupTest {
     }
 
     @Test fun allFieldsRoundTrip() { assertEquals(sample(), BackupCodec.decode(BackupCodec.encode(sample()))) }
+    @Test fun footerPreferenceRoundTripsAndOlderBackupsUseDefault() {
+        val document = sample().copy(settings = sample().settings.copy(footerBlurEnabled = false))
+        assertFalse(BackupCodec.decode(BackupCodec.encode(document)).settings.footerBlurEnabled)
+        val legacy = JSONObject(BackupCodec.encode(document))
+        legacy.getJSONObject("settings").remove("footerBlurEnabled")
+        assertTrue(BackupCodec.decode(legacy.toString()).settings.footerBlurEnabled)
+        legacy.getJSONObject("settings").put("footerBlurEnabled", "false")
+        assertThrows(Exception::class.java) { BackupCodec.decode(legacy.toString()) }
+    }
 
     @Test fun malformedFilesRejected() {
         val encoded = BackupCodec.encode(sample())

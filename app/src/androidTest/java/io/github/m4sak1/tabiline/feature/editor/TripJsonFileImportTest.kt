@@ -19,7 +19,7 @@ import org.junit.Rule
 import org.junit.Test
 import java.io.File
 
-class LegJsonFileImportTest {
+class TripJsonFileImportTest {
     @get:Rule val compose = createComposeRule()
 
     private fun registry(uri: Uri?) = object : ActivityResultRegistryOwner {
@@ -33,13 +33,13 @@ class LegJsonFileImportTest {
     @Test fun fileMenuAutomaticallyLoadsAFileWithoutPasteControls() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val file = File.createTempFile("json-import-test", ".json", context.cacheDir)
-        file.writeText("""{"mode":"FREE_TIME","departure":"2026-11-14T09:00:00+09:00","arrival":"2026-11-14T10:00:00+09:00","departureZoneId":"Asia/Tokyo","arrivalZoneId":"Asia/Tokyo","departurePlace":"昼食","memo":"予約確認"}""")
-        var applied: TransportLeg? = null
+        file.writeText(tripFixture)
+        var applied: TripWithLegs? = null
         try {
             val owner = registry(Uri.fromFile(file))
             compose.setContent { CompositionLocalProvider(LocalActivityResultRegistryOwner provides owner) {
                 TabilineTheme(ThemePreference.LIGHT, AccentPalette.GREEN) {
-                    LegJsonImportPopup(emptyList(), null, {}, pasteMode = false) { applied = it }
+                    TripJsonImportPopup({}, pasteMode = false) { applied = it }
                 }
             } }
             compose.waitUntil(5000) { compose.onAllNodesWithText("ファイルを読み込みました。入力欄へ反映して確認できます。").fetchSemanticsNodes().isNotEmpty() }
@@ -48,8 +48,8 @@ class LegJsonFileImportTest {
             assertNull(applied)
             compose.onNodeWithText("入力欄へ反映").performScrollTo().performClick()
             compose.waitUntil(5000) { applied != null }
-            assertEquals("昼食", applied?.departurePlace)
-            assertEquals("予約確認", applied?.memo)
+            assertEquals("京都旅行", applied?.trip?.name)
+            assertEquals(2, applied?.legs?.size)
         } finally { file.delete() }
     }
 
@@ -58,7 +58,7 @@ class LegJsonFileImportTest {
         val owner = registry(null)
         compose.setContent { CompositionLocalProvider(LocalActivityResultRegistryOwner provides owner) {
             TabilineTheme(ThemePreference.DARK, AccentPalette.PURPLE) {
-                LegJsonImportPopup(emptyList(), null, { dismissed = true }, pasteMode = false) { fail("Should not apply") }
+                TripJsonImportPopup({ dismissed = true }, pasteMode = false) { fail("Should not apply") }
             }
         } }
         compose.waitUntil(5000) { dismissed }

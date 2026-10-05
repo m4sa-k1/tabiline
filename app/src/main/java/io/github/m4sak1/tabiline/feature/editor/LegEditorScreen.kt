@@ -123,9 +123,6 @@ fun LegEditorScreen(
     var memo by remember(existing?.id) { mutableStateOf(existing?.memo.orEmpty()) }
     var confirmDelete by remember { mutableStateOf(false) }
     var precedingGapType by remember(existing?.id) { mutableStateOf(existing?.precedingGapType ?: GapType.WAIT) }
-    var showJsonImport by remember { mutableStateOf(false) }
-    var jsonPasteMode by remember { mutableStateOf(false) }
-    var showAiPrompts by remember { mutableStateOf(false) }
     val selectableTrips = remember(availableTrips) { availableTrips.filterNot { it.isAutomatic } }
     val existingTripIsAutomatic = availableTrips.firstOrNull { it.id == existing?.tripId }?.isAutomatic == true
     var selectedTripId by remember(existing?.id, initialTripId) {
@@ -143,20 +140,7 @@ fun LegEditorScreen(
             if (draft != initialDraft) confirmDiscard = true else onBack()
         }
     }
-    BackHandler(!showJsonImport && !showAiPrompts) { requestClose() }
-    if (showAiPrompts) AiPromptPopup { showAiPrompts = false }
-    if (showJsonImport) LegJsonImportPopup(selectableTrips, selectedTripId, { showJsonImport = false }, pasteMode = jsonPasteMode) { leg ->
-        departureDate = leg.departureLocal.toLocalDate(); departureTime = leg.departureLocal.toLocalTime()
-        arrivalDate = leg.arrivalLocal.toLocalDate(); arrivalTime = leg.arrivalLocal.toLocalTime()
-        departurePlace = leg.departurePlace; arrivalPlace = leg.arrivalPlace
-        departurePlatform = leg.departurePlatform; arrivalPlatform = leg.arrivalPlatform
-        departureTerminal = leg.departureTerminal; arrivalTerminal = leg.arrivalTerminal
-        boardingGroup = leg.boardingGroup; flightNumber = leg.flightNumber
-        departureZone = leg.departureZoneId; arrivalZone = leg.arrivalZoneId
-        mode = leg.mode; trainType = leg.trainType ?: TrainType.LOCAL; trainLine = leg.trainLine
-        memo = leg.memo; precedingGapType = leg.precedingGapType
-        selectedTripId = leg.tripId.takeIf { it > 0 }
-    }
+    BackHandler { requestClose() }
     if (confirmDiscard) DiscardChangesDialog(
         onKeepEditing = { confirmDiscard = false },
         onDiscard = { confirmDiscard = false; onBack() },
@@ -181,16 +165,9 @@ fun LegEditorScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.surface,
-        floatingActionButton = {
-            if (existing == null) EditorImportMenu(enabled = !isSaving && !showJsonImport && !showAiPrompts,
-                onAi = { showAiPrompts = true },
-                onJson = { jsonPasteMode = false; showJsonImport = true },
-                onPaste = { jsonPasteMode = true; showJsonImport = true })
-        },
     ) { padding ->
         Column(
-            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(padding).padding(PaddingValues(16.dp))
-                .padding(bottom = if (existing == null) 88.dp else 0.dp),
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(padding).padding(PaddingValues(16.dp)),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
