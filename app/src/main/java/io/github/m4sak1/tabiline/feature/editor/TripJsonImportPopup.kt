@@ -25,8 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
-import io.github.m4sak1.tabiline.core.model.TransportLeg
-import io.github.m4sak1.tabiline.core.model.Trip
+import io.github.m4sak1.tabiline.core.model.TripWithLegs
 import io.github.m4sak1.tabiline.ui.components.CenterPopup
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -37,12 +36,17 @@ import java.nio.ByteBuffer
 import java.nio.charset.CodingErrorAction
 
 @Composable
-internal fun LegJsonImportPopup(trips: List<Trip>, currentTripId: Long?, onDismiss: () -> Unit, pasteMode: Boolean = true, onApply: (TransportLeg) -> Unit) {
+internal fun TripJsonImportPopup(onDismiss: () -> Unit, pasteMode: Boolean, onApply: (TripWithLegs) -> Unit) {
+    JsonImportPopup(onDismiss, pasteMode, TripJsonCodec.MAX_BYTES, "1MB", TripJsonCodec::decode, onApply)
+}
+
+@Composable
+private fun <T> JsonImportPopup(onDismiss: () -> Unit, pasteMode: Boolean, maxBytes: Int, sizeLabel: String, decode: (String) -> T, onApply: (T) -> Unit) {
     var visible by remember { mutableStateOf(true) }
     var source by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
     var reading by remember { mutableStateOf(false) }
-    var result by remember { mutableStateOf<TransportLeg?>(null) }
+    var result by remember { mutableStateOf<T?>(null) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val latestApply by rememberUpdatedState(onApply)
@@ -60,7 +64,7 @@ internal fun LegJsonImportPopup(trips: List<Trip>, currentTripId: Long?, onDismi
                             while (true) {
                                 val count = input.read(buffer)
                                 if (count < 0) break
-                                require(bytes.size() + count <= LegJsonCodec.MAX_BYTES) { "JSONが大きすぎます（最大256KB）。" }
+                                require(bytes.size() + count <= maxBytes) { "JSONが大きすぎます（最大${sizeLabel}）。" }
                                 bytes.write(buffer, 0, count)
                             }
                         }
@@ -68,7 +72,7 @@ internal fun LegJsonImportPopup(trips: List<Trip>, currentTripId: Long?, onDismi
                             .onUnmappableCharacter(CodingErrorAction.REPORT).decode(ByteBuffer.wrap(bytes.toByteArray())).toString()
                     }
                 } catch (cancelled: CancellationException) { throw cancelled }
-                catch (_: Exception) { error = "ファイルを読み込めませんでした。UTF-8のJSON（最大256KB）を選んでください。" }
+                catch (_: Exception) { error = "ファイルを読み込めませんでした。UTF-8のJSON（最大${sizeLabel}）を選んでください。" }
                 finally { reading = false }
             }
         }
@@ -103,13 +107,13 @@ internal fun LegJsonImportPopup(trips: List<Trip>, currentTripId: Long?, onDismi
                             }.getOrNull()
                             when {
                                 copied.isNullOrBlank() -> error = "クリップボードに文字列がありません。JSONをコピーしてからお試しください。"
-                                copied.toByteArray(Charsets.UTF_8).size > LegJsonCodec.MAX_BYTES -> error = "JSONが大きすぎます（最大256KB）。"
+                                copied.toByteArray(Charsets.UTF_8).size > maxBytes -> error = "JSONが大きすぎます（最大${sizeLabel}）。"
                                 else -> { source = copied; error = null }
                             }
                         }, enabled = !reading) { Text("クリップボードから貼り付け") }
                         if (pasteMode) OutlinedTextField(value = source, onValueChange = {
-                            if (it.length <= LegJsonCodec.MAX_BYTES) { source = it; error = null }
-                            else error = "JSONが大きすぎます（最大256KB）。"
+                            if (it.length <= maxBytes) { source = it; error = null }
+                            else error = "JSONが大きすぎます（最大${sizeLabel}）。"
                         }, enabled = !reading, label = { Text("JSONを貼り付け") }, minLines = 5, maxLines = 10,
                             shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth())
                         else if (source.isNotBlank()) Text("ファイルを読み込みました。入力欄へ反映して確認できます。")
@@ -117,8 +121,13 @@ internal fun LegJsonImportPopup(trips: List<Trip>, currentTripId: Long?, onDismi
                         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                         if (reading) CircularProgressIndicator(Modifier.align(Alignment.CenterHorizontally))
                         Button(enabled = !reading && source.isNotBlank() && visible, onClick = {
-                            try { result = LegJsonCodec.decode(source, trips, currentTripId); visible = false }
-                            catch (failure: IllegalArgumentException) { error = failure.message }
+                            reading = true; error = null
+                            scope.launch {
+                                try { result = withContext(Dispatchers.Default) { decode(source) }; visible = false }
+                                catch (cancelled: CancellationException) { throw cancelled }
+                                catch (failure: IllegalArgumentException) { error = failure.message }
+                                finally { reading = false }
+                            }
                         }, modifier = Modifier.fillMaxWidth()) { Text("入力欄へ反映") }
                     }
                 }

@@ -27,6 +27,9 @@ class MainViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UserSettings())
 
     fun observeTrip(id: Long) = repository.observeTrip(id)
+    suspend fun saveTripPlan(plan: TripWithLegs): Long = backupManager.exclusive {
+        repository.createTripWithLegs(plan)
+    }
     suspend fun getLeg(id: Long) = repository.getLeg(id)
 
     fun saveTrip(trip: Trip, onSaved: (Long) -> Unit = {}) = viewModelScope.launch {

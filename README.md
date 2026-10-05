@@ -111,13 +111,17 @@ Tabilineはアカウントを要求せず、旅行・移動・設定データを
 
 ただし、Androidのバックアップ機能は有効です。端末の設定により、旅行・移動データなどがOSによってGoogle Driveなどへバックアップされたり、新しい端末へ転送されたりする場合があります。これはTabiline独自のクラウド同期ではありません。バックアップの管理は端末の設定で行ってください。
 
-### ⚡ JSONから移動を追加
+### 🤖 AIとJSONで旅全体を追加
 
-「移動を追加」画面の右下の **＋ → JSONを読み込む** から、AIが作成したJSONをファイルまたは貼り付けで読み込めます。現在は1件ずつの読み込みに対応します。すべての交通手段と空き時間、路線・乗り場・フライト情報・メモ・旅行への紐づけに対応します。
+「旅を追加」ポップアップの右下の **＋** から、**AIに考えてもらう・JSONを読み込む・JSONをコピペで読み込む** を選べます。AIが作成した旅行名・期間・メモと複数の予定を、旅行単位でまとめて取り込めます。すべての交通手段、空き時間、路線・乗り場・フライト情報に対応します。
 
-読み込みは現在の入力欄を置き換えるだけで、まだ登録されません。内容を確認して **保存** を押してください。不正なJSONでは元の入力内容を変更しません。右下の **JSONを読み込む** はファイル選択、**JSONをコピペで読み込む** は貼り付け専用です。1行のJSONやUnicode・文字列のエスケープにも対応します。
+読み込みは旅行の入力欄と予定一覧を置き換えるだけで、まだ登録されません。内容を確認して **保存** を押すと、新しい旅行と予定をまとめて登録します。途中で失敗した場合はすべて取り消され、既存旅行には影響しません。不正なJSONでは元の入力を維持します。ファイル・貼り付けは別項目で、1行JSONにも対応します（最大1MB、1〜200件、旅行期間は最大366日）。予定の詳細は保存後に編集できます。
 
-**AIに考えてもらう** では、「行き先が決まっている」「県・地域が決まっている」「日数から行き先を考える」「完全おまかせ」の4種類のプロンプトをコピーできます。`【要入力：…】` を自分の情報に置き換えてから、お使いのAIへ送ってください。現在地の自動取得・AIへの自動送信はありません。プロンプトにJSONの全仕様を含むため、利用者によるJSONの手作業での作成は想定していません。AIの提案する運行時刻や乗り場は、必ず公式情報でも確認してください。
+**AIに考えてもらう** では、目的地指定・地域指定・日数から提案・完全おまかせ・日帰り・予算優先・テーマ重視・周遊・青春18きっぷの **9種類** を用意しています。全種類で **旅行先でしたいこと** を入力できます。出発地・日程・予算・人数、宿泊、予約済みの予定、避けたいこと、歩行の配慮、乗り換えの余裕などをアプリ内で指定し、旅のペースと交通手段も選べます。青春18きっぷは旅行時点の公式条件を確認するよう指示します。未入力の `【要入力：…】` はコピー後に埋めてください。現在地の自動取得・AIへの自動送信はありません。JSONの全仕様をプロンプトへ含めています。AIの運行時刻や乗り場は公式情報でご確認ください。
+
+📖 [旅行JSONの仕様と使い方](docs/trip-json.md)。旧1.1.0の移動1件用JSONとは別形式です。
+
+🌫️ **設定 → 画面表示 → フッター背景ぼかし** で、フッターと追加ボタンの背後のぼかしをオン・オフできます。初期設定はオンで、上端はグラデーションで透明になります。非対応の端末では透明表示を維持します。
 
 ### 💾 手動バックアップ・復元
 
@@ -244,13 +248,17 @@ Tabiline requires no account. Trip, journey, and preference data is stored local
 
 Android backup is enabled. Depending on device settings, the operating system may back up trip and journey data to a service such as Google Drive or transfer it to another device. This is separate from app-operated cloud synchronization. Manage backups in your device settings.
 
-### ⚡ Add a journey from JSON
+### 🤖 Plan and import a whole trip with AI and JSON
 
-In the add-journey screen, tap **+ → Import JSON** to load an AI-generated JSON file or paste its contents. Import currently handles one entry at a time, including all transport modes, free time, route and boarding details, flight information, notes and trip association.
+In the **Add trip** popup, tap **+** for AI prompts, JSON file import, or JSON paste import. Import a trip name, dates, notes and multiple transport/free-time entries together, including route, boarding and flight details.
 
-Import replaces the current form, not saved data. Review the populated fields and press **Save** to register the entry. Invalid JSON leaves the current draft unchanged. File import and paste import are separate menu items, and minified single-line JSON, Unicode and escaped strings are supported.
+Review the populated trip form and itinerary before pressing **Save**. The trip and entries are created atomically; a failed save leaves no partial trip and does not overwrite existing trips. Invalid JSON preserves the draft. Single-line JSON is supported, up to 1MB, 1–200 entries and a 366-day trip. Individual entries can be edited after saving.
 
-The AI planning popup offers four copyable prompts: a specific destination, a general region, destinations reachable within a trip duration, or a surprise trip. Replace the clearly marked required/optional placeholders before sending the prompt to your chosen AI. The complete JSON contract is embedded in each prompt; users are not expected to write JSON manually. Location is not collected automatically and nothing is sent to an AI automatically. Verify the AI's timetable and boarding information against official sources.
+Choose from **nine** planning styles: destination, region, duration, surprise, day trip, budget-first, theme-focused, multi-stop or Seishun 18 Ticket. Every style lets you specify **what you want to do at the destination**. Customize departure, dates, budget, party size, accommodation, fixed bookings, exclusions, accessibility needs and connection buffers. Choose the pace and multiple transport modes. The ticket mode asks the AI to verify official rules for your travel dates. Fill remaining placeholders before sending the copied prompt to your AI. The complete JSON contract is included; location is not collected automatically and nothing is sent automatically. Verify timetables and boarding information against official sources.
+
+📖 [Whole-trip JSON contract](docs/trip-json.md). This is separate from the single-entry format used in version 1.1.0.
+
+🌫️ **Settings → Display → Footer background blur** toggles blur behind the footer and add button, with a gradient at its upper edge. Enabled by default; unsupported devices retain a transparent background.
 
 ### 💾 Manual backup and restore
 

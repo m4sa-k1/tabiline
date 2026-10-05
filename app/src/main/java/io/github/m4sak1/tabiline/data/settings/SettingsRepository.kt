@@ -23,6 +23,7 @@ interface SettingsRepository {
 class DataStoreSettingsRepository(private val context: Context) : SettingsRepository {
     override val settings = context.settingsDataStore.data.map { prefs ->
         UserSettings(
+            footerBlurEnabled = prefs[booleanPreferencesKey("footer_blur_enabled")] ?: true,
             notificationsEnabled = prefs[booleanPreferencesKey("notifications_enabled")] ?: false,
             notificationMinutes = TransportMode.entries.associateWith {
                 (prefs[intPreferencesKey("notify_${it.name}_minutes")] ?: if (it == TransportMode.FLIGHT) 60 else 10).coerceIn(0, 999)
@@ -42,6 +43,7 @@ class DataStoreSettingsRepository(private val context: Context) : SettingsReposi
 
     override suspend fun update(settings: UserSettings) {
         context.settingsDataStore.edit {
+            it[booleanPreferencesKey("footer_blur_enabled")] = settings.footerBlurEnabled
             it[booleanPreferencesKey("notifications_enabled")] = settings.notificationsEnabled
             settings.notificationMinutes.forEach { (mode, minutes) -> it[intPreferencesKey("notify_${mode.name}_minutes")] = minutes.coerceIn(0, 999) }
             it[Keys.theme] = settings.theme.name

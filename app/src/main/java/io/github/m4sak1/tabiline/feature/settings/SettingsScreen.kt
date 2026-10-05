@@ -79,6 +79,8 @@ import io.github.m4sak1.tabiline.core.model.ThemePreference
 import io.github.m4sak1.tabiline.core.model.UserSettings
 import io.github.m4sak1.tabiline.ui.components.CenterPopup
 import io.github.m4sak1.tabiline.ui.theme.accentColors
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 
 enum class SettingsSection(
     val route: String,
@@ -86,6 +88,7 @@ enum class SettingsSection(
     val subtitle: String,
     val icon: ImageVector,
 ) {
+    DISPLAY("display", "画面表示", "フッターの背景ぼかし", Icons.Rounded.Palette),
     BACKUP("backup", "バックアップ", "データをファイルに保存・復元", Icons.Rounded.Backup),
     ACCENT("accent", "アクセントカラー", "アプリの色を選択", Icons.Rounded.Palette),
     ICON("icon", "アプリアイコン", "アイコンと起動アニメーションの色", Icons.Rounded.Palette),
@@ -209,6 +212,18 @@ fun SettingsDetailPopup(
                     }
 
                     when (section) {
+                        SettingsSection.DISPLAY -> SettingsCard {
+                            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                Column(Modifier.weight(1f)) {
+                                    Text("フッター背景ぼかし", style = MaterialTheme.typography.titleMedium)
+                                    Text("フッターと追加ボタンの背後をぼかします。上端はなめらかに透明になります。", style = MaterialTheme.typography.bodySmall)
+                                }
+                                androidx.compose.material3.Switch(checked = settings.footerBlurEnabled,
+                                    onCheckedChange = { onUpdate(settings.copy(footerBlurEnabled = it)) },
+                                    modifier = Modifier.semantics { contentDescription = "フッター背景ぼかし" })
+                            }
+                            Text("初期設定はオンです。ぼかし非対応の端末では透明表示を維持します。", style = MaterialTheme.typography.bodySmall)
+                        }
                         SettingsSection.BACKUP -> Unit
                         SettingsSection.ICON -> AppIconSettings()
                         SettingsSection.ACCENT -> SettingsCard {

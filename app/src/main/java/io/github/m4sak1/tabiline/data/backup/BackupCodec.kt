@@ -30,6 +30,7 @@ object BackupCodec {
             .put("settings", JSONObject().put("theme", settings.theme.name)
                 .put("accentPalette", settings.accentPalette.name).put("defaultZoneId", settings.defaultZoneId)
                 .put("notificationsEnabled", settings.notificationsEnabled)
+                .put("footerBlurEnabled", settings.footerBlurEnabled)
                 .put("notificationMinutes", JSONObject().apply {
                     TransportMode.entries.forEach { put(it.name, settings.notificationMinutes.getValue(it)) }
                 }).put("trainMinutes", settings.trainMinutes).put("busMinutes", settings.busMinutes)
@@ -72,6 +73,7 @@ object BackupCodec {
             val config = root.getJSONObject("settings")
             val minutes = config.getJSONObject("notificationMinutes")
             val settings = UserSettings(
+                footerBlurEnabled = if (config.has("footerBlurEnabled")) config.boolean("footerBlurEnabled") else true,
                 theme = ThemePreference.valueOf(config.string("theme")),
                 accentPalette = AccentPalette.valueOf(config.string("accentPalette")),
                 defaultZoneId = config.string("defaultZoneId"),

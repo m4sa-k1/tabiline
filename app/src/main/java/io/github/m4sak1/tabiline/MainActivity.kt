@@ -60,6 +60,13 @@ import io.github.m4sak1.tabiline.feature.timeline.EmptyTimelineScreen
 import io.github.m4sak1.tabiline.feature.timeline.TimelineScreen
 import io.github.m4sak1.tabiline.ui.components.AppDestination
 import io.github.m4sak1.tabiline.ui.components.AppBottomBar
+import io.github.m4sak1.tabiline.ui.components.FooterBackdrop
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
 import io.github.m4sak1.tabiline.ui.components.EditorSlideTransition
 import io.github.m4sak1.tabiline.ui.components.TabilineLaunchAnimation
 import io.github.m4sak1.tabiline.ui.theme.TabilineTheme
@@ -186,6 +193,9 @@ private fun TabilineRoot(
         var addScreenVisible by remember { mutableStateOf(false) }
         var addScreenProgress by remember { mutableFloatStateOf(0f) }
         var popupBlurProgress by remember { mutableFloatStateOf(0f) }
+        val footerHaze = remember { HazeState() }
+        var footerHeight by remember { mutableStateOf(0.dp) }
+        val footerDensity = LocalDensity.current
         var launchAnimationVisible by remember { mutableStateOf(true) }
         LaunchedEffect(notificationOpen) {
             if (notificationOpen > 0) {
@@ -223,7 +233,7 @@ private fun TabilineRoot(
             }
         }
         Box(
-            Modifier.fillMaxSize().blur(
+            Modifier.fillMaxSize().hazeSource(footerHaze).blur(
                 radius = 12.dp * popupBlurProgress,
                 edgeTreatment = BlurredEdgeTreatment.Unbounded,
             ),
@@ -442,9 +452,16 @@ private fun TabilineRoot(
                 it.trip.isAutomatic && today in it.trip.startDate..it.trip.endDate
             }?.trip?.id
             val routeTripId = currentEntry?.arguments?.getLong("tripId")
+            if (settings.footerBlurEnabled && footerHeight > 0.dp) {
+                FooterBackdrop(footerHaze, Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                    .height(footerHeight + 48.dp).zIndex(1.5f).blur(
+                        12.dp * popupBlurProgress, BlurredEdgeTreatment.Unbounded))
+            }
             AppBottomBar(
                 selected = barDestination,
-                modifier = Modifier.align(Alignment.BottomCenter).zIndex(2f).blur(
+                modifier = Modifier.align(Alignment.BottomCenter).onSizeChanged {
+                    footerHeight = with(footerDensity) { it.height.toDp() }
+                }.zIndex(2f).blur(
                     radius = 12.dp * popupBlurProgress,
                     edgeTreatment = BlurredEdgeTreatment.Unbounded,
                 ),
@@ -524,6 +541,8 @@ private fun TabilineRoot(
         if (showNewTrip) TripEditorDialog(
             existing = null,
             onDismiss = { showNewTrip = false },
+            onSavePlan = viewModel::saveTripPlan,
+            onPlanSaved = { id -> selectedTripId = id; showNewTrip = false; nav.navigate("trip/$id") },
             onSave = { trip ->
                 viewModel.saveTrip(trip) { id -> selectedTripId = id; showNewTrip = false; nav.navigate("trip/$id") }
             },
