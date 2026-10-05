@@ -32,16 +32,19 @@ class AppContainer(context: Context) {
     val trips: TabilineRepository = OfflineTabilineRepository(database, database.dao())
     val settings: SettingsRepository = DataStoreSettingsRepository(context)
     val reminders = DepartureReminders(context.applicationContext)
+    private val initialization = applicationScope.launch { SampleDataSeeder(context, database).seedIfNeeded() }
+    val backup = io.github.m4sak1.tabiline.data.backup.BackupManager(context.applicationContext, trips, settings) {
+        initialization.join()
+    }
 
     fun refreshReminders() {
-        applicationScope.launch { reminders.sync(trips.observeTrips().first(), settings.settings.first()) }
+        applicationScope.launch { backup.exclusive { reminders.sync(trips.observeTrips().first(), settings.settings.first()) } }
     }
 
     init {
-        applicationScope.launch { SampleDataSeeder(context, database).seedIfNeeded() }
         applicationScope.launch {
             combine(trips.observeTrips(), settings.settings) { trips, settings -> trips to settings }
-                .collect { (trips, settings) -> reminders.sync(trips, settings) }
+                .collect { backup.exclusive { reminders.sync(trips.observeTrips().first(), settings.settings.first()) } }
         }
     }
 }

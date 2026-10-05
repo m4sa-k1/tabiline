@@ -11,6 +11,12 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TabilineDao {
+    @Query("DELETE FROM transport_legs")
+    suspend fun deleteAllLegs()
+
+    @Query("DELETE FROM trips")
+    suspend fun deleteAllTrips()
+
     @Query("SELECT COUNT(*) FROM trips")
     suspend fun tripCount(): Int
 

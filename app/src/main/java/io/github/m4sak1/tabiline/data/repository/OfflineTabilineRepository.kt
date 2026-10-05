@@ -17,11 +17,25 @@ import java.time.LocalDate
 import java.time.ZoneId
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.first
 
 class OfflineTabilineRepository(
     private val database: TabilineDatabase,
     private val dao: TabilineDao,
 ) : TabilineRepository {
+    override suspend fun snapshotTrips(): List<TripWithLegs> = database.withTransaction {
+        dao.observeTrips().first().map(TripWithLegsEntity::toModel)
+    }
+
+    override suspend fun replaceTrips(trips: List<TripWithLegs>, beforeCommit: suspend () -> Unit) {
+        database.withTransaction {
+            dao.deleteAllLegs()
+            dao.deleteAllTrips()
+            trips.forEach { dao.upsertTrip(it.trip.toEntity()) }
+            trips.flatMap { it.legs }.forEach { dao.upsertLeg(it.toEntity()) }
+            beforeCommit()
+        }
+    }
     override fun observeTrips(): Flow<List<TripWithLegs>> =
         dao.observeTrips().map { rows -> rows.map(TripWithLegsEntity::toModel) }
 

@@ -32,6 +32,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.DarkMode
@@ -85,6 +86,7 @@ enum class SettingsSection(
     val subtitle: String,
     val icon: ImageVector,
 ) {
+    BACKUP("backup", "バックアップ", "データをファイルに保存・復元", Icons.Rounded.Backup),
     ACCENT("accent", "アクセントカラー", "アプリの色を選択", Icons.Rounded.Palette),
     ICON("icon", "アプリアイコン", "アイコンと起動アニメーションの色", Icons.Rounded.Palette),
     REGION("region", "デフォルト地域", "新しい移動のタイムゾーン", Icons.Rounded.Language),
@@ -207,6 +209,7 @@ fun SettingsDetailPopup(
                     }
 
                     when (section) {
+                        SettingsSection.BACKUP -> Unit
                         SettingsSection.ICON -> AppIconSettings()
                         SettingsSection.ACCENT -> SettingsCard {
                             AccentPalette.entries.chunked(2).forEach { row ->

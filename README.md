@@ -111,6 +111,17 @@ Tabilineはアカウントを要求せず、旅行・移動・設定データを
 
 ただし、Androidのバックアップ機能は有効です。端末の設定により、旅行・移動データなどがOSによってGoogle Driveなどへバックアップされたり、新しい端末へ転送されたりする場合があります。これはTabiline独自のクラウド同期ではありません。バックアップの管理は端末の設定で行ってください。
 
+### 💾 手動バックアップ・復元
+
+**設定 → バックアップ**から、旅行・移動・空き時間と設定を `.tabiline` ファイルに保存できます。Androidのファイル選択画面で保存先を選びます。対応する保存サービスがあればクラウドにも保存でき、アプリ内で最終保存日時を確認できます。
+
+復元前にファイルを検証し、作成日時と旅行・予定の件数を表示します。設定も復元するか選択できます。通知の許可とアプリアイコンの色は対象外です。未来の通知は再設定し、過去の通知は送信しません。
+
+> [!WARNING]
+> **復元すると現在の旅行・移動・空き時間はすべて上書きされます。事前にバックアップしていない既存データは、復元後に取り戻せません。** 警告を確認してチェックを入れるまで復元できません。現在のデータを残したい場合は、必ず先に別のファイルへ保存してください。
+
+ファイルは暗号化されず、メモや予約情報も含まれます。安全な場所に保管してください。破損・未対応のファイルでは既存データを置き換えません。上限は10MBです。この機能は手動保存であり、自動クラウド同期ではありません。
+
 > [!IMPORTANT]
 > アプリを削除すると端末内のデータも失われる場合があります。予約番号や航空券などの重要情報は、必ず別の安全な場所にも保管してください。
 
@@ -224,6 +235,17 @@ No trip yet? Save the journey without assigning it. Tabiline creates a standalon
 Tabiline requires no account. Trip, journey, and preference data is stored locally on your device, and Tabiline does not send it to an external server.
 
 Android backup is enabled. Depending on device settings, the operating system may back up trip and journey data to a service such as Google Drive or transfer it to another device. This is separate from app-operated cloud synchronization. Manage backups in your device settings.
+
+### 💾 Manual backup and restore
+
+Open **Settings → Backup** to save trips, journeys, free-time entries and preferences in a `.tabiline` file. Choose a location using Android's file picker; cloud storage is available when its provider supports it. The popup shows the last successful export time.
+
+Before restoring, Tabiline validates the file and shows its creation time and entry counts. Restoring preferences is optional. Notification permissions and launcher-icon color are not included. Future reminders are rescheduled; past reminders are not sent.
+
+> [!WARNING]
+> **Restoring replaces ALL existing trips and entries. Existing data cannot be recovered unless you backed it up beforehand.** Read the warning and check the confirmation box before proceeding. Save a separate backup first if you want to keep your current data.
+
+Backup files are not encrypted and may include notes and reservation details. Store them securely. Invalid or unsupported files are rejected without replacing your data. The maximum file size is 10 MB. This feature is manual backup, not automatic cloud synchronization.
 
 ### ☕ Support development
 

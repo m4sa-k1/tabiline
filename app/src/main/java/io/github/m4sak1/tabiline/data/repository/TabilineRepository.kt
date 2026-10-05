@@ -7,6 +7,8 @@ import io.github.m4sak1.tabiline.core.model.TripWithLegs
 import kotlinx.coroutines.flow.Flow
 
 interface TabilineRepository {
+    suspend fun snapshotTrips(): List<TripWithLegs>
+    suspend fun replaceTrips(trips: List<TripWithLegs>, beforeCommit: suspend () -> Unit = {})
     fun observeTrips(): Flow<List<TripWithLegs>>
     fun observeTrip(id: Long): Flow<TripWithLegs?>
     suspend fun getLeg(id: Long): TransportLeg?
