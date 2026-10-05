@@ -33,6 +33,21 @@ class BackupTest {
     }
 
     @Test fun allFieldsRoundTrip() { assertEquals(sample(), BackupCodec.decode(BackupCodec.encode(sample()))) }
+    @Test fun busFieldsAndBlurModeRoundTripWithLegacyDefaults() {
+        val sample = sample()
+        val document = sample.copy(settings = sample.settings.copy(footerBlurMode = FooterBlurMode.FOOTER_ONLY),
+            trips = sample.trips.map { it.copy(legs = it.legs.map { leg ->
+                if (leg.mode == TransportMode.BUS) leg.copy(busLine = "京都市バス205系統", busType = BusType.LOCAL) else leg
+            }) })
+        assertEquals(document, BackupCodec.decode(BackupCodec.encode(document)))
+        val json = JSONObject(BackupCodec.encode(document))
+        json.getJSONObject("settings").remove("footerBlurMode")
+        val rows = json.getJSONArray("trips").getJSONObject(0).getJSONArray("legs")
+        repeat(rows.length()) { rows.getJSONObject(it).remove("busLine"); rows.getJSONObject(it).remove("busType") }
+        val restored = BackupCodec.decode(json.toString())
+        assertEquals(FooterBlurMode.WITH_ADD_BUTTON, restored.settings.footerBlurMode)
+        assertTrue(restored.trips.flatMap { it.legs }.all { it.busLine.isEmpty() && it.busType == null })
+    }
     @Test fun footerPreferenceRoundTripsAndOlderBackupsUseDefault() {
         val document = sample().copy(settings = sample().settings.copy(footerBlurEnabled = false))
         assertFalse(BackupCodec.decode(BackupCodec.encode(document)).settings.footerBlurEnabled)

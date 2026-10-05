@@ -15,6 +15,13 @@ enum class TrainType(val label: String) {
     LIMITED_EXPRESS("特急"),
     EXPRESS("急行"),
     RAPID("快速"),
+    SPECIAL_RAPID("新快速"),
     LOCAL("普通"),
     OTHER("その他"),
+}
+
+enum class BusType(val label: String) {
+    LOCAL("路線バス"),
+    HIGHWAY_DAY("高速バス(昼行)"),
+    HIGHWAY_NIGHT("高速バス(夜行)"),
 }

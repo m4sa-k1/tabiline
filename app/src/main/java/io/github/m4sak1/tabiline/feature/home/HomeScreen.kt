@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.offset
@@ -50,6 +51,7 @@ import io.github.m4sak1.tabiline.core.model.TripWithLegs
 import io.github.m4sak1.tabiline.ui.components.detailLabel
 import io.github.m4sak1.tabiline.ui.components.serviceLabel
 import io.github.m4sak1.tabiline.ui.components.departureBoardingLabel
+import io.github.m4sak1.tabiline.ui.components.boardingLines
 import io.github.m4sak1.tabiline.ui.components.visual
 import java.time.Duration
 import java.time.Instant
@@ -140,7 +142,7 @@ private fun HeroCard(leg: TransportLeg, remaining: String, onClick: () -> Unit) 
     val isFreeTime = leg.mode == TransportMode.FREE_TIME
     Surface(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth().height(264.dp),
+        modifier = Modifier.fillMaxWidth().heightIn(min = 264.dp),
         shape = RoundedCornerShape(40.dp),
         color = MaterialTheme.colorScheme.primaryContainer,
     ) {
@@ -177,42 +179,24 @@ private fun HeroCard(leg: TransportLeg, remaining: String, onClick: () -> Unit) 
                     contentAlignment = Alignment.Center,
                 ) { Icon(visual.icon, leg.mode.label, Modifier.size(48.dp), tint = MaterialTheme.colorScheme.onPrimary) }
             }
-            Text(
-                if (isFreeTime) leg.departurePlace.ifBlank { "空き時間" }
-                else leg.departureBoardingLabel.ifBlank { "乗り場未設定" },
-                fontSize = if (leg.mode == TransportMode.FLIGHT) 18.sp else 30.sp,
-                lineHeight = 38.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.offset(24.dp, 140.dp),
-            )
-            if (isFreeTime) {
-                Text(
-                    "終了 ${leg.arrivalLocal.format(timeFormat)}",
-                    fontSize = 18.sp,
-                    lineHeight = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.offset(24.dp, 186.dp),
-                )
-            } else Text(
-                    "${leg.departurePlace} → ${leg.arrivalPlace}",
-                    fontSize = 18.sp,
-                    lineHeight = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.offset(24.dp, 186.dp),
-                )
-            val detail = buildList {
-                add(leg.serviceLabel)
-                if (leg.memo.isNotBlank()) add(leg.memo)
-            }.joinToString(" ・ ")
-            Text(
-                detail,
-                fontSize = 14.sp,
-                lineHeight = 20.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.offset(24.dp, 216.dp).padding(end = 24.dp),
-            )
+            Column(Modifier.fillMaxWidth().padding(start = 24.dp, top = 156.dp, end = 24.dp, bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(if (isFreeTime) leg.departurePlace.ifBlank { "空き時間" }
+                    else "${leg.departurePlace} → ${leg.arrivalPlace}",
+                    fontSize = 30.sp, lineHeight = 38.sp, fontWeight = FontWeight.Bold,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis)
+                if (isFreeTime) Text("終了 ${leg.arrivalLocal.format(timeFormat)}",
+                    fontSize = 18.sp, lineHeight = 24.sp, fontWeight = FontWeight.Bold)
+                else leg.boardingLines.forEach { boarding ->
+                    Text(boarding, fontSize = 16.sp, lineHeight = 22.sp,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                Text(leg.serviceLabel, fontSize = 14.sp, lineHeight = 20.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (leg.memo.isNotBlank()) Text(leg.memo, fontSize = 14.sp, lineHeight = 20.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
         }
     }
 }

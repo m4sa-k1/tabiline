@@ -15,7 +15,7 @@ object LegJsonCodec {
     private val keys = setOf("format", "version", "tripId", "tripName", "departure", "arrival",
         "departureZoneId", "arrivalZoneId", "departurePlace", "arrivalPlace", "mode", "trainType", "trainLine",
         "departureTerminal", "arrivalTerminal", "boardingGroup", "flightNumber", "departurePlatform",
-        "arrivalPlatform", "memo", "precedingGapType")
+        "arrivalPlatform", "memo", "precedingGapType", "busLine", "busType")
 
     fun decode(source: String, trips: List<Trip>, currentTripId: Long?): TransportLeg {
         require(source.toByteArray(Charsets.UTF_8).size <= MAX_BYTES) { "JSONが大きすぎます（最大256KB）。" }
@@ -73,6 +73,8 @@ object LegJsonCodec {
                     if (mode == TransportMode.TRAIN) TrainType.LOCAL else null
                 } else TrainType.valueOf(row.text("trainType")),
                 trainLine = row.optional("trainLine"), departureTerminal = row.optional("departureTerminal"),
+                busLine = row.optional("busLine"),
+                busType = if (!row.has("busType") || row.isNull("busType")) null else BusType.valueOf(row.text("busType")),
                 arrivalTerminal = row.optional("arrivalTerminal"), boardingGroup = row.optional("boardingGroup"),
                 flightNumber = row.optional("flightNumber"), departurePlatform = row.optional("departurePlatform"),
                 arrivalPlatform = row.optional("arrivalPlatform"), memo = row.optional("memo"),

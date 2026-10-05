@@ -5,6 +5,8 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -58,31 +60,29 @@ fun TripEditorDialog(
     onProgress: (Float) -> Unit = {},
     onSavePlan: (suspend (TripWithLegs) -> Long)? = null,
     onPlanSaved: (Long) -> Unit = {},
+    initialPlan: TripWithLegs? = null,
 ) {
-    var name by remember(existing) { mutableStateOf(existing?.name.orEmpty()) }
-    var start by remember(existing) { mutableStateOf(existing?.startDate ?: LocalDate.now()) }
-    var end by remember(existing) { mutableStateOf(existing?.endDate ?: LocalDate.now().plusDays(1)) }
-    var note by remember(existing) { mutableStateOf(existing?.note.orEmpty()) }
+    var name by remember(existing, initialPlan) { mutableStateOf(existing?.name ?: initialPlan?.trip?.name.orEmpty()) }
+    var start by remember(existing, initialPlan) { mutableStateOf(existing?.startDate ?: initialPlan?.trip?.startDate ?: LocalDate.now()) }
+    var end by remember(existing, initialPlan) { mutableStateOf(existing?.endDate ?: initialPlan?.trip?.endDate ?: LocalDate.now().plusDays(1)) }
+    var note by remember(existing, initialPlan) { mutableStateOf(existing?.note ?: initialPlan?.trip?.note.orEmpty()) }
     var dialogVisible by remember { mutableStateOf(true) }
     var closing by remember { mutableStateOf(false) }
     var pendingSave by remember { mutableStateOf<Trip?>(null) }
-    var importedLegs by remember { mutableStateOf<List<TransportLeg>>(emptyList()) }
-    var showAi by remember { mutableStateOf(false) }
-    var showJson by remember { mutableStateOf(false) }
-    var pasteMode by remember { mutableStateOf(false) }
+    var importedLegs by remember(initialPlan) { mutableStateOf(initialPlan?.legs.orEmpty()) }
     var saving by remember { mutableStateOf(false) }
     var saveError by remember { mutableStateOf<String?>(null) }
     var savedPlanId by remember { mutableStateOf<Long?>(null) }
     val scope = rememberCoroutineScope()
     val valid = name.isNotBlank() && !end.isBefore(start)
     val draft = listOf(name, start, end, note, importedLegs)
-    val initialDraft = remember(existing) { draft }
+    val initialDraft = remember(existing, initialPlan) { draft }
     var confirmDiscard by remember { mutableStateOf(false) }
     var discardApproved by remember { mutableStateOf(false) }
 
     fun closeAfterMotion(trip: Trip? = null) {
         if (closing || saving) return
-        if (trip == null && draft != initialDraft && !discardApproved) {
+        if (trip == null && (draft != initialDraft || initialPlan != null) && !discardApproved) {
             confirmDiscard = true
             return
         }
@@ -91,12 +91,7 @@ fun TripEditorDialog(
         dialogVisible = false
     }
 
-    BackHandler(enabled = dialogVisible && !closing && !showAi && !showJson) { closeAfterMotion() }
-    if (showAi) AiPromptPopup { showAi = false }
-    if (showJson) TripJsonImportPopup({ showJson = false }, pasteMode) { plan ->
-        name = plan.trip.name; start = plan.trip.startDate; end = plan.trip.endDate; note = plan.trip.note
-        importedLegs = plan.legs; saveError = null
-    }
+    BackHandler(enabled = dialogVisible && !closing) { closeAfterMotion() }
     if (confirmDiscard) DiscardChangesDialog(
         onKeepEditing = { confirmDiscard = false },
         onDiscard = { confirmDiscard = false; discardApproved = true; closeAfterMotion() },
@@ -116,7 +111,7 @@ fun TripEditorDialog(
                 onClick = { closeAfterMotion() },
             ),
         )
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(Modifier.fillMaxSize().statusBarsPadding().imePadding(), contentAlignment = Alignment.Center) {
             Surface(
                 modifier = motionModifier
                     .padding(horizontal = 20.dp)
@@ -127,8 +122,7 @@ fun TripEditorDialog(
             ) {
                 Box {
                 Column(
-                    Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(22.dp)
-                        .padding(bottom = if (existing == null) 72.dp else 0.dp),
+                    Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(22.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -205,10 +199,6 @@ fun TripEditorDialog(
                             Text(if (saving) "保存中…" else "保存", Modifier.padding(start = 8.dp))
                         }
                     }
-                }
-                if (existing == null) Box(Modifier.align(Alignment.BottomEnd).padding(18.dp)) {
-                    EditorImportMenu(enabled = !saving && !closing && !showAi && !showJson,
-                        onAi = { showAi = true }, onJson = { pasteMode = false; showJson = true }, onPaste = { pasteMode = true; showJson = true })
                 }
                 }
             }

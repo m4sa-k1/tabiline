@@ -29,6 +29,9 @@ val TransportLeg.serviceLabel: String
     } else if (mode == TransportMode.FLIGHT) {
         listOf(mode.detailLabel, flightNumber, boardingGroup.takeIf(String::isNotBlank)?.let { "Group $it" }.orEmpty())
             .filter(String::isNotBlank).joinToString(" ・ ")
+    } else if (mode == TransportMode.BUS) {
+        listOfNotNull(busLine.takeIf(String::isNotBlank), busType?.label)
+            .joinToString(" ").ifBlank { mode.detailLabel }
     } else {
         mode.detailLabel
     }
@@ -40,6 +43,20 @@ val TransportLeg.departureBoardingLabel: String
             departurePlatform.takeIf(String::isNotBlank)?.let { "ゲート $it" },
         ).joinToString(" ・ ")
     } else departurePlatform
+
+val TransportLeg.arrivalBoardingLabel: String
+    get() = if (mode == TransportMode.FLIGHT) {
+        listOfNotNull(
+            arrivalTerminal.takeIf(String::isNotBlank)?.let { "ターミナル $it" },
+            arrivalPlatform.takeIf(String::isNotBlank)?.let { "ゲート $it" },
+        ).joinToString(" ・ ")
+    } else arrivalPlatform
+
+val TransportLeg.boardingLines: List<String>
+    get() = listOfNotNull(
+        departureBoardingLabel.takeIf(String::isNotBlank)?.let { "乗り場:$it" },
+        arrivalBoardingLabel.takeIf(String::isNotBlank)?.let { "降り場:$it" },
+    )
 
 @Composable
 fun TransportMode.visual(): TransportVisual = when (this) {

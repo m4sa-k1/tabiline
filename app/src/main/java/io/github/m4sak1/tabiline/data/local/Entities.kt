@@ -1,6 +1,7 @@
 package io.github.m4sak1.tabiline.data.local
 
 import androidx.room.Embedded
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -50,6 +51,8 @@ data class TransportLegEntity(
     val memo: String,
     val sortOrder: Int,
     val precedingGapType: String = "WAIT",
+    @ColumnInfo(defaultValue = "''") val busLine: String = "",
+    val busType: String? = null,
 )
 
 data class TripWithLegsEntity(

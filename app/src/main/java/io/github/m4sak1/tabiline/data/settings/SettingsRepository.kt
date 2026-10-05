@@ -10,6 +10,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import io.github.m4sak1.tabiline.core.model.ThemePreference
 import io.github.m4sak1.tabiline.core.model.AccentPalette
 import io.github.m4sak1.tabiline.core.model.UserSettings
+import io.github.m4sak1.tabiline.core.model.FooterBlurMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -24,6 +25,9 @@ class DataStoreSettingsRepository(private val context: Context) : SettingsReposi
     override val settings = context.settingsDataStore.data.map { prefs ->
         UserSettings(
             footerBlurEnabled = prefs[booleanPreferencesKey("footer_blur_enabled")] ?: true,
+            footerBlurMode = prefs[stringPreferencesKey("footer_blur_mode")]?.let {
+                runCatching { FooterBlurMode.valueOf(it) }.getOrNull()
+            } ?: FooterBlurMode.WITH_ADD_BUTTON,
             notificationsEnabled = prefs[booleanPreferencesKey("notifications_enabled")] ?: false,
             notificationMinutes = TransportMode.entries.associateWith {
                 (prefs[intPreferencesKey("notify_${it.name}_minutes")] ?: if (it == TransportMode.FLIGHT) 60 else 10).coerceIn(0, 999)
@@ -44,6 +48,7 @@ class DataStoreSettingsRepository(private val context: Context) : SettingsReposi
     override suspend fun update(settings: UserSettings) {
         context.settingsDataStore.edit {
             it[booleanPreferencesKey("footer_blur_enabled")] = settings.footerBlurEnabled
+            it[stringPreferencesKey("footer_blur_mode")] = settings.footerBlurMode.name
             it[booleanPreferencesKey("notifications_enabled")] = settings.notificationsEnabled
             settings.notificationMinutes.forEach { (mode, minutes) -> it[intPreferencesKey("notify_${mode.name}_minutes")] = minutes.coerceIn(0, 999) }
             it[Keys.theme] = settings.theme.name

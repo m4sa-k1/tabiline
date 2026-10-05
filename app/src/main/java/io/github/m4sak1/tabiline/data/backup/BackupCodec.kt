@@ -31,6 +31,7 @@ object BackupCodec {
                 .put("accentPalette", settings.accentPalette.name).put("defaultZoneId", settings.defaultZoneId)
                 .put("notificationsEnabled", settings.notificationsEnabled)
                 .put("footerBlurEnabled", settings.footerBlurEnabled)
+                .put("footerBlurMode", settings.footerBlurMode.name)
                 .put("notificationMinutes", JSONObject().apply {
                     TransportMode.entries.forEach { put(it.name, settings.notificationMinutes.getValue(it)) }
                 }).put("trainMinutes", settings.trainMinutes).put("busMinutes", settings.busMinutes)
@@ -57,6 +58,7 @@ object BackupCodec {
         .put("arrivalZoneId", leg.arrivalZoneId).put("departurePlace", leg.departurePlace)
         .put("arrivalPlace", leg.arrivalPlace).put("mode", leg.mode.name)
         .put("trainType", leg.trainType?.name ?: JSONObject.NULL).put("trainLine", leg.trainLine)
+        .put("busType", leg.busType?.name ?: JSONObject.NULL).put("busLine", leg.busLine)
         .put("departureTerminal", leg.departureTerminal).put("arrivalTerminal", leg.arrivalTerminal)
         .put("boardingGroup", leg.boardingGroup).put("flightNumber", leg.flightNumber)
         .put("departurePlatform", leg.departurePlatform).put("arrivalPlatform", leg.arrivalPlatform)
@@ -74,6 +76,7 @@ object BackupCodec {
             val minutes = config.getJSONObject("notificationMinutes")
             val settings = UserSettings(
                 footerBlurEnabled = if (config.has("footerBlurEnabled")) config.boolean("footerBlurEnabled") else true,
+                footerBlurMode = if (config.has("footerBlurMode")) FooterBlurMode.valueOf(config.string("footerBlurMode")) else FooterBlurMode.WITH_ADD_BUTTON,
                 theme = ThemePreference.valueOf(config.string("theme")),
                 accentPalette = AccentPalette.valueOf(config.string("accentPalette")),
                 defaultZoneId = config.string("defaultZoneId"),
@@ -113,6 +116,8 @@ object BackupCodec {
         mode = TransportMode.valueOf(row.string("mode")),
         trainType = if (row.get("trainType") == JSONObject.NULL) null else TrainType.valueOf(row.string("trainType")),
         trainLine = row.string("trainLine"), departureTerminal = row.string("departureTerminal"),
+        busLine = if (row.has("busLine")) row.string("busLine") else "",
+        busType = if (!row.has("busType") || row.isNull("busType")) null else BusType.valueOf(row.string("busType")),
         arrivalTerminal = row.string("arrivalTerminal"), boardingGroup = row.string("boardingGroup"),
         flightNumber = row.string("flightNumber"), departurePlatform = row.string("departurePlatform"),
         arrivalPlatform = row.string("arrivalPlatform"), memo = row.string("memo"),
@@ -142,7 +147,7 @@ object BackupCodec {
                 require(leg.arrival >= leg.departure) { "終了時刻が開始時刻より前になっています。" }
                 require(leg.sortOrder >= 0 && orders.add(leg.sortOrder)) { "予定の並び順が不正です。" }
                 ZoneId.of(leg.departureZoneId); ZoneId.of(leg.arrivalZoneId)
-                listOf(leg.departurePlace, leg.arrivalPlace, leg.trainLine, leg.departureTerminal,
+                listOf(leg.departurePlace, leg.arrivalPlace, leg.trainLine, leg.busLine, leg.departureTerminal,
                     leg.arrivalTerminal, leg.boardingGroup, leg.flightNumber, leg.departurePlatform,
                     leg.arrivalPlatform, leg.memo).forEach(::checkText)
             }

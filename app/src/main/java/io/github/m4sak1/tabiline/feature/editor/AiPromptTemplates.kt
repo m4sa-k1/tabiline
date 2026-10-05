@@ -88,6 +88,7 @@ $schemaInstructions
       "arrivalZoneId": "Asia/Tokyo",
       "departurePlace": "出発駅", "arrivalPlace": "到着駅",
       "trainType": "LOCAL", "trainLine": "確認済みの路線名",
+      "busType": null, "busLine": "",
       "departureTerminal": "", "arrivalTerminal": "",
       "departurePlatform": "", "arrivalPlatform": "",
       "boardingGroup": "", "flightNumber": "", "memo": "", "precedingGapType": "WAIT"
@@ -102,10 +103,11 @@ formatは必ずtabiline.trip、versionは整数1。tripはオブジェクトでn
 mode・departure・arrival・departureZoneId・arrivalZoneIdは必須。通常の移動はdeparturePlace・arrivalPlaceも空欄不可。
 modeはTRAIN（電車）・FLIGHT（飛行機）・FERRY（船）・BUS（バス）・WALK（徒歩）・FREE_TIME（空き時間・用事）・OTHERのいずれか。
 departure・arrivalは年月日と時刻を含むISO 8601形式で+09:00などのUTCオフセット、またはZを必ず付ける。到着・終了は出発・開始より後。夜行便のarrivalは翌日の実際の年月日を使い、「翌07:48」などの表示用文字列にしない。タイムゾーンはAsia/Tokyoなどの有効なIANA名。地域・季節・海外の日付変更も考慮し、オフセットと現地時刻を一致させる。出発順に並べ、重複する時刻は相談して解消してください。
-trainTypeはSHINKANSEN・LIMITED_EXPRESS・EXPRESS・RAPID・LOCAL・OTHERまたはnull。電車で省略時はLOCAL、電車以外はnull。trainLineは路線名。
+trainTypeはSHINKANSEN・LIMITED_EXPRESS・EXPRESS・RAPID・SPECIAL_RAPID（新快速）・LOCAL・OTHERまたはnull。電車で省略時はLOCAL、電車以外はnull。trainLineは電車の路線名。
+busLineはバスの路線名。busTypeはLOCAL（路線バス）・HIGHWAY_DAY（高速バス・昼行）・HIGHWAY_NIGHT（高速バス・夜行）またはnull。バス以外ではbusLineは空欄、busTypeはnull。
 departurePlatform・arrivalPlatformは出発と到着の乗り場・ホーム・ゲート。departureTerminal・arrivalTerminalは出発と到着の空港ターミナル。boardingGroupは搭乗Group、flightNumberは便番号。飛行機以外では空港固有項目を空欄にする。
 memoはメモ。precedingGapTypeはWAIT（同じホームなどで待つ、省略時）またはTRANSFER（ホームなどを移動する）。不明な乗り場・ゲート・便番号を推測しない。
-任意の文字列は省略時に空欄。文字列は最大20,000文字。trainType以外の文字列にnull・数値・配列を使わない。
+任意の文字列は省略時に空欄。文字列は最大20,000文字。trainType・busType以外の文字列にnull・数値・配列を使わない。
 FREE_TIMEではdeparturePlaceに用事名（空欄なら「空き時間」）、arrivalPlace・乗り場・交通機関固有項目は空欄。departureは開始、arrivalは終了で終了時刻も必須。両方のタイムゾーンは同じ地域にする。memoは利用可能。
 id・tripId・tripName・sortOrder・createdAtなど、上記にない項目は追加しない。内部ID・紐づけ・並び順はアプリが管理します。設定や既存データを含めないでください。
 """.trimIndent()
