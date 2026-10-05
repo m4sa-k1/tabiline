@@ -78,7 +78,7 @@ private fun PickerPopup(
     Dialog(onDismissRequest = { visible = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         val popupWindow = (LocalView.current.parent as? DialogWindowProvider)?.window
         SideEffect {
-            if (Build.VERSION.SDK_INT >= 31) popupWindow?.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+            popupWindow?.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
         }
         CenterPopup(visible = visible, onHidden = {
             if (confirmed) latestConfirm()

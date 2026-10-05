@@ -7,8 +7,8 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
-val releaseVersionName = providers.gradleProperty("versionName").orElse("1.0.2")
-val releaseVersionCode = providers.gradleProperty("versionCode").map(String::toInt).orElse(1000002)
+val releaseVersionName = providers.gradleProperty("versionName").orElse("1.1.0")
+val releaseVersionCode = providers.gradleProperty("versionCode").map(String::toInt).orElse(1001000)
 
 val keystorePath = providers.environmentVariable("ANDROID_KEYSTORE_PATH")
 val keystorePassword = providers.environmentVariable("ANDROID_KEYSTORE_PASSWORD")

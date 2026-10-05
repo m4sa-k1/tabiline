@@ -38,14 +38,15 @@ jobs:
         id: version
         shell: bash
         run: |
-          latest_patch="$(gh release list --limit 100 --json tagName --jq '[.[].tagName | select(test("^v1\\.0\\.[0-9]+$")) | capture("v1\\.0\\.(?<n>[0-9]+)").n | tonumber] | max // empty')"
-          if [[ -z "$latest_patch" ]]; then
-            patch=0
-          else
+          base="$(sed -n 's/^val releaseVersionName = .*orElse("\([0-9]*\.[0-9]*\.[0-9]*\)")$/\1/p' app/build.gradle.kts)"
+          [[ "$base" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          IFS=. read -r major minor patch <<< "$base"
+          latest_patch="$(gh release list --limit 100 --json tagName | jq --arg series "v${major}.${minor}." '[.[].tagName | select(startswith($series)) | ltrimstr($series) | select(test("^[0-9]+$")) | tonumber] | max // -1')"
+          if (( latest_patch >= patch )); then
             patch=$((latest_patch + 1))
           fi
-          echo "name=1.0.${patch}" >> "$GITHUB_OUTPUT"
-          echo "code=$((1000000 + patch))" >> "$GITHUB_OUTPUT"
+          echo "name=${major}.${minor}.${patch}" >> "$GITHUB_OUTPUT"
+          echo "code=$((major * 1000000 + minor * 1000 + patch))" >> "$GITHUB_OUTPUT"
 
       - name: Validate signing secrets
         shell: bash

@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -77,6 +79,7 @@ fun CenterPopup(
     }
 
     Box(modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = popupScrimAlpha(progress.value))))
         val motionModifier = Modifier.graphicsLayer {
             val scale = 0.86f + 0.14f * progress.value
             scaleX = scale
@@ -87,6 +90,9 @@ fun CenterPopup(
         content(progress.value, motionModifier)
     }
 }
+
+/** Shared by every centered popup, synchronized with its open/close progress. */
+internal fun popupScrimAlpha(progress: Float): Float = 0.14f * progress.coerceIn(0f, 1f)
 
 /** Moves and scales a compact popup between its final position and the fixed add button. */
 @Composable
