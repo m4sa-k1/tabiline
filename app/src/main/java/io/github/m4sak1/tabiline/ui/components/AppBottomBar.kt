@@ -46,7 +46,7 @@ fun AppBottomBar(
         modifier = modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .padding(bottom = 12.dp),
+            .padding(bottom = FooterLayout.bottomPadding),
         contentAlignment = Alignment.Center,
     ) {
         Row(
@@ -57,7 +57,7 @@ fun AppBottomBar(
             if (onAdd != null) {
                 Surface(
                     onClick = onAdd,
-                    modifier = Modifier.size(104.dp),
+                    modifier = Modifier.size(FooterLayout.addSize),
                     shape = RoundedCornerShape(34.dp),
                     color = if (addText == null) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.surfaceContainerHighest,
@@ -66,7 +66,7 @@ fun AppBottomBar(
                     shadowElevation = 0.dp,
                     tonalElevation = 0.dp,
                 ) {
-                    Box(Modifier.size(104.dp), contentAlignment = Alignment.Center) {
+                    Box(Modifier.size(FooterLayout.addSize), contentAlignment = Alignment.Center) {
                         if (addText == null) {
                             Icon(Icons.Rounded.Add, addContentDescription, Modifier.size(40.dp))
                         } else {
@@ -120,7 +120,7 @@ private fun FooterSelector(
             )
             IconButton(
                 onClick = { onSelect(destination) },
-                modifier = Modifier.size(52.dp),
+                modifier = Modifier.size(FooterLayout.selectorHeight),
                 shape = RoundedCornerShape(
                     topStart = startRadius,
                     bottomStart = startRadius,

@@ -50,6 +50,8 @@ import io.github.m4sak1.tabiline.core.model.TransportLeg
 import io.github.m4sak1.tabiline.core.model.Trip
 import io.github.m4sak1.tabiline.feature.editor.LegEditorScreen
 import io.github.m4sak1.tabiline.feature.editor.TripEditorDialog
+import io.github.m4sak1.tabiline.feature.editor.TripImportActions
+import io.github.m4sak1.tabiline.core.model.TripWithLegs
 import io.github.m4sak1.tabiline.feature.home.HomeScreen
 import io.github.m4sak1.tabiline.feature.home.PlansScreen
 import io.github.m4sak1.tabiline.feature.settings.SettingsScreen
@@ -60,6 +62,7 @@ import io.github.m4sak1.tabiline.feature.timeline.EmptyTimelineScreen
 import io.github.m4sak1.tabiline.feature.timeline.TimelineScreen
 import io.github.m4sak1.tabiline.ui.components.AppDestination
 import io.github.m4sak1.tabiline.ui.components.AppBottomBar
+import io.github.m4sak1.tabiline.ui.components.backdropHeight
 import io.github.m4sak1.tabiline.ui.components.FooterBackdrop
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
@@ -184,6 +187,7 @@ private fun TabilineRoot(
         val trips by viewModel.trips.collectAsStateWithLifecycle()
         var tripDialog by remember { mutableStateOf<Trip?>(null) }
         var showNewTrip by remember { mutableStateOf(false) }
+        var importedTripPlan by remember { mutableStateOf<TripWithLegs?>(null) }
         var gapTypePicker by remember { mutableStateOf<Pair<Long, GapType>?>(null) }
         var detailLeg by remember { mutableStateOf<TransportLeg?>(null) }
         var footerFace by rememberSaveable { mutableStateOf(footerFaces.random()) }
@@ -201,6 +205,7 @@ private fun TabilineRoot(
             if (notificationOpen > 0) {
                 tripDialog = null
                 showNewTrip = false
+                importedTripPlan = null
                 gapTypePicker = null
                 detailLeg = null
                 settingsDialogSection = null
@@ -304,6 +309,9 @@ private fun TabilineRoot(
                 TimelineScreen(
                     item = item,
                     settings = settings,
+                    bottomContentPadding = if (settings.footerBlurEnabled)
+                        settings.footerBlurMode.backdropHeight(footerHeight).coerceAtLeast(144.dp) + 20.dp
+                        else footerHeight.coerceAtLeast(144.dp) + 20.dp,
                     onEditTrip = { tripDialog = item?.trip },
                     onDeleteTrip = { viewModel.deleteTrip(id) { nav.navigate("plans") { popUpTo("home") } } },
                     onEditLeg = { legId -> detailLeg = item?.legs?.firstOrNull { it.id == legId } },
@@ -454,7 +462,7 @@ private fun TabilineRoot(
             val routeTripId = currentEntry?.arguments?.getLong("tripId")
             if (settings.footerBlurEnabled && footerHeight > 0.dp) {
                 FooterBackdrop(footerHaze, Modifier.align(Alignment.BottomCenter).fillMaxWidth()
-                    .height(footerHeight + 48.dp).zIndex(1.5f).blur(
+                    .height(settings.footerBlurMode.backdropHeight(footerHeight)).zIndex(1.5f).blur(
                         12.dp * popupBlurProgress, BlurredEdgeTreatment.Unbounded))
             }
             AppBottomBar(
@@ -475,7 +483,7 @@ private fun TabilineRoot(
                         addingTripId = tripId
                         addScreenVisible = true
                     })
-                    AppDestination.PLANS -> ({ showNewTrip = true })
+                    AppDestination.PLANS -> ({ importedTripPlan = null; showNewTrip = true })
                     AppDestination.SETTINGS -> ({
                         footerFace = footerFaces.filterNot { it == footerFace }.random()
                     })
@@ -499,6 +507,11 @@ private fun TabilineRoot(
                     }
                 }
             }
+            if (barDestination == AppDestination.PLANS) TripImportActions(
+                enabled = !showNewTrip && tripDialog == null && popupBlurProgress < 0.001f,
+                onPlanImported = { importedTripPlan = it; showNewTrip = true },
+                modifier = Modifier.zIndex(2.1f).blur(12.dp * popupBlurProgress, BlurredEdgeTreatment.Unbounded),
+            )
         }
 
         // Popups must cover the fixed footer (z=2) and editor (z=3),
@@ -540,7 +553,8 @@ private fun TabilineRoot(
         }
         if (showNewTrip) TripEditorDialog(
             existing = null,
-            onDismiss = { showNewTrip = false },
+            initialPlan = importedTripPlan,
+            onDismiss = { showNewTrip = false; importedTripPlan = null },
             onSavePlan = viewModel::saveTripPlan,
             onPlanSaved = { id -> selectedTripId = id; showNewTrip = false; nav.navigate("trip/$id") },
             onSave = { trip ->

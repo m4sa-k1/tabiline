@@ -11,6 +11,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -67,6 +69,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -81,6 +84,7 @@ import io.github.m4sak1.tabiline.core.model.UserSettings
 import io.github.m4sak1.tabiline.ui.components.detailLabel
 import io.github.m4sak1.tabiline.ui.components.serviceLabel
 import io.github.m4sak1.tabiline.ui.components.departureBoardingLabel
+import io.github.m4sak1.tabiline.ui.components.FittedTimeText
 import io.github.m4sak1.tabiline.ui.components.CenterPopup
 import io.github.m4sak1.tabiline.ui.components.visual
 import java.time.Duration
@@ -134,6 +138,7 @@ fun TimelineScreen(
     onEditLeg: (Long) -> Unit,
     onMoveLeg: (Long, Int) -> Unit,
     onEditGapType: (Long, GapType) -> Unit,
+    bottomContentPadding: androidx.compose.ui.unit.Dp = 208.dp,
 ) {
     var confirmDelete by remember { mutableStateOf(false) }
     var menuOpen by remember { mutableStateOf(false) }
@@ -150,8 +155,7 @@ fun TimelineScreen(
     val selectedDate = selectedEpochDay?.let(LocalDate::ofEpochDay) ?: initialDay
     val dayLegs = item?.legs.orEmpty().filter { showAll || (selectedDate != null && it.isVisibleOn(selectedDate)) }.sortedBy { it.sortOrder }
     val referenceDate = if (showAll) dates.firstOrNull() else selectedDate
-    val wideTimes = dayLegs.any { it.departureLocal.toLocalDate() != referenceDate || it.arrivalLocal.toLocalDate() != referenceDate }
-    val timeColumnWidth = if (wideTimes) 88.dp else 62.dp
+    val timeColumnWidth = 62.dp
     val density = LocalDensity.current
     var headerHeight by remember { mutableStateOf(0.dp) }
     val headerHaze = remember { HazeState() }
@@ -226,8 +230,8 @@ fun TimelineScreen(
                 if (dayLegs.isNotEmpty()) {
                     LazyColumn(
                         state = timelineScroll,
-                        modifier = Modifier.fillMaxSize().hazeSource(headerHaze),
-                        contentPadding = PaddingValues(start = 16.dp, top = headerHeight + 12.dp, end = 16.dp, bottom = 144.dp),
+                        modifier = Modifier.fillMaxSize().hazeSource(headerHaze).testTag("timeline-list"),
+                        contentPadding = PaddingValues(start = 16.dp, top = headerHeight + 12.dp, end = 16.dp, bottom = bottomContentPadding),
                     ) {
                         dayLegs.forEachIndexed { index, leg ->
                             item(key = "leg-${leg.id}") {
@@ -339,53 +343,41 @@ private fun TimelineLeg(
     val isFreeTime = leg.mode == TransportMode.FREE_TIME
     var drag by remember { mutableFloatStateOf(0f) }
     Row(
-        Modifier.fillMaxWidth().height(104.dp).zIndex(1f),
+        Modifier.fillMaxWidth().height(IntrinsicSize.Min).zIndex(1f),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.width(timeColumnWidth).fillMaxHeight()) {
-            Text(
+            FittedTimeText(
                 relativeTimelineTime(leg.departureLocal.toLocalDateTime(), referenceDate),
-                fontSize = if (leg.departureLocal.toLocalDate() == referenceDate) 20.sp else 14.sp,
-                maxLines = 1,
-                softWrap = false,
-                lineHeight = 24.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.align(Alignment.TopStart),
+                maxSize = 20.sp,
+                weight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.TopStart).fillMaxWidth().padding(end = 2.dp),
             )
-            val crossesDate = leg.arrivalLocal.toLocalDate() != referenceDate
-            Text(
+            FittedTimeText(
                 relativeTimelineTime(leg.arrivalLocal.toLocalDateTime(), referenceDate),
-                fontSize = if (crossesDate) 14.sp else 16.sp,
-                lineHeight = 17.sp,
-                fontWeight = FontWeight.Normal,
-                modifier = Modifier.align(Alignment.BottomStart),
-                maxLines = 1,
-                softWrap = false,
+                maxSize = 16.sp,
+                weight = FontWeight.Normal,
+                modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(end = 2.dp),
             )
         }
-        Box(Modifier.width(24.dp).fillMaxHeight()) {
-            if (hasPrevious) {
-                Box(
-                    Modifier.align(Alignment.TopCenter).width(4.dp).height(13.dp)
-                        .background(MaterialTheme.colorScheme.surfaceContainerHighest),
-                )
-            }
-            Box(Modifier.align(Alignment.TopCenter).offset(y = 13.dp).width(4.dp).height(80.dp)
-                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(2.dp)))
-            if (hasNext) {
-                Box(
-                    Modifier.align(Alignment.TopCenter).offset(y = 93.dp).width(4.dp).height(11.dp)
-                        .background(MaterialTheme.colorScheme.surfaceContainerHighest),
-                )
-            }
-            Box(Modifier.align(Alignment.TopCenter).offset(y = 6.dp).size(14.dp)
-                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(7.dp)))
-            Box(Modifier.align(Alignment.TopCenter).offset(y = 86.dp).size(14.dp)
-                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(7.dp)))
+        val railColor = MaterialTheme.colorScheme.primary
+        val connectorColor = MaterialTheme.colorScheme.surfaceContainerHighest
+        Canvas(Modifier.width(24.dp).fillMaxHeight().testTag("timeline-rail-${leg.id}")) {
+            val x = size.width / 2
+            val top = 13.dp.toPx()
+            val bottom = size.height - 11.dp.toPx()
+            if (hasPrevious) drawLine(connectorColor, androidx.compose.ui.geometry.Offset(x, 0f),
+                androidx.compose.ui.geometry.Offset(x, top), strokeWidth = 4.dp.toPx())
+            drawLine(railColor, androidx.compose.ui.geometry.Offset(x, top),
+                androidx.compose.ui.geometry.Offset(x, bottom), strokeWidth = 4.dp.toPx(), cap = StrokeCap.Round)
+            if (hasNext) drawLine(connectorColor, androidx.compose.ui.geometry.Offset(x, bottom),
+                androidx.compose.ui.geometry.Offset(x, size.height), strokeWidth = 4.dp.toPx())
+            drawCircle(railColor, 7.dp.toPx(), androidx.compose.ui.geometry.Offset(x, top))
+            drawCircle(railColor, 7.dp.toPx(), androidx.compose.ui.geometry.Offset(x, bottom))
         }
         Card(
             onClick = onClick,
-            modifier = Modifier.weight(1f).fillMaxHeight().padding(start = 12.dp)
+            modifier = Modifier.weight(1f).fillMaxHeight().heightIn(min = 96.dp).padding(start = 12.dp)
                 .pointerInput(leg.id) {
                     detectDragGesturesAfterLongPress(
                         onDragStart = { drag = .1f },
@@ -405,11 +397,9 @@ private fun TimelineLeg(
                     if (isFreeTime) {
                         Text(
                             leg.departurePlace.ifBlank { "空き時間" },
-                            fontSize = 18.sp,
-                            lineHeight = 22.sp,
+                            fontSize = 22.sp,
+                            lineHeight = 26.sp,
                             fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
                         )
                         Text(
                             "空き時間",
@@ -419,36 +409,28 @@ private fun TimelineLeg(
                         )
                     } else {
                         val route = "${leg.departurePlace} → ${leg.arrivalPlace}"
-                        val hasPlatform = leg.departureBoardingLabel.isNotBlank()
-                        val title = leg.departureBoardingLabel.ifBlank { route }
                         Text(
-                            title,
-                            fontSize = if (leg.mode == TransportMode.FLIGHT) 14.sp else if (hasPlatform) 18.sp else 16.sp,
-                            lineHeight = 22.sp,
+                            route,
+                            fontSize = 22.sp,
+                            lineHeight = 26.sp,
                             fontWeight = FontWeight.Bold,
-                            maxLines = if (leg.mode == TransportMode.FLIGHT) 2 else 1,
-                            overflow = TextOverflow.Ellipsis,
                         )
                         val type = leg.serviceLabel
-                        if (hasPlatform) {
+                        if (leg.departureBoardingLabel.isNotBlank()) {
                             Text(
-                                route,
-                                fontSize = 14.sp,
-                                lineHeight = 18.sp,
-                                fontWeight = FontWeight.SemiBold,
+                                "乗り場:${leg.departureBoardingLabel}",
+                                fontSize = 12.sp,
+                                lineHeight = 16.sp,
+                                fontWeight = FontWeight.Normal,
                                 color = MaterialTheme.colorScheme.onSurface,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
                             )
                         }
                         Text(
-                            listOfNotNull(type, leg.memo.takeIf(String::isNotBlank)).joinToString(" ・ "),
+                            type,
                             fontSize = 12.sp,
                             lineHeight = 16.sp,
                             fontWeight = FontWeight.Normal,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                 }

@@ -222,6 +222,16 @@ fun SettingsDetailPopup(
                                     onCheckedChange = { onUpdate(settings.copy(footerBlurEnabled = it)) },
                                     modifier = Modifier.semantics { contentDescription = "フッター背景ぼかし" })
                             }
+                            if (settings.footerBlurEnabled) {
+                                Text("ぼかしの高さ", style = MaterialTheme.typography.titleSmall)
+                                io.github.m4sak1.tabiline.core.model.FooterBlurMode.entries.forEach { mode ->
+                                    androidx.compose.material3.FilterChip(
+                                        selected = settings.footerBlurMode == mode,
+                                        onClick = { onUpdate(settings.copy(footerBlurMode = mode)) },
+                                        label = { Text(mode.label) },
+                                    )
+                                }
+                            }
                             Text("初期設定はオンです。ぼかし非対応の端末では透明表示を維持します。", style = MaterialTheme.typography.bodySmall)
                         }
                         SettingsSection.BACKUP -> Unit

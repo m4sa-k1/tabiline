@@ -119,6 +119,9 @@ fun LegEditorScreen(
     }
     var trainType by remember(existing?.id) { mutableStateOf(existing?.trainType ?: previous?.trainType ?: TrainType.LOCAL) }
     var trainLine by remember(existing?.id) { mutableStateOf(existing?.trainLine ?: previous?.trainLine.orEmpty()) }
+    var busLine by remember(existing?.id) { mutableStateOf(existing?.busLine ?: previous?.busLine.orEmpty()) }
+    var busType by remember(existing?.id) { mutableStateOf(existing?.busType ?: io.github.m4sak1.tabiline.core.model.BusType.LOCAL) }
+    var busTypeMenu by remember { mutableStateOf(false) }
     var trainTypeMenu by remember { mutableStateOf(false) }
     var memo by remember(existing?.id) { mutableStateOf(existing?.memo.orEmpty()) }
     var confirmDelete by remember { mutableStateOf(false) }
@@ -132,7 +135,7 @@ fun LegEditorScreen(
     val isFreeTime = mode == TransportMode.FREE_TIME
     val draft = listOf(departureDate, departureTime, arrivalDate, arrivalTime, departurePlace, arrivalPlace,
         departurePlatform, arrivalPlatform, departureTerminal, arrivalTerminal, boardingGroup, flightNumber,
-        departureZone, arrivalZone, mode, trainType, trainLine, memo, selectedTripId, precedingGapType)
+        departureZone, arrivalZone, mode, trainType, trainLine, busLine, busType, memo, selectedTripId, precedingGapType)
     val initialDraft = remember(existing?.id) { draft }
     var confirmDiscard by remember { mutableStateOf(false) }
     fun requestClose() {
@@ -242,6 +245,22 @@ fun LegEditorScreen(
                         )
                     }
                 }
+                if (mode == TransportMode.BUS) {
+                    EditorField(busLine, { busLine = it }, "路線名（任意）",
+                        { Icon(mode.visual().icon, null) }, "例：京都駅行き、東京・大阪線")
+                    ExposedDropdownMenuBox(expanded = busTypeMenu, onExpandedChange = { busTypeMenu = it }) {
+                        OutlinedTextField(value = busType.label, onValueChange = {}, readOnly = true,
+                            label = { Text("バスの種別") },
+                            trailingIcon = { Icon(Icons.Rounded.ArrowDropDown, null) },
+                            shape = RoundedCornerShape(20.dp),
+                            modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable))
+                        ExposedDropdownMenu(expanded = busTypeMenu, onDismissRequest = { busTypeMenu = false }) {
+                            io.github.m4sak1.tabiline.core.model.BusType.entries.forEach { value ->
+                                DropdownMenuItem(text = { Text(value.label) }, onClick = { busType = value; busTypeMenu = false })
+                            }
+                        }
+                    }
+                }
                 if (mode == TransportMode.TRAIN) {
                     EditorField(
                         trainLine,
@@ -343,6 +362,8 @@ fun LegEditorScreen(
                         mode = mode,
                         trainType = trainType.takeIf { mode == TransportMode.TRAIN },
                         trainLine = trainLine.trim().takeIf { mode == TransportMode.TRAIN }.orEmpty(),
+                        busLine = busLine.trim().takeIf { mode == TransportMode.BUS }.orEmpty(),
+                        busType = busType.takeIf { mode == TransportMode.BUS },
                         departureTerminal = departureTerminal.trim().takeIf { mode == TransportMode.FLIGHT }.orEmpty(),
                         arrivalTerminal = arrivalTerminal.trim().takeIf { mode == TransportMode.FLIGHT }.orEmpty(),
                         boardingGroup = boardingGroup.trim().takeIf { mode == TransportMode.FLIGHT }.orEmpty(),

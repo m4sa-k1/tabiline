@@ -32,7 +32,8 @@
 - 🕒 **「今日」を即確認** — 次の移動、乗り場、経路を大きく表示。出発まで1時間未満なら秒単位でカウントダウン
 - 🧵 **一本のタイムライン** — 日別・「すべて」を切り替え。夜行便は通過する各日に表示し、前・翌・翌々の時刻で整理
 - 🔎 **タップで詳細** — 詳細ポップアップから編集・削除へ。未保存の入力を閉じるときは確認します
-- ✈️ **フライト情報** — 出発・到着のターミナルとゲート、搭乗Group、便番号を保存。一覧は出発側の情報を表示
+- ✈️ **フライト情報** — 出発・到着のターミナルとゲート、搭乗Group、便番号を保存。経路の下に乗り場・降り場を表示
+- 🚃 **路線と種別** — 電車は新快速にも対応。バスは路線名と路線バス・高速バス(昼行／夜行)の種別を保存・表示
 - 🔔 **出発前にお知らせ** — 設定から任意で有効化し、交通手段ごとに通知時間を指定
 - 🚉 **幅広い移動手段** — 電車、飛行機、船、バス、徒歩、その他に対応
 - ☕ **空き時間も予定化** — 用事名と時間を、移動と同じ流れの中で管理
@@ -113,7 +114,7 @@ Tabilineはアカウントを要求せず、旅行・移動・設定データを
 
 ### 🤖 AIとJSONで旅全体を追加
 
-「旅を追加」ポップアップの右下の **＋** から、**AIに考えてもらう・JSONを読み込む・JSONをコピペで読み込む** を選べます。AIが作成した旅行名・期間・メモと複数の予定を、旅行単位でまとめて取り込めます。すべての交通手段、空き時間、路線・乗り場・フライト情報に対応します。
+**旅行一覧画面**で、常設の追加ボタンのすぐ上にある小さい **＋** から、**AIに考えてもらう・JSONを読み込む・JSONをコピペで読み込む** を選べます。このメニューは旅行追加ポップアップの中にはありません。AIが作成した旅行名・期間・メモと複数の予定を、旅行単位でまとめて取り込めます。すべての交通手段、空き時間、路線・乗り場・フライト情報に対応します。
 
 読み込みは旅行の入力欄と予定一覧を置き換えるだけで、まだ登録されません。内容を確認して **保存** を押すと、新しい旅行と予定をまとめて登録します。途中で失敗した場合はすべて取り消され、既存旅行には影響しません。不正なJSONでは元の入力を維持します。ファイル・貼り付けは別項目で、1行JSONにも対応します（最大1MB、1〜200件、旅行期間は最大366日）。予定の詳細は保存後に編集できます。
 
@@ -121,7 +122,7 @@ Tabilineはアカウントを要求せず、旅行・移動・設定データを
 
 📖 [旅行JSONの仕様と使い方](docs/trip-json.md)。旧1.1.0の移動1件用JSONとは別形式です。
 
-🌫️ **設定 → 画面表示 → フッター背景ぼかし** で、フッターと追加ボタンの背後のぼかしをオン・オフできます。初期設定はオンで、上端はグラデーションで透明になります。非対応の端末では透明表示を維持します。
+🌫️ **設定 → 画面表示 → フッター背景ぼかし** で、ぼかしのオン・オフと高さ（**フッターのみ／追加ボタンまで**）を選べます。初期設定はオン・追加ボタンまでで、上端はグラデーションで透明になります。非対応の端末では透明表示を維持します。
 
 ### 💾 手動バックアップ・復元
 
@@ -184,7 +185,8 @@ Large time displays, mode-specific icons, automatic connection calculations, and
 - 🕒 **Today at a glance** — see the next journey, platform and route, with a seconds countdown below one hour
 - 🧵 **One continuous timeline** — switch between individual days and All; overnight journeys appear on each day they span with relative-day time labels
 - 🔎 **Details first** — tap an entry for a detail popup, then edit or delete; discarding unsaved trip or journey changes requires confirmation
-- ✈️ **Flight details** — save both terminals and gates, boarding group and flight number; lists show departure-side boarding information
+- ✈️ **Flight details** — save both terminals and gates, boarding group and flight number; boarding and arrival locations appear below the route
+- 🚃 **Routes and service types** — trains include Special Rapid; buses support route names and local, daytime highway, or overnight highway services
 - 🚉 **Many transport modes** — train, flight, ferry, bus, walking, and other
 - ☕ **Free-time entries** — place activities and breaks naturally between journeys
 - 🔁 **Clear connections** — calculate gaps automatically and mark them as waiting or moving
@@ -250,7 +252,7 @@ Android backup is enabled. Depending on device settings, the operating system ma
 
 ### 🤖 Plan and import a whole trip with AI and JSON
 
-In the **Add trip** popup, tap **+** for AI prompts, JSON file import, or JSON paste import. Import a trip name, dates, notes and multiple transport/free-time entries together, including route, boarding and flight details.
+On the **Trips screen**, tap the small **+** just above the permanent add button for AI prompts, JSON file import, or JSON paste import. This menu is outside the Add trip popup. Import a trip name, dates, notes and multiple transport/free-time entries together, including route, boarding and flight details.
 
 Review the populated trip form and itinerary before pressing **Save**. The trip and entries are created atomically; a failed save leaves no partial trip and does not overwrite existing trips. Invalid JSON preserves the draft. Single-line JSON is supported, up to 1MB, 1–200 entries and a 366-day trip. Individual entries can be edited after saving.
 
@@ -258,7 +260,7 @@ Choose from **nine** planning styles: destination, region, duration, surprise, d
 
 📖 [Whole-trip JSON contract](docs/trip-json.md). This is separate from the single-entry format used in version 1.1.0.
 
-🌫️ **Settings → Display → Footer background blur** toggles blur behind the footer and add button, with a gradient at its upper edge. Enabled by default; unsupported devices retain a transparent background.
+🌫️ **Settings → Display → Footer background blur** lets you toggle blur and choose its height: **footer only** or **including the add button**. Enabled with add-button coverage by default, with a gradient at its upper edge; unsupported devices retain a transparent background.
 
 ### 💾 Manual backup and restore
 
